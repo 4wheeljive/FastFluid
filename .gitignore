@@ -1,0 +1,7 @@
+.pio
+.vscode/
+.claude/
+/ignore
+/lib
+/managed_components
+nul
