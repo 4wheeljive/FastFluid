@@ -9,6 +9,142 @@
 namespace fluidSim {
 
     // ═══════════════════════════════════════════════════════════════════
+    //  DISPLAY PIPELINE
+    // ═══════════════════════════════════════════════════════════════════
+    //  Post-simulation render: dye + velocity → color-graded RGB → LEDs.
+    //  Stages (per ns_3 draw()):
+    //    1. velocity-magnitude additive glow into base RGB
+    //    2. flow saturation/brightness boost around Rec.709 luminance
+    //    3. highlight saturation second-pass on bright pixels
+    //    4. 5-tap blur glow on (channel - 0.55) regions
+    //    5. black-point compression
+    //    6. gamma (Color Contrast)
+    //    7. Bayer-dither quantization to LEDs
+    //
+    //  Buffer reuse (post-fluidAdvect, all of these are scratch):
+    //    tR/tG/tB:           working RGB (normalized [0,1])
+    //    pressure/divergence: glow scratch (init / blurred), reused per channel
+
+    struct RenderParams {
+        float colorContrast = 0.8f;
+        float blackPoint    = 0.0897f;
+        float flowSat       = 0.5583f;
+        float flowBright    = 0.18f;
+        float glowStrength  = 0.24f;
+        float highlightSat  = 0.22f;
+    };
+
+    RenderParams render;
+
+    FL_FAST_MATH_BEGIN
+    FL_OPTIMIZATION_LEVEL_O3_BEGIN
+
+    static void renderFluidToLeds() {
+        const float invBlack = 1.0f / fmaxf(1e-3f, 1.0f - render.blackPoint);
+        const float gamma    = 1.0f / fmaxf(0.2f, render.colorContrast);
+
+        // ─── Stage 1+2+3: base RGB → flow sat/bright → highlight sat ───
+        for (int y = 0; y < HEIGHT; y++) {
+            for (int xc = 0; xc < WIDTH; xc++) {
+                const float vu = u[y][xc];
+                const float vv = v[y][xc];
+                float vmag = fl::sqrtf(vu * vu + vv * vv) * 1.8f;
+                if (vmag > 255.0f) vmag = 255.0f;
+
+                // Normalize base RGB to [0,1] with velocity-glow add
+                float r = (gR[y][xc] + vmag * 0.08f) * (1.0f / 255.0f);
+                float g = (gG[y][xc] + vmag * 0.08f) * (1.0f / 255.0f);
+                float b = (gB[y][xc] + vmag * 0.08f) * (1.0f / 255.0f);
+                r = clampf(r, 0.0f, 1.0f);
+                g = clampf(g, 0.0f, 1.0f);
+                b = clampf(b, 0.0f, 1.0f);
+
+                // Velocity influence: normalize then sqrt (matches ns_3 draw())
+                float vn = fl::sqrtf(vmag * (1.0f / 255.0f));
+
+                // Flow saturation + brightness around Rec.709 luminance.
+                // 0.94 base brightness intentionally slightly < 1.0 — at zero velocity
+                // the image is mildly muted, fast regions push it brighter.
+                float lum = r * 0.2126f + g * 0.7152f + b * 0.0722f;
+                float satBoost    = 1.0f + vn * render.flowSat;
+                float brightBoost = 0.94f + vn * render.flowBright;
+                r = (lum + (r - lum) * satBoost) * brightBoost;
+                g = (lum + (g - lum) * satBoost) * brightBoost;
+                b = (lum + (b - lum) * satBoost) * brightBoost;
+
+                // Highlight pass: second sat boost on bright pixels (max-channel > 0.42)
+                float maxChan = r;
+                if (g > maxChan) maxChan = g;
+                if (b > maxChan) maxChan = b;
+                float highlight = clampf((maxChan - 0.42f) * (1.0f / 0.58f), 0.0f, 1.0f);
+                float hsBoost = 1.0f + highlight * render.highlightSat;
+                lum = r * 0.2126f + g * 0.7152f + b * 0.0722f;
+                tR[y][xc] = lum + (r - lum) * hsBoost;
+                tG[y][xc] = lum + (g - lum) * hsBoost;
+                tB[y][xc] = lum + (b - lum) * hsBoost;
+            }
+        }
+
+        // ─── Stage 4: per-channel glow (5-tap blur of values > 0.55) ───
+        // Process each channel using pressure as glow_init, divergence as blurred.
+        const float gs = render.glowStrength;
+        float (*channels[3])[WIDTH] = { tR, tG, tB };
+        for (int ch = 0; ch < 3; ch++) {
+            float (*chan)[WIDTH] = channels[ch];
+
+            // glow_init = max(chan - 0.55, 0)
+            for (int y = 0; y < HEIGHT; y++) {
+                for (int xc = 0; xc < WIDTH; xc++) {
+                    float v_ = chan[y][xc] - 0.55f;
+                    pressure[y][xc] = (v_ < 0.0f) ? 0.0f : v_;
+                }
+            }
+            // 5-tap blur (0.42 center, 0.145 cardinal neighbors). Edge cells
+            // sample the center for the missing neighbor (clamp-to-edge).
+            for (int y = 0; y < HEIGHT; y++) {
+                for (int xc = 0; xc < WIDTH; xc++) {
+                    float c  = pressure[y][xc];
+                    float n  = (y > 0)          ? pressure[y - 1][xc] : c;
+                    float s  = (y < HEIGHT - 1) ? pressure[y + 1][xc] : c;
+                    float w_ = (xc > 0)         ? pressure[y][xc - 1] : c;
+                    float e  = (xc < WIDTH - 1) ? pressure[y][xc + 1] : c;
+                    divergence[y][xc] = c * 0.42f + (n + s + w_ + e) * 0.145f;
+                }
+            }
+            // Add blurred glow * strength back to channel
+            for (int y = 0; y < HEIGHT; y++) {
+                for (int xc = 0; xc < WIDTH; xc++) {
+                    chan[y][xc] += divergence[y][xc] * gs;
+                }
+            }
+        }
+
+        // ─── Stage 5+6+7: black point → gamma → Bayer dither → LEDs ───
+        for (uint8_t y = 0; y < HEIGHT; y++) {
+            for (uint8_t xc = 0; xc < WIDTH; xc++) {
+                uint16_t idx = xyFunc(xc, y);
+                if (idx >= NUM_LEDS) continue;
+
+                float r = clampf((tR[y][xc] - render.blackPoint) * invBlack, 0.0f, 1.0f);
+                float g = clampf((tG[y][xc] - render.blackPoint) * invBlack, 0.0f, 1.0f);
+                float b = clampf((tB[y][xc] - render.blackPoint) * invBlack, 0.0f, 1.0f);
+
+                // Gamma curve via fastpow (~5% error, base in [0,1] which is satisfied here).
+                r = fastpow(r, gamma);
+                g = fastpow(g, gamma);
+                b = fastpow(b, gamma);
+
+                leds[idx].r = f2u8d(r * 255.0f, xc, y);
+                leds[idx].g = f2u8d(g * 255.0f, xc, y);
+                leds[idx].b = f2u8d(b * 255.0f, xc, y);
+            }
+        }
+    }
+
+    FL_OPTIMIZATION_LEVEL_O3_END
+    FL_FAST_MATH_END
+
+    // ═══════════════════════════════════════════════════════════════════
     //  INIT & MAIN LOOP
     // ═══════════════════════════════════════════════════════════════════
 
@@ -37,17 +173,25 @@ namespace fluidSim {
 
     static void pushFlowDefaultsToCVars() {
         fluid = FluidParams{};
+        render = RenderParams{};
         cViscosity = fluid.viscosity;
         cDiffusion = fluid.diffusion;
         cVelocityDissipation = fluid.velocityDissipation;
         cDyeDissipation = fluid.dyeDissipation;
         cVorticity = fluid.vorticity;
-        cGravity = fluid.gravity;
+        cGravityForce = fluid.gravityForce;
+        cGravityAngle = fluid.gravityAngle;
         cSolverIterations = (float)fluid.solverIterations;
         cModVelDissipRate = fluid.modVelDissip.modRate;
         cModVelDissipLevel = fluid.modVelDissip.modLevel;
         cModDyeDissipRate = fluid.modDyeDissip.modRate;
         cModDyeDissipLevel = fluid.modDyeDissip.modLevel;
+        cColorContrast = render.colorContrast;
+        cBlackPoint    = render.blackPoint;
+        cFlowSat       = render.flowSat;
+        cFlowBright    = render.flowBright;
+        cGlowStrength  = render.glowStrength;
+        cHighlightSat  = render.highlightSat;
     }
 
     static void syncFlowFromCVars() {
@@ -56,18 +200,25 @@ namespace fluidSim {
         fluid.velocityDissipation = cVelocityDissipation;
         fluid.dyeDissipation = cDyeDissipation;
         fluid.vorticity = cVorticity;
-        fluid.gravity = cGravity;
+        fluid.gravityForce = cGravityForce;
+        fluid.gravityAngle = cGravityAngle;
         fluid.solverIterations = (uint8_t)cSolverIterations;
         fluid.modVelDissip.modRate = cModVelDissipRate;
         fluid.modVelDissip.modLevel = cModVelDissipLevel;
         fluid.modDyeDissip.modRate = cModDyeDissipRate;
         fluid.modDyeDissip.modLevel = cModDyeDissipLevel;
+        render.colorContrast = cColorContrast;
+        render.blackPoint    = cBlackPoint;
+        render.flowSat       = cFlowSat;
+        render.flowBright    = cFlowBright;
+        render.glowStrength  = cGlowStrength;
+        render.highlightSat  = cHighlightSat;
     }
 
     static void pushDefaultsToCVars() {
         // Universal
         cGlobalSpeed = globalSpeed;
-        cPersistence = floorf(persistence);
+        cPersistence = fl::floorf(persistence);
         cPersistFine = persistence - cPersistence;
         cColorShift = colorShift;
         // Emitter: fluidJet
@@ -84,6 +235,7 @@ namespace fluidSim {
     }
 
     static void syncFromCVars() {
+
         globalSpeed = cGlobalSpeed;
         persistence = cPersistence + cPersistFine;
         colorShift = cColorShift;
@@ -127,21 +279,11 @@ namespace fluidSim {
 
         syncFromCVars();
 
-        // Pipeline: prepare → emit → advect → copy out
+        // Pipeline: prepare → emit → advect → render
         fluidPrepare();
         emitFluidJet();
         fluidAdvect();
-
-        // Float grid → LED array (Bayer-dithered to break uint8 banding)
-        for (uint8_t y = 0; y < HEIGHT; y++) {
-            for (uint8_t x = 0; x < WIDTH; x++) {
-                uint16_t idx = xyFunc(x, y);
-                if (idx >= NUM_LEDS) continue;
-                leds[idx].r = f2u8d(gR[y][x], x, y);
-                leds[idx].g = f2u8d(gG[y][x], x, y);
-                leds[idx].b = f2u8d(gB[y][x], x, y);
-            }
-        }
+        renderFluidToLeds();
     }
 
 } // namespace fluidSim

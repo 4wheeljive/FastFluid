@@ -29,7 +29,10 @@ namespace fluidSim {
         float velocityDissipation = 0.75f;     // per-second velocity decay (0..1, 1=no decay)
         float dyeDissipation      = 0.25f;     // per-second dye decay (overrides project persistence)
         float vorticity           = 7.0f;     // confinement strength (0 = disabled)
-        float gravity             = 0.3f;     // uniform vertical force on v
+        // Directional gravity: applied as a uniform force inside the velocity step.
+        // Angle convention: 0°=right, 90°=down, 180°=left, 270°=up.
+        float gravityForce        = 1.0f;     // intensity (0 = disabled)
+        float gravityAngle        = 90.0f;    // direction in degrees
         uint8_t solverIterations  = 5;        // Jacobi passes per lin_solve
 
         ModConfig modVelDissip = {0, 0.5f, 0.0f};   // modTimer, modRate, modLevel
@@ -98,14 +101,18 @@ namespace fluidSim {
         }
     }
 
+    // Fast-diffusion threshold (matches ns_3's `fast_diffusion_threshold = 1e-8`).
+    // Skip the linSolve when the effective coefficient is negligible — covers
+    // diff==0 and tiny-dt paused-frame cases without a separate guard.
+    static constexpr float FAST_DIFFUSION_THRESHOLD = 1e-8f;
+
     static void diffuse(int b, float (*x)[WIDTH], float (*x0)[WIDTH], float diff, float dt_) {
-        if (diff <= 0.0f) {
-            // No diffusion: result is just x0
-            memcpy(x, x0, sizeof(float) * HEIGHT * WIDTH);
+        const float a = dt_ * diff * SIM_SIZE * SIM_SIZE;
+        if (a <= FAST_DIFFUSION_THRESHOLD) {
+            fl::memcpy(x, x0, sizeof(float) * HEIGHT * WIDTH);
             setBnd(b, x);
             return;
         }
-        const float a = dt_ * diff * SIM_SIZE * SIM_SIZE;
         linSolve(b, x, x0, a, 1.0f + 4.0f * a, fluid.solverIterations);
     }
 
@@ -250,25 +257,46 @@ namespace fluidSim {
     }
 
     static void fluidAdvect() {
-        // Apply gravity (uniform vertical force)
-        if (fluid.gravity != 0.0f) {
-            const float dvg = fluid.gravity * dt;
-            for (int y = 0; y < HEIGHT; y++) {
-                for (int xc = 0; xc < WIDTH; xc++) {
-                    v[y][xc] += dvg;
-                }
-            }
+        // Decompose 2D gravity from intensity + angle.
+        // Angle 0°=right (+x), 90°=down (+y in C++ where v is vertical),
+        // 180°=left, 270°=up. Convention matches navier_stokes_3.py.
+        // Note Python↔C++ axis swap: Python u/v ↔ C++ v/u (Python uses
+        // [row,col] axis ordering where row-axis=u; C++ uses fluid convention
+        // where u=horizontal/x, v=vertical/y). The screen-space angle
+        // semantics are preserved.
+        float gravityU = 0.0f;
+        float gravityV = 0.0f;
+        if (fluid.gravityForce != 0.0f) {
+            const float angleRad = fluid.gravityAngle * (CT_PI / 180.0f);
+            SinCosResult sc = sincos_fast(angleRad);
+            gravityU = sc.cos_val * fluid.gravityForce * 5.0f;   // horizontal (x): cos
+            gravityV = sc.sin_val * fluid.gravityForce * 5.0f;   // vertical   (y): sin (positive = down)
         }
 
         // ─── VELOCITY STEP ─────────────────────────────────────────
-        memcpy(uPrev, u, sizeof(u));
-        memcpy(vPrev, v, sizeof(v));
+        fl::memcpy(uPrev, u, sizeof(u));
+        fl::memcpy(vPrev, v, sizeof(v));
         diffuse(1, u, uPrev, fluid.viscosity, dt);
         diffuse(2, v, vPrev, fluid.viscosity, dt);
+
+        // Gravity applied between diffuse and project (matches ns_3 step()).
+        if (gravityU != 0.0f || gravityV != 0.0f) {
+            const float dgu = dt * gravityU;
+            const float dgv = dt * gravityV;
+            for (int y = 0; y < HEIGHT; y++) {
+                for (int xc = 0; xc < WIDTH; xc++) {
+                    u[y][xc] += dgu;
+                    v[y][xc] += dgv;
+                }
+            }
+            setBnd(1, u);
+            setBnd(2, v);
+        }
+
         project();
 
-        memcpy(uPrev, u, sizeof(u));
-        memcpy(vPrev, v, sizeof(v));
+        fl::memcpy(uPrev, u, sizeof(u));
+        fl::memcpy(vPrev, v, sizeof(v));
         advectField(1, u, uPrev, uPrev, vPrev, dt);
         advectField(2, v, vPrev, uPrev, vPrev, dt);
         project();
@@ -282,17 +310,17 @@ namespace fluidSim {
         // For each channel: optionally diffuse, then advect through u,v.
         // Use tR/tG/tB as the previous-frame buffer.
         if (fluid.diffusion > 0.0f) {
-            memcpy(tR, gR, sizeof(gR));
-            memcpy(tG, gG, sizeof(gG));
-            memcpy(tB, gB, sizeof(gB));
+            fl::memcpy(tR, gR, sizeof(gR));
+            fl::memcpy(tG, gG, sizeof(gG));
+            fl::memcpy(tB, gB, sizeof(gB));
             diffuse(0, gR, tR, fluid.diffusion, dt);
             diffuse(0, gG, tG, fluid.diffusion, dt);
             diffuse(0, gB, tB, fluid.diffusion, dt);
         }
 
-        memcpy(tR, gR, sizeof(gR));
-        memcpy(tG, gG, sizeof(gG));
-        memcpy(tB, gB, sizeof(gB));
+        fl::memcpy(tR, gR, sizeof(gR));
+        fl::memcpy(tG, gG, sizeof(gG));
+        fl::memcpy(tB, gB, sizeof(gB));
         advectField(0, gR, tR, u, v, dt);
         advectField(0, gG, tG, u, v, dt);
         advectField(0, gB, tB, u, v, dt);

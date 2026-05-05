@@ -4,7 +4,7 @@
 
 **FluidSim** is an ESP32-based real-time fluid simulation visualizer for WS2812 LED matrices. It runs a Stable-Fluids (Jos Stam, 1999) Navier-Stokes solver that advects RGB dye through a velocity field, producing flame/smoke/plume visuals. Bluetooth LE provides live parameter control via a web UI (`index.html`).
 
-This project was **forked from FlowFields** in November 2026 to support obstacle-based simulation (smoke around paddles, then bitmap obstacles, eventually obstacle-as-emitter). The architectural reasoning is documented in [docs/PLAN.md](docs/PLAN.md). Read that file first if you're new to this project — it explains why FluidSim is separate from FlowFields and what the planned roadmap looks like.
+This project was **forked from FlowFields** in May 2026 to support obstacle-based simulation (smoke around paddles, then bitmap obstacles, eventually obstacle-as-emitter). The architectural reasoning is documented in [docs/PLAN.md](docs/PLAN.md). Read that file first if you're new to this project — it explains why FluidSim is separate from FlowFields and what the planned roadmap looks like.
 
 ## What's currently in place (v1)
 

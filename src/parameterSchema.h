@@ -68,9 +68,11 @@ const char* const FLOWS[] PROGMEM = {
 
 const char* const FLUID_PARAMS[] PROGMEM = {
    "viscosity", "diffusion", "velocityDissipation", "dyeDissipation",
-   "vorticity", "gravity", "solverIterations",
+   "vorticity", "gravityForce", "gravityAngle", "solverIterations",
    "modVelDissipRate", "modVelDissipLevel",
-   "modDyeDissipRate", "modDyeDissipLevel"
+   "modDyeDissipRate", "modDyeDissipLevel",
+   "colorContrast", "blackPoint", "flowSat", "flowBright",
+   "glowStrength", "highlightSat"
 };
 
 struct FlowParamEntry {
@@ -80,7 +82,7 @@ struct FlowParamEntry {
 };
 
 const FlowParamEntry FLOW_PARAM_LOOKUP[] PROGMEM = {
-   {"fluid", FLUID_PARAMS, 11}
+   {"fluid", FLUID_PARAMS, 18}
 };
 
 static const FlowParamEntry* getFlowParams(uint8_t flowIdx) {
@@ -128,12 +130,19 @@ float cDiffusion = 0.0f;
 float cVelocityDissipation = 0.5f;
 float cDyeDissipation = 0.5f;
 float cVorticity = 7.0f;
-float cGravity = 0.3f;
+float cGravityForce = 1.0f;
+float cGravityAngle = 90.0f;
 float cSolverIterations = 5.0f;
 float cModVelDissipRate = 0.5f;
 float cModVelDissipLevel = 0.0f;
 float cModDyeDissipRate = 0.5f;
 float cModDyeDissipLevel = 0.0f;
+float cColorContrast = 0.8f;
+float cBlackPoint = 0.0897f;
+float cFlowSat = 0.5583f;
+float cFlowBright = 0.18f;
+float cGlowStrength = 0.24f;
+float cHighlightSat = 0.22f;
 
 // ═══════════════════════════════════════════════════════════════════
 //  X-MACRO PARAMETER TABLE
@@ -160,9 +169,16 @@ float cModDyeDissipLevel = 0.0f;
    X(float, VelocityDissipation, 0.75f) \
    X(float, DyeDissipation, 0.25f) \
    X(float, Vorticity, 7.0f) \
-   X(float, Gravity, 0.3f) \
+   X(float, GravityForce, 1.0f) \
+   X(float, GravityAngle, 90.0f) \
    X(float, SolverIterations, 5.0f) \
    X(float, ModVelDissipRate, 0.5f) \
    X(float, ModVelDissipLevel, 0.0f) \
    X(float, ModDyeDissipRate, 0.5f) \
-   X(float, ModDyeDissipLevel, 0.0f)
+   X(float, ModDyeDissipLevel, 0.0f) \
+   X(float, ColorContrast, 0.8f) \
+   X(float, BlackPoint, 0.0897f) \
+   X(float, FlowSat, 0.5583f) \
+   X(float, FlowBright, 0.18f) \
+   X(float, GlowStrength, 0.24f) \
+   X(float, HighlightSat, 0.22f)
