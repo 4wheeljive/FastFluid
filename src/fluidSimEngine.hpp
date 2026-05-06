@@ -300,6 +300,16 @@ namespace fluidSim {
 
         syncFromCVars();
 
+        // ─── Modulator pipeline (Phase 4.5 consolidation) ──────────
+        // 1. Each component writes its slot ratios. 2. Single
+        // calculate_modulators pass. 3. Components run, reading move[*].
+        // Avoids the previous shared-slot fragility (flow + emitter
+        // both writing slots 0+1, working only by capture-before-overwrite).
+        fluidPrepareModulators();
+        emitterPrepareModulators();
+        paddlesPrepareModulators();
+        calculate_modulators(timings, TOTAL_ACTIVE_SLOTS);
+
         // Pipeline: obstacle → prepare → emit → advect → render → overlay
         updateObstacle(t);
         fluidPrepare();

@@ -35,8 +35,8 @@ namespace fluidSim {
         float gravityAngle        = 180.0f;   // direction in degrees (default = down)
         uint8_t solverIterations  = 5;        // Jacobi passes per lin_solve
 
-        ModConfig modVelDissip = {0, 0.5f, 0.0f};   // modTimer, modRate, modLevel
-        ModConfig modDyeDissip = {1, 0.5f, 0.0f};
+        ModConfig modVelDissip = {FLOW_SLOT_BASE + 0, 0.5f, 0.0f};   // modTimer, modRate, modLevel
+        ModConfig modDyeDissip = {FLOW_SLOT_BASE + 1, 0.5f, 0.0f};
     };
 
     FluidParams fluid;
@@ -239,22 +239,26 @@ namespace fluidSim {
     // ───────────────────────────────────────────────────────────────
     //  Pipeline entry points
     // ───────────────────────────────────────────────────────────────
+    // Phase 1 of frame: write this component's timer slot ratios.
+    // Engine collects all components' ratios, then runs ONE central
+    // calculate_modulators call before any component reads `move[*]`.
+    static void fluidPrepareModulators() {
+        timings.ratio[fluid.modVelDissip.modTimer] = 0.0004f  * fluid.modVelDissip.modRate;
+        timings.ratio[fluid.modDyeDissip.modTimer] = 0.00045f * fluid.modDyeDissip.modRate;
+    }
+
+    // Phase 3 of frame: read modulator output and compute work values.
+    // Called AFTER calculate_modulators has run.
     static void fluidPrepare() {
         const ModConfig& velMod = fluid.modVelDissip;
         const ModConfig& dyeMod = fluid.modDyeDissip;
 
-        // 1) Plumbing
-        timings.ratio[velMod.modTimer] = 0.0004f  * velMod.modRate;
-        timings.ratio[dyeMod.modTimer] = 0.00045f * dyeMod.modRate;
-        
-        calculate_modulators(timings, 2);
-
-        // 2) Signal acquisition: bipolar [-1, 1]
+        // Signal acquisition: bipolar [-1, 1]
         const float velSignal = move.directional_noise[velMod.modTimer];
         const float dySignal  = move.directional_noise[dyeMod.modTimer];
 
-        // 3) Artistic application: orbitalDots-style bipolar modulation,
-        //    clamped to [0.01, 1.0] to keep dissipation values stable.
+        // Artistic application: orbitalDots-style bipolar modulation,
+        // clamped to [0.01, 1.0] to keep dissipation values stable.
         workVelDissip = fluid.velocityDissipation *
             ((1.0f - velMod.modLevel) + velMod.modLevel * velSignal);
         workVelDissip = fmaxf(0.01f, fminf(1.0f, workVelDissip));

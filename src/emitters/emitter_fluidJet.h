@@ -27,8 +27,8 @@ namespace fluidSim {
         float jetAngle     = 0.0f;       // base direction (radians; 0 = straight up)
         float jetHueSpeed  = 0.7f;      // hue rotation rate (Hz)
 
-        ModConfig modJetForce = {0, 0.3f, 0.1f};   // modTimer, modRate, modLevel
-        ModConfig modAngle    = {1, 0.3f, 2.0f};   // modLevel: 0 = no movement, 2 = full ±90°
+        ModConfig modJetForce = {EMITTER_SLOT_BASE + 0, 0.3f, 0.1f};   // modTimer, modRate, modLevel
+        ModConfig modAngle    = {EMITTER_SLOT_BASE + 1, 0.3f, 2.0f};   // modLevel: 0 = no movement, 2 = full ±90°
     };
 
     FluidJetParams fluidJet;
@@ -86,14 +86,15 @@ namespace fluidSim {
         }
     }
 
+    // Phase 1 of frame: write this component's timer slot ratios.
+    static void emitterPrepareModulators() {
+        timings.ratio[fluidJet.modJetForce.modTimer] = 0.0004f  * fluidJet.modJetForce.modRate;
+        timings.ratio[fluidJet.modAngle.modTimer]    = 0.00045f * fluidJet.modAngle.modRate;
+    }
+
     static void emitFluidJet() {
         const ModConfig& forceMod = fluidJet.modJetForce;
         const ModConfig& angleMod = fluidJet.modAngle;
-
-        // ─── 1) Plumbing: configure timer channels ─────────────────
-        timings.ratio[forceMod.modTimer] = 0.0004f  * forceMod.modRate;
-        timings.ratio[angleMod.modTimer] = 0.00045f * angleMod.modRate;
-        calculate_modulators(timings, 2);
 
         // ─── 2) Signal acquisition ─────────────────────────────────
         //const float forceSignal = move.directional_noise[forceMod.modTimer];

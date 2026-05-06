@@ -42,13 +42,21 @@ namespace fluidSim {
         // Sliding motion: noise-driven horizontal position.
         //   modRate  → how fast the noise evolves (slide pace)
         //   modLevel → amplitude as fraction of travel range (0=center, 1=full)
-        ModConfig modSlide = {4, 0.3f, 0.85f};   // {modTimer, modRate, modLevel}
+        ModConfig modSlide = {OBSTACLE_SLOT_BASE + 0, 0.3f, 0.85f};   // {modTimer, modRate, modLevel}
     };
 
     PaddleParams paddles;
 
     static inline int clampi(int v, int lo, int hi) {
         return (v < lo) ? lo : (v > hi) ? hi : v;
+    }
+
+    // Phase 1 of frame: write this component's timer slot ratios.
+    // Always writes (regardless of paddles.enable) so the slot is in a
+    // known state — cost is one slot's noise calc that nobody reads when
+    // disabled. Trivial.
+    static void paddlesPrepareModulators() {
+        timings.ratio[paddles.modSlide.modTimer] = 0.0004f * paddles.modSlide.modRate;
     }
 
     // Generate paddle geometry into the generic obstacle state arrays.
@@ -78,9 +86,9 @@ namespace fluidSim {
 
         // ─── Modulator-driven slide ────────────────────────────────
         // Perlin-noise drives a smooth, organic horizontal position.
+        // Ratio was written by paddlesPrepareModulators(); calculate_modulators
+        // already ran at the engine level — we just read the output here.
         const ModConfig& slideMod = paddles.modSlide;
-        timings.ratio[slideMod.modTimer] = 0.0004f * slideMod.modRate;
-        calculate_modulators(timings, slideMod.modTimer + 1);
         const float slideSignal = move.directional_noise[slideMod.modTimer];   // [-1, +1]
 
         // ─── Geometry (float-precision throughout) ─────────────────

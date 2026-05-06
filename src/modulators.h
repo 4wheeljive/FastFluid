@@ -19,6 +19,30 @@ namespace fluidSim {
         float ratio[num_timers];   // ratio determines time-sensitivity
     };
 
+    // ─── Modulator slot allocation ─────────────────────────────────────
+    // Each component category has a reserved slot region; variants within
+    // a category use slots relative to the region base. Only one variant
+    // per category is active at a time, so variants needing fewer slots
+    // than their region holds leave the trailing slots unused (harmless).
+    //
+    // To add slots to a category: bump that _COUNT.
+    // To add a new category: add another base+count pair and update
+    // TOTAL_ACTIVE_SLOTS.
+    //
+    // Components reference slots as `<CATEGORY>_SLOT_BASE + N` — never
+    // bare integers — so reordering categories is a one-line change.
+
+    static constexpr uint8_t FLOW_SLOT_BASE      = 0;
+    static constexpr uint8_t FLOW_SLOT_COUNT     = 4;
+    static constexpr uint8_t EMITTER_SLOT_BASE   = FLOW_SLOT_BASE + FLOW_SLOT_COUNT;
+    static constexpr uint8_t EMITTER_SLOT_COUNT  = 4;
+    static constexpr uint8_t OBSTACLE_SLOT_BASE  = EMITTER_SLOT_BASE + EMITTER_SLOT_COUNT;
+    static constexpr uint8_t OBSTACLE_SLOT_COUNT = 4;
+
+    static constexpr uint8_t TOTAL_ACTIVE_SLOTS  = OBSTACLE_SLOT_BASE + OBSTACLE_SLOT_COUNT;
+    static_assert(TOTAL_ACTIVE_SLOTS <= num_timers,
+                  "Active slot count exceeds num_timers");
+
     struct modulators {
         // Base progression
         float linear[num_timers];
