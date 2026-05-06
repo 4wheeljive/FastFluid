@@ -516,6 +516,8 @@ void processCheckbox(String receivedID, bool receivedValue ) {
 
    if (receivedID == "cx11") {mappingOverride = receivedValue;};
    if (receivedID == "cx32") {cUseRainbow = receivedValue;};
+   if (receivedID == "cx40") {cPaddleEnable = receivedValue;};
+   if (receivedID == "cx41") {cPaddleOverlay = receivedValue;};
 
 }
 

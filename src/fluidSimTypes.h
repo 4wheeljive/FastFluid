@@ -416,7 +416,7 @@ namespace fluidSim {
     // ═══════════════════════════════════════════════════════════════════
 
     struct ModConfig {
-        // Hardcoded by developer — architectural choices, set on the instance in the emitter file
+        // Hardcoded by developer — architectural choices, set on the instance in the emitter/flow/obstacle file
         uint8_t modTimer = 0;          // which timer index to read from (0 to num_timers)
 
         // UI-tunable via cVars — struct values are defaults, overwritten by syncFromCVars()

@@ -3,6 +3,8 @@
 #include "parameterSchema.h"
 #include "fluidSimTypes.h"
 #include "flows/flow_fluid.h"
+#include "obstacles.h"
+#include "obstacles/obstacle_paddles.h"
 #include "emitters/emitter_fluidJet.h"
 #include "modulators.h"
 
@@ -139,7 +141,7 @@ namespace fluidSim {
                 leds[idx].b = f2u8d(b * 255.0f, xc, y);
             }
         }
-    }
+    } // renderFluidToLeds()
 
     FL_OPTIMIZATION_LEVEL_O3_END
     FL_FAST_MATH_END
@@ -174,6 +176,7 @@ namespace fluidSim {
     static void pushFlowDefaultsToCVars() {
         fluid = FluidParams{};
         render = RenderParams{};
+        paddles = PaddleParams{};
         cViscosity = fluid.viscosity;
         cDiffusion = fluid.diffusion;
         cVelocityDissipation = fluid.velocityDissipation;
@@ -192,6 +195,15 @@ namespace fluidSim {
         cFlowBright    = render.flowBright;
         cGlowStrength  = render.glowStrength;
         cHighlightSat  = render.highlightSat;
+        cPaddleEnable     = paddles.enable;
+        cPaddleOverlay    = paddles.overlay;
+        cPaddleWidth      = paddles.width;
+        cPaddleSlideRate  = paddles.modSlide.modRate;
+        cPaddleSlideLevel = paddles.modSlide.modLevel;
+        cPaddleSoftEdge   = paddles.softEdge;
+        cPaddleR          = paddles.colorR;
+        cPaddleG          = paddles.colorG;
+        cPaddleB          = paddles.colorB;
     }
 
     static void syncFlowFromCVars() {
@@ -213,6 +225,15 @@ namespace fluidSim {
         render.flowBright    = cFlowBright;
         render.glowStrength  = cGlowStrength;
         render.highlightSat  = cHighlightSat;
+        paddles.enable            = cPaddleEnable;
+        paddles.overlay           = cPaddleOverlay;
+        paddles.width             = cPaddleWidth;
+        paddles.modSlide.modRate  = cPaddleSlideRate;
+        paddles.modSlide.modLevel = cPaddleSlideLevel;
+        paddles.softEdge          = cPaddleSoftEdge;
+        paddles.colorR            = cPaddleR;
+        paddles.colorG            = cPaddleG;
+        paddles.colorB            = cPaddleB;
     }
 
     static void pushDefaultsToCVars() {
@@ -279,11 +300,19 @@ namespace fluidSim {
 
         syncFromCVars();
 
-        // Pipeline: prepare → emit → advect → render
+        // Pipeline: obstacle → prepare → emit → advect → render → overlay
+        updateObstacle(t);
         fluidPrepare();
         emitFluidJet();
         fluidAdvect();
         renderFluidToLeds();
-    }
+
+        // Obstacle overlay: write color over the rendered dye at solid
+        // cells. Generic — reads obstacleCommon (mirrored from the active
+        // obstacle generator each frame). Solver-enforce and overlay are
+        // independently toggleable so the user can verify dye actually
+        // deflects (overlay off, BC on) vs. is just hidden.
+        applyObstacleOverlay();
+    } // runFluidSim() 
 
 } // namespace fluidSim

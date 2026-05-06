@@ -298,6 +298,16 @@
                     data-my-number="32"
                     unchecked>
                 </control-checkbox>
+                <control-checkbox
+                    label="Paddle Enable"
+                    data-my-number="40"
+                    checked>
+                </control-checkbox>
+                <control-checkbox
+                    label="Paddle Overlay"
+                    data-my-number="41"
+                    checked>
+                </control-checkbox>
                 <control-button
                     label="Trigger (not enabled)"
                     data-my-number="160"
@@ -647,7 +657,7 @@
             diffusion:           {min: 0, max: 0.01, default: 0.0005, step: 0.0005},
             velocityDissipation: {min: 0.01, max: 1.0, default: 0.75, step: 0.01},
             dyeDissipation:      {min: 0.01, max: 1.0, default: 0.25, step: 0.01},
-            vorticity:           {min: 0, max: 8, default: 7, step: 0.1},
+            vorticity:           {min: 0, max: 30, default: 10, step: 0.1},
             gravityForce:        {min: 0, max: 2.0, default: 1.0, step: 0.05},
             gravityAngle:        {min: 0, max: 360, default: 180, step: 1},
             solverIterations:    {min: 2, max: 20, default: 5, step: 1},
@@ -663,6 +673,15 @@
             flowBright:          {min: 0.0, max: 1.0, default: 0.18, step: 0.01},
             glowStrength:        {min: 0.0, max: 2.0, default: 0.24, step: 0.01},
             highlightSat:        {min: 0.0, max: 2.0, default: 0.22, step: 0.01},
+
+            // FLOW: fluid (paddles obstacle)
+            paddleWidth:         {min: 1, max: 64, default: 10, step: 1},
+            paddleSlideRate:     {min: 0, max: 3.0, default: 0.3, step: 0.05},
+            paddleSlideLevel:    {min: 0, max: 1.0, default: 0.85, step: 0.05},
+            paddleSoftEdge:      {min: 0, max: 0.5, default: 0.22, step: 0.01},
+            paddleR:             {min: 0, max: 255, default: 220, step: 1},
+            paddleG:             {min: 0, max: 255, default: 220, step: 1},
+            paddleB:             {min: 0, max: 255, default: 240, step: 1},
         };
 
         // Parameter lists per component
@@ -680,7 +699,9 @@
                             "modVelDissipRate", "modVelDissipLevel",
                             "modDyeDissipRate", "modDyeDissipLevel",
                             "colorContrast", "blackPoint", "flowSat", "flowBright",
-                            "glowStrength", "highlightSat"]
+                            "glowStrength", "highlightSat",
+                            "paddleWidth", "paddleSlideRate", "paddleSlideLevel",
+                            "paddleSoftEdge", "paddleR", "paddleG", "paddleB"]
         };
 
 

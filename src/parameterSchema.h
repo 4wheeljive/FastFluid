@@ -72,7 +72,9 @@ const char* const FLUID_PARAMS[] PROGMEM = {
    "modVelDissipRate", "modVelDissipLevel",
    "modDyeDissipRate", "modDyeDissipLevel",
    "colorContrast", "blackPoint", "flowSat", "flowBright",
-   "glowStrength", "highlightSat"
+   "glowStrength", "highlightSat",
+   "paddleWidth", "paddleSlideRate", "paddleSlideLevel", "paddleSoftEdge",
+   "paddleR", "paddleG", "paddleB"
 };
 
 struct FlowParamEntry {
@@ -82,7 +84,7 @@ struct FlowParamEntry {
 };
 
 const FlowParamEntry FLOW_PARAM_LOOKUP[] PROGMEM = {
-   {"fluid", FLUID_PARAMS, 18}
+   {"fluid", FLUID_PARAMS, 25}
 };
 
 static const FlowParamEntry* getFlowParams(uint8_t flowIdx) {
@@ -144,6 +146,19 @@ float cFlowBright = 0.18f;
 float cGlowStrength = 0.24f;
 float cHighlightSat = 0.22f;
 
+// Paddles obstacle (sliders; checkboxes below)
+float cPaddleWidth      = 10.0f;
+float cPaddleSlideRate  = 0.3f;     // modulator rate — how fast the noise evolves
+float cPaddleSlideLevel = 0.85f;    // amplitude of slide as fraction of travel range
+float cPaddleSoftEdge   = 0.22f;
+float cPaddleR          = 220.0f;
+float cPaddleG          = 220.0f;
+float cPaddleB          = 240.0f;
+
+// Paddles checkboxes (handled in processCheckbox via cx40/cx41)
+bool  cPaddleEnable  = true;
+bool  cPaddleOverlay = true;
+
 // ═══════════════════════════════════════════════════════════════════
 //  X-MACRO PARAMETER TABLE
 // ═══════════════════════════════════════════════════════════════════
@@ -181,4 +196,11 @@ float cHighlightSat = 0.22f;
    X(float, FlowSat, 0.5583f) \
    X(float, FlowBright, 0.18f) \
    X(float, GlowStrength, 0.24f) \
-   X(float, HighlightSat, 0.22f)
+   X(float, HighlightSat, 0.22f) \
+   X(float, PaddleWidth, 10.0f) \
+   X(float, PaddleSlideRate, 0.3f) \
+   X(float, PaddleSlideLevel, 0.85f) \
+   X(float, PaddleSoftEdge, 0.22f) \
+   X(float, PaddleR, 220.0f) \
+   X(float, PaddleG, 220.0f) \
+   X(float, PaddleB, 240.0f)

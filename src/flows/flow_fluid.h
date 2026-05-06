@@ -54,6 +54,13 @@ namespace fluidSim {
     // Stam's algorithm assumes a square grid; we pick a single representative size.
     static constexpr float SIM_SIZE = (float)MIN_DIMENSION;
 
+    // Forward declarations of obstacle hooks (defined in obstacles/obstacle.h,
+    // which is included after this header in fluidSimEngine.hpp). The functions
+    // are no-ops when the obstacle module is disabled.
+    extern bool obstacleHas;
+    static void applyObstacleVelocity();
+    static void applyObstacleField(float (*grid)[WIDTH]);
+
     // ───────────────────────────────────────────────────────────────
     //  Boundary conditions
     //    b == 0: scalar (dye, pressure) — no enforcement (relies on clamp in samplers)
@@ -239,6 +246,7 @@ namespace fluidSim {
         // 1) Plumbing
         timings.ratio[velMod.modTimer] = 0.0004f  * velMod.modRate;
         timings.ratio[dyeMod.modTimer] = 0.00045f * dyeMod.modRate;
+        
         calculate_modulators(timings, 2);
 
         // 2) Signal acquisition: bipolar [-1, 1]
@@ -266,8 +274,8 @@ namespace fluidSim {
         if (fluid.gravityForce != 0.0f) {
             const float angleRad = fluid.gravityAngle * (CT_PI / 180.0f);
             SinCosResult sc = sincos_fast(angleRad);
-            gravityU =  sc.sin_val * fluid.gravityForce * 5.0f;
-            gravityV = -sc.cos_val * fluid.gravityForce * 5.0f;
+            gravityU =  sc.sin_val * fluid.gravityForce;
+            gravityV = -sc.cos_val * fluid.gravityForce;
         }
 
         // ─── VELOCITY STEP ─────────────────────────────────────────
@@ -290,16 +298,19 @@ namespace fluidSim {
             setBnd(2, v);
         }
 
+        applyObstacleVelocity();   // hook 1: after diffuse + gravity
         project();
 
         fl::memcpy(uPrev, u, sizeof(u));
         fl::memcpy(vPrev, v, sizeof(v));
         advectField(1, u, uPrev, uPrev, vPrev, dt);
         advectField(2, v, vPrev, uPrev, vPrev, dt);
+        applyObstacleVelocity();   // hook 2: after self-advect
         project();
 
         if (fluid.vorticity > 0.0f) {
             applyVorticityConfinement(dt);
+            applyObstacleVelocity(); // hook 3: after vorticity confinement
             project();
         }
 
@@ -321,6 +332,10 @@ namespace fluidSim {
         advectField(0, gR, tR, u, v, dt);
         advectField(0, gG, tG, u, v, dt);
         advectField(0, gB, tB, u, v, dt);
+        // Dye hard-clear in solid cells — keeps the paddle crisp after advect.
+        applyObstacleField(gR);
+        applyObstacleField(gG);
+        applyObstacleField(gB);
 
         // ─── DISSIPATION ───────────────────────────────────────────
         const float fadeVel = fl::powf(workVelDissip, dt);
@@ -334,6 +349,8 @@ namespace fluidSim {
                 gB[y][xc] *= fadeDye;
             }
         }
+
+        applyObstacleVelocity();   // hook 4: end of step
     }
 
     FL_OPTIMIZATION_LEVEL_O3_END
