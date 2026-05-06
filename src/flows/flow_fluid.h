@@ -30,9 +30,9 @@ namespace fluidSim {
         float dyeDissipation      = 0.25f;     // per-second dye decay (overrides project persistence)
         float vorticity           = 7.0f;     // confinement strength (0 = disabled)
         // Directional gravity: applied as a uniform force inside the velocity step.
-        // Angle convention: 0°=right, 90°=down, 180°=left, 270°=up.
+        // Angle convention matches jetAngle: 0°=up, 90°=right, 180°=down, 270°=left.
         float gravityForce        = 1.0f;     // intensity (0 = disabled)
-        float gravityAngle        = 90.0f;    // direction in degrees
+        float gravityAngle        = 180.0f;   // direction in degrees (default = down)
         uint8_t solverIterations  = 5;        // Jacobi passes per lin_solve
 
         ModConfig modVelDissip = {0, 0.5f, 0.0f};   // modTimer, modRate, modLevel
@@ -258,19 +258,16 @@ namespace fluidSim {
 
     static void fluidAdvect() {
         // Decompose 2D gravity from intensity + angle.
-        // Angle 0°=right (+x), 90°=down (+y in C++ where v is vertical),
-        // 180°=left, 270°=up. Convention matches navier_stokes_3.py.
-        // Note Python↔C++ axis swap: Python u/v ↔ C++ v/u (Python uses
-        // [row,col] axis ordering where row-axis=u; C++ uses fluid convention
-        // where u=horizontal/x, v=vertical/y). The screen-space angle
-        // semantics are preserved.
+        // Angle convention matches jetAngle: 0°=up, 90°=right, 180°=down, 270°=left.
+        //   u (horizontal, +x = right):  sin(angle) * force
+        //   v (vertical,   +y = down ): -cos(angle) * force
         float gravityU = 0.0f;
         float gravityV = 0.0f;
         if (fluid.gravityForce != 0.0f) {
             const float angleRad = fluid.gravityAngle * (CT_PI / 180.0f);
             SinCosResult sc = sincos_fast(angleRad);
-            gravityU = sc.cos_val * fluid.gravityForce * 5.0f;   // horizontal (x): cos
-            gravityV = sc.sin_val * fluid.gravityForce * 5.0f;   // vertical   (y): sin (positive = down)
+            gravityU =  sc.sin_val * fluid.gravityForce * 5.0f;
+            gravityV = -sc.cos_val * fluid.gravityForce * 5.0f;
         }
 
         // ─── VELOCITY STEP ─────────────────────────────────────────

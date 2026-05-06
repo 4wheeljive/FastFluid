@@ -131,7 +131,7 @@ float cVelocityDissipation = 0.5f;
 float cDyeDissipation = 0.5f;
 float cVorticity = 7.0f;
 float cGravityForce = 1.0f;
-float cGravityAngle = 90.0f;
+float cGravityAngle = 180.0f;
 float cSolverIterations = 5.0f;
 float cModVelDissipRate = 0.5f;
 float cModVelDissipLevel = 0.0f;
@@ -170,7 +170,7 @@ float cHighlightSat = 0.22f;
    X(float, DyeDissipation, 0.25f) \
    X(float, Vorticity, 7.0f) \
    X(float, GravityForce, 1.0f) \
-   X(float, GravityAngle, 90.0f) \
+   X(float, GravityAngle, 180.0f) \
    X(float, SolverIterations, 5.0f) \
    X(float, ModVelDissipRate, 0.5f) \
    X(float, ModVelDissipLevel, 0.0f) \
