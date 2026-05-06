@@ -137,8 +137,8 @@ namespace fluidSim {
                 sx = clampf(sx, 0.5f, maxX);
                 sy = clampf(sy, 0.5f, maxY);
 
-                int   ix0 = (int)fl::floorf(sx);
-                int   iy0 = (int)fl::floorf(sy);
+                int   ix0 = (int)sx;
+                int   iy0 = (int)sy;
                 int   ix1 = ix0 + 1;
                 int   iy1 = iy0 + 1;
                 if (ix1 >= WIDTH)  ix1 = WIDTH  - 1;
@@ -153,6 +153,89 @@ namespace fluidSim {
             }
         }
         setBnd(b, d);
+    }
+
+    // Combined advection for fields sharing the same backtrace. This keeps
+    // the generic scalar advectField() available for future one-off fields,
+    // but avoids recomputing coordinates and bilinear weights for velocity
+    // and RGB dye every frame.
+    static void advectVelocityPair(float dt_) {
+        const float dt0 = dt_ * SIM_SIZE;
+        const float maxX = (float)WIDTH  - 1.5f;
+        const float maxY = (float)HEIGHT - 1.5f;
+
+        for (int y = 0; y < HEIGHT; y++) {
+            for (int xc = 0; xc < WIDTH; xc++) {
+                float sx = (float)xc - dt0 * uPrev[y][xc];
+                float sy = (float)y  - dt0 * vPrev[y][xc];
+                sx = clampf(sx, 0.5f, maxX);
+                sy = clampf(sy, 0.5f, maxY);
+
+                int ix0 = (int)sx;
+                int iy0 = (int)sy;
+                int ix1 = ix0 + 1;
+                int iy1 = iy0 + 1;
+                if (ix1 >= WIDTH)  ix1 = WIDTH  - 1;
+                if (iy1 >= HEIGHT) iy1 = HEIGHT - 1;
+
+                const float fx = sx - ix0;
+                const float fy = sy - iy0;
+                const float wx0 = 1.0f - fx;
+                const float wy0 = 1.0f - fy;
+                const float w00 = wx0 * wy0;
+                const float w10 = fx  * wy0;
+                const float w01 = wx0 * fy;
+                const float w11 = fx  * fy;
+
+                u[y][xc] = uPrev[iy0][ix0] * w00 + uPrev[iy0][ix1] * w10 +
+                           uPrev[iy1][ix0] * w01 + uPrev[iy1][ix1] * w11;
+                v[y][xc] = vPrev[iy0][ix0] * w00 + vPrev[iy0][ix1] * w10 +
+                           vPrev[iy1][ix0] * w01 + vPrev[iy1][ix1] * w11;
+            }
+        }
+        setBnd(1, u);
+        setBnd(2, v);
+    }
+
+    static void advectDyeRGB(float dt_) {
+        const float dt0 = dt_ * SIM_SIZE;
+        const float maxX = (float)WIDTH  - 1.5f;
+        const float maxY = (float)HEIGHT - 1.5f;
+
+        for (int y = 0; y < HEIGHT; y++) {
+            for (int xc = 0; xc < WIDTH; xc++) {
+                float sx = (float)xc - dt0 * u[y][xc];
+                float sy = (float)y  - dt0 * v[y][xc];
+                sx = clampf(sx, 0.5f, maxX);
+                sy = clampf(sy, 0.5f, maxY);
+
+                int ix0 = (int)sx;
+                int iy0 = (int)sy;
+                int ix1 = ix0 + 1;
+                int iy1 = iy0 + 1;
+                if (ix1 >= WIDTH)  ix1 = WIDTH  - 1;
+                if (iy1 >= HEIGHT) iy1 = HEIGHT - 1;
+
+                const float fx = sx - ix0;
+                const float fy = sy - iy0;
+                const float wx0 = 1.0f - fx;
+                const float wy0 = 1.0f - fy;
+                const float w00 = wx0 * wy0;
+                const float w10 = fx  * wy0;
+                const float w01 = wx0 * fy;
+                const float w11 = fx  * fy;
+
+                gR[y][xc] = tR[iy0][ix0] * w00 + tR[iy0][ix1] * w10 +
+                            tR[iy1][ix0] * w01 + tR[iy1][ix1] * w11;
+                gG[y][xc] = tG[iy0][ix0] * w00 + tG[iy0][ix1] * w10 +
+                            tG[iy1][ix0] * w01 + tG[iy1][ix1] * w11;
+                gB[y][xc] = tB[iy0][ix0] * w00 + tB[iy0][ix1] * w10 +
+                            tB[iy1][ix0] * w01 + tB[iy1][ix1] * w11;
+            }
+        }
+        setBnd(0, gR);
+        setBnd(0, gG);
+        setBnd(0, gB);
     }
 
     // Hodge projection: subtract pressure gradient to make velocity divergence-free
@@ -283,10 +366,16 @@ namespace fluidSim {
         }
 
         // ─── VELOCITY STEP ─────────────────────────────────────────
-        fl::memcpy(uPrev, u, sizeof(u));
-        fl::memcpy(vPrev, v, sizeof(v));
-        diffuse(1, u, uPrev, fluid.viscosity, dt);
-        diffuse(2, v, vPrev, fluid.viscosity, dt);
+        const float viscosityA = dt * fluid.viscosity * SIM_SIZE * SIM_SIZE;
+        if (viscosityA <= FAST_DIFFUSION_THRESHOLD) {
+            setBnd(1, u);
+            setBnd(2, v);
+        } else {
+            fl::memcpy(uPrev, u, sizeof(u));
+            fl::memcpy(vPrev, v, sizeof(v));
+            diffuse(1, u, uPrev, fluid.viscosity, dt);
+            diffuse(2, v, vPrev, fluid.viscosity, dt);
+        }
 
         // Gravity applied between diffuse and project (matches ns_3 step()).
         if (gravityU != 0.0f || gravityV != 0.0f) {
@@ -307,8 +396,7 @@ namespace fluidSim {
 
         fl::memcpy(uPrev, u, sizeof(u));
         fl::memcpy(vPrev, v, sizeof(v));
-        advectField(1, u, uPrev, uPrev, vPrev, dt);
-        advectField(2, v, vPrev, uPrev, vPrev, dt);
+        advectVelocityPair(dt);
         applyObstacleVelocity();   // hook 2: after self-advect
         project();
 
@@ -333,9 +421,7 @@ namespace fluidSim {
         fl::memcpy(tR, gR, sizeof(gR));
         fl::memcpy(tG, gG, sizeof(gG));
         fl::memcpy(tB, gB, sizeof(gB));
-        advectField(0, gR, tR, u, v, dt);
-        advectField(0, gG, tG, u, v, dt);
-        advectField(0, gB, tB, u, v, dt);
+        advectDyeRGB(dt);
         // Dye hard-clear in solid cells — keeps the paddle crisp after advect.
         applyObstacleField(gR);
         applyObstacleField(gG);

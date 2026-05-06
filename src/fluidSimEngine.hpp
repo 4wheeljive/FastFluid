@@ -44,6 +44,7 @@ namespace fluidSim {
     static void renderFluidToLeds() {
         const float invBlack = 1.0f / fmaxf(1e-3f, 1.0f - render.blackPoint);
         const float gamma    = 1.0f / fmaxf(0.2f, render.colorContrast);
+        const bool applyGamma = fl::fabsf(gamma - 1.0f) > 1e-6f;
 
         // ─── Stage 1+2+3: base RGB → flow sat/bright → highlight sat ───
         for (int y = 0; y < HEIGHT; y++) {
@@ -90,33 +91,35 @@ namespace fluidSim {
         // ─── Stage 4: per-channel glow (5-tap blur of values > 0.55) ───
         // Process each channel using pressure as glow_init, divergence as blurred.
         const float gs = render.glowStrength;
-        float (*channels[3])[WIDTH] = { tR, tG, tB };
-        for (int ch = 0; ch < 3; ch++) {
-            float (*chan)[WIDTH] = channels[ch];
+        if (gs > 0.0f) {
+            float (*channels[3])[WIDTH] = { tR, tG, tB };
+            for (int ch = 0; ch < 3; ch++) {
+                float (*chan)[WIDTH] = channels[ch];
 
-            // glow_init = max(chan - 0.55, 0)
-            for (int y = 0; y < HEIGHT; y++) {
-                for (int xc = 0; xc < WIDTH; xc++) {
-                    float v_ = chan[y][xc] - 0.55f;
-                    pressure[y][xc] = (v_ < 0.0f) ? 0.0f : v_;
+                // glow_init = max(chan - 0.55, 0)
+                for (int y = 0; y < HEIGHT; y++) {
+                    for (int xc = 0; xc < WIDTH; xc++) {
+                        float v_ = chan[y][xc] - 0.55f;
+                        pressure[y][xc] = (v_ < 0.0f) ? 0.0f : v_;
+                    }
                 }
-            }
-            // 5-tap blur (0.42 center, 0.145 cardinal neighbors). Edge cells
-            // sample the center for the missing neighbor (clamp-to-edge).
-            for (int y = 0; y < HEIGHT; y++) {
-                for (int xc = 0; xc < WIDTH; xc++) {
-                    float c  = pressure[y][xc];
-                    float n  = (y > 0)          ? pressure[y - 1][xc] : c;
-                    float s  = (y < HEIGHT - 1) ? pressure[y + 1][xc] : c;
-                    float w_ = (xc > 0)         ? pressure[y][xc - 1] : c;
-                    float e  = (xc < WIDTH - 1) ? pressure[y][xc + 1] : c;
-                    divergence[y][xc] = c * 0.42f + (n + s + w_ + e) * 0.145f;
+                // 5-tap blur (0.42 center, 0.145 cardinal neighbors). Edge cells
+                // sample the center for the missing neighbor (clamp-to-edge).
+                for (int y = 0; y < HEIGHT; y++) {
+                    for (int xc = 0; xc < WIDTH; xc++) {
+                        float c  = pressure[y][xc];
+                        float n  = (y > 0)          ? pressure[y - 1][xc] : c;
+                        float s  = (y < HEIGHT - 1) ? pressure[y + 1][xc] : c;
+                        float w_ = (xc > 0)         ? pressure[y][xc - 1] : c;
+                        float e  = (xc < WIDTH - 1) ? pressure[y][xc + 1] : c;
+                        divergence[y][xc] = c * 0.42f + (n + s + w_ + e) * 0.145f;
+                    }
                 }
-            }
-            // Add blurred glow * strength back to channel
-            for (int y = 0; y < HEIGHT; y++) {
-                for (int xc = 0; xc < WIDTH; xc++) {
-                    chan[y][xc] += divergence[y][xc] * gs;
+                // Add blurred glow * strength back to channel
+                for (int y = 0; y < HEIGHT; y++) {
+                    for (int xc = 0; xc < WIDTH; xc++) {
+                        chan[y][xc] += divergence[y][xc] * gs;
+                    }
                 }
             }
         }
@@ -131,10 +134,12 @@ namespace fluidSim {
                 float g = clampf((tG[y][xc] - render.blackPoint) * invBlack, 0.0f, 1.0f);
                 float b = clampf((tB[y][xc] - render.blackPoint) * invBlack, 0.0f, 1.0f);
 
-                // Gamma curve via fastpow (~5% error, base in [0,1] which is satisfied here).
-                r = fastpow(r, gamma);
-                g = fastpow(g, gamma);
-                b = fastpow(b, gamma);
+                if (applyGamma) {
+                    // Gamma curve via fastpow (~5% error, base in [0,1] which is satisfied here).
+                    r = fastpow(r, gamma);
+                    g = fastpow(g, gamma);
+                    b = fastpow(b, gamma);
+                }
 
                 leds[idx].r = f2u8d(r * 255.0f, xc, y);
                 leds[idx].g = f2u8d(g * 255.0f, xc, y);
@@ -313,16 +318,26 @@ namespace fluidSim {
         // Pipeline: obstacle → prepare → emit → advect → render → overlay
         updateObstacle(t);
         fluidPrepare();
+        PROFILE_START("emitFluidJet");
         emitFluidJet();
+        PROFILE_END();
+
+        PROFILE_START("fluidAdvect");
         fluidAdvect();
+        PROFILE_END();
+
+        PROFILE_START("renderFluidToLeds");
         renderFluidToLeds();
+        PROFILE_END();
 
         // Obstacle overlay: write color over the rendered dye at solid
         // cells. Generic — reads obstacleCommon (mirrored from the active
         // obstacle generator each frame). Solver-enforce and overlay are
         // independently toggleable so the user can verify dye actually
         // deflects (overlay off, BC on) vs. is just hidden.
+        PROFILE_START("applyObstacleOverlay");
         applyObstacleOverlay();
+        PROFILE_END();
     } // runFluidSim() 
 
 } // namespace fluidSim
