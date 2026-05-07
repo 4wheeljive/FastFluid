@@ -115,6 +115,7 @@ namespace fluidSim {
         return v.f;
     }
 
+    /*
     // ═══════════════════════════════════════════════════════════════════
     //  NOISE GENERATORS
     // ═══════════════════════════════════════════════════════════════════
@@ -265,6 +266,8 @@ namespace fluidSim {
 
     static float xProf[WIDTH];    // one noise value per column
     static float yProf[HEIGHT];   // one noise value per row
+
+    */
 
     // ═══════════════════════════════════════════════════════════════════
     //  COLOR MANAGEMENT
@@ -474,8 +477,5 @@ namespace fluidSim {
     float colorShift  = 0.20f;
     Emitter activeEmitter = EMITTER_FLUIDJET;
     Flow    activeFlow    = FLOW_FLUID;
-
-    FL_OPTIMIZATION_LEVEL_O3_END
-    FL_FAST_MATH_END
 
 } // namespace fluidSim

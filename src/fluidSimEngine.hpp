@@ -6,6 +6,7 @@
 #include "obstacles.h"
 #include "obstacles/obstacle_paddles.h"
 #include "emitters/emitter_fluidJet.h"
+#include "noise.h"
 #include "modulators.h"
 
 namespace fluidSim {
