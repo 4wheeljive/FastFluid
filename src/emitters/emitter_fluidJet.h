@@ -20,11 +20,14 @@ namespace fluidSim {
     FL_OPTIMIZATION_LEVEL_O3_BEGIN
 
     struct FluidJetParams {
+        // Density and force are grid-independent (forces, not sizes).
         float jetDensity   = 50.0f;     // dye magnitude (per layer-weighted)
-        float jetForce     = 0.25f;      // velocity magnitude
-        float jetRadius    = 2.0f;       // gaussian splat radius (cells)
-        float jetSpread    = 1.0f;       // side-injection lateral velocity
-        float jetAngle     = 0.0f;       // base direction (radians; 0 = straight up)
+        float jetForce     = 0.25f;     // velocity magnitude
+        // Radius and spread scale with grid so plume looks proportional
+        // across boards (22→1.8, 32→2.7, 48→4.0, 64→5.3 cells radius).
+        float jetRadius    = (float)MIN_DIMENSION / 12.0f;
+        float jetSpread    = (float)MIN_DIMENSION / 22.0f;
+        float jetAngle     = 0.0f;      // base direction (radians; 0 = straight up)
         float jetHueSpeed  = 0.7f;      // hue rotation rate (Hz)
 
         ModConfig modJetForce = {EMITTER_SLOT_BASE + 0, 0.3f, 0.1f};   // modTimer, modRate, modLevel
@@ -132,18 +135,23 @@ namespace fluidSim {
         const float jy = (float)HEIGHT - 3.0f;
 
         // ─── 4) 3-layered Gaussian splat ──────────────────────────
-        // Each layer is shifted along the jet axis to extend the plume.
+        // Each layer is shifted along the jet axis. Offsets scale with
+        // jetRadius so plume structure stays proportional to its core
+        // size across grid sizes (was fixed 1.2/2.2 cells, calibrated
+        // for a small grid).
         const float r = fluidJet.jetRadius;
+        const float layerMid  = r * 0.6f;   // ns_3 had 1.2 at r≈2 → 0.6 * r
+        const float layerOut  = r * 1.1f;   // ns_3 had 2.2 at r≈2 → 1.1 * r
         // Core layer: 55% density, 100% velocity
         fluidJetSplat(jx, jy, r,
                       density * 0.55f,
                       velX,         velY);
-        // Middle layer: 30% density, 82% velocity, shifted 1 cell along jet
-        fluidJetSplat(jx + dirX * 1.2f, jy + dirY * 1.2f, r,
+        // Middle layer: 30% density, 82% velocity, shifted along jet
+        fluidJetSplat(jx + dirX * layerMid, jy + dirY * layerMid, r,
                       density * 0.30f,
                       velX * 0.82f, velY * 0.82f);
         // Outer layer: 15% density, 65% velocity, shifted further
-        fluidJetSplat(jx + dirX * 2.2f, jy + dirY * 2.2f, r,
+        fluidJetSplat(jx + dirX * layerOut, jy + dirY * layerOut, r,
                       density * 0.15f,
                       velX * 0.65f, velY * 0.65f);
 
@@ -153,12 +161,14 @@ namespace fluidSim {
             const float perpX = -dirY;
             const float perpY =  dirX;
             const float side = fluidJet.jetSpread;
+            // Side offset also scales with jetRadius (was fixed 1.5).
+            const float sideOff = r * 0.75f;
             // Left side: push left (negative perp)
-            fluidJetSplat(jx - perpX * 1.5f, jy - perpY * 1.5f, r * 0.7f,
+            fluidJetSplat(jx - perpX * sideOff, jy - perpY * sideOff, r * 0.7f,
                           density * 0.15f,
                           -perpX * side * 0.35f, -perpY * side * 0.35f);
             // Right side: push right (positive perp)
-            fluidJetSplat(jx + perpX * 1.5f, jy + perpY * 1.5f, r * 0.7f,
+            fluidJetSplat(jx + perpX * sideOff, jy + perpY * sideOff, r * 0.7f,
                           density * 0.15f,
                            perpX * side * 0.35f,  perpY * side * 0.35f);
         }
