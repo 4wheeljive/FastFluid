@@ -383,7 +383,7 @@ namespace fluidSim {
 
         EVERY_N_MILLISECONDS(40) {
             if (gCurrentPalette != gTargetPalette) {
-                nblendPaletteTowardPalette(gCurrentPalette, gTargetPalette, (uint8_t)maxChanges);
+                nblendPalette32TowardPalette32(gCurrentPalette, gTargetPalette, (uint8_t)maxChanges);
             } else {
                 gCurrentPaletteNumber = gTargetPaletteNumber;
             }

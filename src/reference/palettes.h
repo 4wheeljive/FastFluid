@@ -1,393 +1,280 @@
 #ifndef PALETTES_H
 #define PALETTES_H
 
-DEFINE_GRADIENT_PALETTE( ib_jul01_gp ) {
-    0, 194,  1,  1,
-   94,   1, 29, 18,
-  132,  57,131, 28,
-  255, 113,  1,  1};
+#include <FastLED.h>
 
-DEFINE_GRADIENT_PALETTE( es_vintage_57_gp ) {
-    0,   2,  1,  1,
-   53,  18,  1,  0,
-  104,  69, 29,  1,
-  153, 167,135, 10,
-  255,  46, 56,  4};
-
-DEFINE_GRADIENT_PALETTE( es_vintage_01_gp ) {
-    0,   4,  1,  1,
-   51,  16,  0,  1,
-   76,  97,104,  3,
-  101, 255,131, 19,
-  127,  67,  9,  4,
-  153,  16,  0,  1,
-  229,   4,  1,  1,
-  255,   4,  1,  1};
-
-DEFINE_GRADIENT_PALETTE( es_rivendell_15_gp ) {
-    0,   1, 14,  5,
-  101,  16, 36, 14,
-  165,  56, 68, 30,
-  242, 150,156, 99,
-  255, 150,156, 99};
-
-DEFINE_GRADIENT_PALETTE( rgi_15_gp ) {
-    0,   4,  1, 31,
-   31,  55,  1, 16,
-   63, 197,  3,  7,
-   95,  59,  2, 17,
-  127,   6,  2, 34,
-  159,  39,  6, 33,
-  191, 112, 13, 32,
-  223,  56,  9, 35,
-  255,  22,  6, 38};
-
-DEFINE_GRADIENT_PALETTE( retro2_16_gp ) {
-    0, 188,135,  1,
-  255,  46,  7,  1};
-
-DEFINE_GRADIENT_PALETTE( Analogous_1_gp ) {
-    0,   3,  0,255,
-   63,  23,  0,255,
-  127,  67,  0,255,
-  191, 142,  0, 45,
-  255, 255,  0,  0};
-
-DEFINE_GRADIENT_PALETTE( es_pinksplash_08_gp ) {
-    0, 126, 11,255,
-  127, 197,  1, 22,
-  175, 210,157,172,
-  221, 157,  3,112,
-  255, 157,  3,112};
-
-DEFINE_GRADIENT_PALETTE( es_pinksplash_07_gp ) {
-    0, 229,  1,  1,
-   61, 242,  4, 63,
-  101, 255, 12,255,
-  127, 249, 81,252,
-  153, 255, 11,235,
-  193, 244,  5, 68,
-  255, 232,  1,  5};
-
-DEFINE_GRADIENT_PALETTE( Coral_reef_gp ) {
-    0,  40,199,197,
-   50,  10,152,155,
-   96,   1,111,120,
-   96,  43,127,162,
-  139,  10, 73,111,
-  255,   1, 34, 71};
-
-DEFINE_GRADIENT_PALETTE( es_ocean_breeze_068_gp ) {
-    0, 100,156,153,
-   51,   1, 99,137,
-  101,   1, 68, 84,
-  104,  35,142,168,
-  178,   0, 63,117,
-  255,   1, 10, 10};
-
-DEFINE_GRADIENT_PALETTE( es_ocean_breeze_036_gp ) {
-    0,   1,  6,  7,
-   89,   1, 99,111,
-  153, 144,209,255,
-  255,   0, 73, 82};
-
-DEFINE_GRADIENT_PALETTE( departure_gp ) {
-    0,   8,  3,  0,
-   42,  23,  7,  0,
-   63,  75, 38,  6,
-   84, 169, 99, 38,
-  106, 213,169,119,
-  116, 255,255,255,
-  138, 135,255,138,
-  148,  22,255, 24,
-  170,   0,255,  0,
-  191,   0,136,  0,
-  212,   0, 55,  0,
-  255,   0, 55,  0};
-
-DEFINE_GRADIENT_PALETTE( es_landscape_64_gp ) {
-    0,   0,  0,  0,
-   37,   2, 25,  1,
-   76,  15,115,  5,
-  127,  79,213,  1,
-  128, 126,211, 47,
-  130, 188,209,247,
-  153, 144,182,205,
-  204,  59,117,250,
-  255,   1, 37,192};
-
-DEFINE_GRADIENT_PALETTE( es_landscape_33_gp ) {
-    0,   1,  5,  0,
-   19,  32, 23,  1,
-   38, 161, 55,  1,
-   63, 229,144,  1,
-   66,  39,142, 74,
-  255,   1,  4,  1};
-
-DEFINE_GRADIENT_PALETTE( rainbowsherbet_gp ) {
-    0, 255, 33,  4,
-   43, 255, 68, 25,
-   86, 255,  7, 25,
-  127, 255, 82,103,
-  170, 255,255,242,
-  209,  42,255, 22,
-  255,  87,255, 65};
-
-DEFINE_GRADIENT_PALETTE( gr65_hult_gp ) {
-    0, 247,176,247,
-   48, 255,136,255,
-   89, 220, 29,226,
-  160,   7, 82,178,
-  216,   1,124,109,
-  255,   1,124,109};
-
-DEFINE_GRADIENT_PALETTE( gr64_hult_gp ) {
-    0,   1,124,109,
-   66,   1, 93, 79,
-  104,  52, 65,  1,
-  130, 115,127,  1,
-  150,  52, 65,  1,
-  201,   1, 86, 72,
-  239,   0, 55, 45,
-  255,   0, 55, 45};
-
-DEFINE_GRADIENT_PALETTE( GMT_drywet_gp ) {
-    0,  47, 30,  2,
-   42, 213,147, 24,
-   84, 103,219, 52,
-  127,   3,219,207,
-  170,   1, 48,214,
-  212,   1,  1,111,
-  255,   1,  7, 33};
-
-DEFINE_GRADIENT_PALETTE( ib15_gp ) {
-    0, 113, 91,147,
-   72, 157, 88, 78,
-   89, 208, 85, 33,
-  107, 255, 29, 11,
-  141, 137, 31, 39,
-  255,  59, 33, 89};
-
-DEFINE_GRADIENT_PALETTE( Fuschia_7_gp ) {
-    0,  43,  3,153,
-   63, 100,  4,103,
-  127, 188,  5, 66,
-  191, 161, 11,115,
-  255, 135, 20,182};
-
-DEFINE_GRADIENT_PALETTE( es_emerald_dragon_08_gp ) {
-    0,  97,255,  1,
-  101,  47,133,  1,
-  178,  13, 43,  1,
-  255,   2, 10,  1};
-
-DEFINE_GRADIENT_PALETTE( lava_gp ) {
-    0,   0,  0,  0,
-   46,  18,  0,  0,
-   96, 113,  0,  0,
-  108, 142,  3,  1,
-  119, 175, 17,  1,
-  146, 213, 44,  2,
-  174, 255, 82,  4,
-  188, 255,115,  4,
-  202, 255,156,  4,
-  218, 255,203,  4,
-  234, 255,255,  4,
-  244, 255,255, 71,
-  255, 255,255,255};
-
-DEFINE_GRADIENT_PALETTE( fire_gp ) {
-    0,   1,  1,  0,
-   76,  32,  5,  0,
-  146, 192, 24,  0,
-  197, 220,105,  5,
-  240, 252,255, 31,
-  250, 252,255,111,
-  255, 255,255,255};
-
-DEFINE_GRADIENT_PALETTE( Colorfull_gp ) {
-    0,  10, 85,  5,
-   25,  29,109, 18,
-   60,  59,138, 42,
-   93,  83, 99, 52,
-  106, 110, 66, 64,
-  109, 123, 49, 65,
-  113, 139, 35, 66,
-  116, 192,117, 98,
-  124, 255,255,137,
-  168, 100,180,155,
-  255,  22,121,174};
-
-DEFINE_GRADIENT_PALETTE( Magenta_Evening_gp ) {
-    0,  71, 27, 39,
-   31, 130, 11, 51,
-   63, 213,  2, 64,
-   70, 232,  1, 66,
-   76, 252,  1, 69,
-  108, 123,  2, 51,
-  255,  46,  9, 35};
-
-DEFINE_GRADIENT_PALETTE( Pink_Purple_gp ) {
-    0,  19,  2, 39,
-   25,  26,  4, 45,
-   51,  33,  6, 52,
-   76,  68, 62,125,
-  102, 118,187,240,
-  109, 163,215,247,
-  114, 217,244,255,
-  122, 159,149,221,
-  149, 113, 78,188,
-  183, 128, 57,155,
-  255, 146, 40,123};
-
-DEFINE_GRADIENT_PALETTE( Sunset_Real_gp ) {
-    0, 120,  0,  0,
-   22, 179, 22,  0,
-   51, 255,104,  0,
-   85, 167, 22, 18,
-  135, 100,  0,103,
-  198,  16,  0,130,
-  255,   0,  0,160};
-
-DEFINE_GRADIENT_PALETTE( es_autumn_19_gp ) {
-    0,  26,  1,  1,
-   51,  67,  4,  1,
-   84, 118, 14,  1,
-  104, 137,152, 52,
-  112, 113, 65,  1,
-  122, 133,149, 59,
-  124, 137,152, 52,
-  135, 113, 65,  1,
-  142, 139,154, 46,
-  163, 113, 13,  1,
-  204,  55,  3,  1,
-  249,  17,  1,  1,
-  255,  17,  1,  1};
-
-DEFINE_GRADIENT_PALETTE( BlacK_Blue_Magenta_White_gp ) {
-    0,   0,  0,  0,
-   42,   0,  0, 45,
-   84,   0,  0,255,
-  127,  42,  0,255,
-  170, 255,  0,255,
-  212, 255, 55,255,
-  255, 255,255,255};
-
-DEFINE_GRADIENT_PALETTE( BlacK_Magenta_Red_gp ) {
-    0,   0,  0,  0,
-   63,  42,  0, 45,
-  127, 255,  0,255,
-  191, 255,  0, 45,
-  255, 255,  0,  0};
-
-DEFINE_GRADIENT_PALETTE( BlacK_Red_Magenta_Yellow_gp ) {
-    0,   0,  0,  0,
-   42,  42,  0,  0,
-   84, 255,  0,  0,
-  127, 255,  0, 45,
-  170, 255,  0,255,
-  212, 255, 55, 45,
-  255, 255,255,  0};
-
-DEFINE_GRADIENT_PALETTE( Blue_Cyan_Yellow_gp ) {
-    0,   0,  0,255,
-   63,   0, 55,255,
-  127,   0,255,255,
-  191,  42,255, 45,
-  255, 255,255,  0};
-
-
-const TProgmemRGBGradientPaletteRef gGradientPalettes[] = {
-  Sunset_Real_gp,
-  es_rivendell_15_gp,
-  es_ocean_breeze_036_gp,
-  rgi_15_gp,
-  retro2_16_gp,
-  Analogous_1_gp,
-  es_pinksplash_08_gp,
-  Coral_reef_gp,
-  es_ocean_breeze_068_gp,
-  es_pinksplash_07_gp,
-  es_vintage_01_gp,
-  departure_gp,
-  es_landscape_64_gp,
-  es_landscape_33_gp,
-  rainbowsherbet_gp,
-  gr65_hult_gp,
-  gr64_hult_gp,
-  GMT_drywet_gp,
-  ib_jul01_gp,
-  es_vintage_57_gp,
-  ib15_gp,
-  Fuschia_7_gp,
-  es_emerald_dragon_08_gp,
-  lava_gp,
-  fire_gp,
-  Colorfull_gp,
-  Magenta_Evening_gp,
-  Pink_Purple_gp,
-  es_autumn_19_gp,
-  BlacK_Blue_Magenta_White_gp,
-  BlacK_Magenta_Red_gp,
-  BlacK_Red_Magenta_Yellow_gp,
-  Blue_Cyan_Yellow_gp 
-  };
-
-const char* const gGradientPaletteNames[] PROGMEM = {
-  "Sunset_Real",
-  "es_rivendell_15",
-  "es_ocean_breeze_036",
-  "rgi_15",
-  "retro2_16",
-  "Analogous_1",
-  "es_pinksplash_08",
-  "Coral_reef",
-  "es_ocean_breeze_068",
-  "es_pinksplash_07",
-  "es_vintage_01",
-  "departure",
-  "es_landscape_64",
-  "es_landscape_33",
-  "rainbowsherbet",
-  "gr65_hult",
-  "gr64_hult",
-  "GMT_drywet",
-  "ib_jul01",
-  "es_vintage_57",
-  "ib15",
-  "Fuschia_7",
-  "es_emerald_dragon_08",
-  "lava",
-  "fire",
-  "Colorfull",
-  "Magenta_Evening",
-  "Pink_Purple",
-  "es_autumn_19",
-  "BlacK_Blue_Magenta_White",
-  "BlacK_Magenta_Red",
-  "BlacK_Red_Magenta_Yellow",
-  "Blue_Cyan_Yellow"
+DEFINE_GRADIENT_PALETTE( fluid_teal_ember_gp ) {
+    0,   2,  8, 12,
+   32,   6, 34, 42,
+   72,  16, 72, 68,
+  114,  42, 86, 70,
+  148, 255, 92, 18,
+  162, 255,176, 78,
+  184,  58, 92, 76,
+  224,   8, 38, 54,
+  255,   2,  8, 12
 };
 
-const uint8_t gGradientPaletteCount = 
-  sizeof( gGradientPalettes) / sizeof( TProgmemRGBGradientPaletteRef );
+DEFINE_GRADIENT_PALETTE( kelp_gold_gp ) {
+    0,   1,  8,  5,
+   36,   8, 36, 18,
+   78,  24, 78, 34,
+  120,  82,112, 44,
+  154, 202,168, 48,
+  174, 255,214, 96,
+  198,  86,106, 46,
+  232,  12, 40, 24,
+  255,   1,  8,  5
+};
+
+DEFINE_GRADIENT_PALETTE( arctic_lime_gp ) {
+    0,   2,  6, 18,
+   34,   4, 28, 58,
+   74,   8, 76,104,
+  112,  26,144,150,
+  144,  92,210,164,
+  166, 196,255, 88,
+  184, 238,255,178,
+  218,  32, 88,108,
+  255,   2,  6, 18
+};
+
+DEFINE_GRADIENT_PALETTE( lagoon_coral_gp ) {
+    0,   0, 12, 22,
+   32,   0, 50, 72,
+   72,   0,126,128,
+  112,  42,174,142,
+  138, 255,104, 82,
+  154, 255,178,132,
+  178,  64,132,118,
+  220,   0, 54, 82,
+  255,   0, 12, 22
+};
+
+DEFINE_GRADIENT_PALETTE( violet_cyan_flare_gp ) {
+    0,   8,  3, 22,
+   30,  26,  8, 62,
+   66,  70, 24,116,
+  104,  36,100,152,
+  134,  16,206,220,
+  150, 206,250,255,
+  168,  56,116,170,
+  216,  20, 12, 54,
+  255,   8,  3, 22
+};
+
+DEFINE_GRADIENT_PALETTE( thermal_arc_gp ) {
+    0,   0,  0,  8,
+   28,   6,  0, 32,
+   58,  34,  0, 92,
+   90,   0, 60,178,
+  122,   0,184,232,
+  150,  96,255,120,
+  178, 255,224, 50,
+  208, 255, 90, 14,
+  238, 255,230,170,
+  255,   0,  0,  8
+};
+
+DEFINE_GRADIENT_PALETTE( plasma_smoke_gp ) {
+    0,   4,  2,  8,
+   28,  24, 10, 34,
+   62,  78, 18, 72,
+   96, 150, 28, 92,
+  126,  46, 54,136,
+  152,  20,160,190,
+  174, 255, 74,180,
+  188, 255,210,242,
+  216,  54, 32, 82,
+  255,   4,  2,  8
+};
+
+DEFINE_GRADIENT_PALETTE( molten_glass_gp ) {
+    0,   2,  2,  5,
+   32,  24,  4,  6,
+   66,  94, 18,  8,
+   98, 192, 50, 10,
+  124, 255,128, 34,
+  148, 255,222,116,
+  174,  28,172,198,
+  208,   8, 58,104,
+  255,   2,  2,  5
+};
+
+DEFINE_GRADIENT_PALETTE( emerald_mono_gp ) {
+    0,   0,  4,  2,
+   36,   0, 18,  8,
+   76,   0, 48, 22,
+  116,   8, 94, 48,
+  154,  38,162, 88,
+  188, 104,232,150,
+  220, 210,255,226,
+  255,   0,  4,  2
+};
+
+DEFINE_GRADIENT_PALETTE( amber_mono_gp ) {
+    0,   6,  2,  0,
+   34,  28,  8,  1,
+   76,  78, 26,  3,
+  116, 144, 58,  8,
+  152, 220,114, 22,
+  184, 255,186, 72,
+  220, 255,240,174,
+  255,   6,  2,  0
+};
+
+DEFINE_GRADIENT_PALETTE( blue_ion_mono_gp ) {
+    0,   0,  2, 10,
+   34,   0, 10, 38,
+   76,   0, 28, 92,
+  116,   6, 72,160,
+  152,  24,134,232,
+  184, 104,210,255,
+  220, 220,248,255,
+  255,   0,  2, 10
+};
+
+DEFINE_GRADIENT_PALETTE( rose_duotype_gp ) {
+    0,   8,  2,  8,
+   34,  34,  8, 30,
+   74,  96, 20, 66,
+  112, 174, 48, 98,
+  142, 255,124,116,
+  166, 255,210,164,
+  196,  90, 36, 82,
+  232,  24, 10, 34,
+  255,   8,  2,  8
+};
+
+DEFINE_GRADIENT_PALETTE( olive_peach_bold_gp ) {
+    0,   4,  8,  2,
+   28,  26, 42, 10,
+   64,  76, 94, 22,
+  100, 156,146, 34,
+  128, 234,214, 46,
+  150, 255,128, 36,
+  166, 255,208,132,
+  190,  96,106, 42,
+  224,  20, 38, 12,
+  255,   4,  8,  2
+};
+
+DEFINE_GRADIENT_PALETTE( cyan_magenta_split_gp ) {
+    0,   2,  6, 16,
+   30,   0, 32, 76,
+   68,   0,142,182,
+  104,  32,230,230,
+  134,  94, 82,150,
+  154, 255, 40,154,
+  170, 255,154,216,
+  198,  84, 42,112,
+  232,   8, 14, 34,
+  255,   2,  6, 16
+};
+
+DEFINE_GRADIENT_PALETTE( soft_tetrad_gp ) {
+    0,   4,  6, 14,
+   24,  28, 26, 82,
+   50,  76, 70,154,
+   78,  20, 92,108,
+  106,  30,148, 96,
+  132, 128,146, 42,
+  158, 212,162, 52,
+  184, 174, 68, 78,
+  210, 124, 34, 92,
+  238,  32, 18, 44,
+  255,   4,  6, 14
+};
+
+DEFINE_GRADIENT_PALETTE( prism_tetrad_gp ) {
+    0,   0,  0, 10,
+   22,   0, 54,180,
+   44,  32,194,255,
+   70,  12,160, 48,
+   94, 172,255, 28,
+  120, 255,210, 20,
+  146, 255, 86, 12,
+  172, 255, 38,128,
+  198, 128, 20,255,
+  226,  34, 10, 72,
+  255,   0,  0, 10
+};
+
+DEFINE_GRADIENT_PALETTE( deep_rainbow_ink_gp ) {
+    0,   1,  2,  8,
+   24,  20,  6, 58,
+   52,  70, 12,128,
+   78,   8, 82,168,
+  104,   0,154,144,
+  130,  42,188, 64,
+  156, 216,184, 28,
+  182, 255, 82, 22,
+  208, 220, 34,108,
+  232,  42, 12, 58,
+  255,   1,  2,  8
+};
+
+DEFINE_GRADIENT_PALETTE( aurora_mineral_gp ) {
+    0,   1,  5, 12,
+   28,   8, 28, 44,
+   62,  18, 78, 82,
+   92,  44,138,112,
+  122, 126,196,138,
+  150, 230,218,154,
+  172, 128, 82,132,
+  198,  70, 40,108,
+  228,  12, 26, 54,
+  255,   1,  5, 12
+};
+
+const TProgmemRGBGradientPaletteRef gGradientPalettes[] = {
+    fluid_teal_ember_gp,
+    kelp_gold_gp,
+    arctic_lime_gp,
+    lagoon_coral_gp,
+    violet_cyan_flare_gp,
+    thermal_arc_gp,
+    plasma_smoke_gp,
+    molten_glass_gp,
+    emerald_mono_gp,
+    amber_mono_gp,
+    blue_ion_mono_gp,
+    rose_duotype_gp,
+    olive_peach_bold_gp,
+    cyan_magenta_split_gp,
+    soft_tetrad_gp,
+    prism_tetrad_gp,
+    deep_rainbow_ink_gp,
+    aurora_mineral_gp
+};
+
+const char* const gGradientPaletteNames[] PROGMEM = {
+    "Fluid Teal Ember",
+    "Kelp Gold",
+    "Arctic Lime",
+    "Lagoon Coral",
+    "Violet Cyan Flare",
+    "Thermal Arc",
+    "Plasma Smoke",
+    "Molten Glass",
+    "Emerald Mono",
+    "Amber Mono",
+    "Blue Ion Mono",
+    "Rose Duotype",
+    "Olive Peach Bold",
+    "Cyan Magenta Split",
+    "Soft Tetrad",
+    "Prism Tetrad",
+    "Deep Rainbow Ink",
+    "Aurora Mineral"
+};
+
+const uint8_t gGradientPaletteCount =
+    sizeof(gGradientPalettes) / sizeof(TProgmemRGBGradientPaletteRef);
 const uint8_t gGradientPaletteNameCount =
-  sizeof( gGradientPaletteNames) / sizeof( gGradientPaletteNames[0] );
+    sizeof(gGradientPaletteNames) / sizeof(gGradientPaletteNames[0]);
 
-//fxWave2d
-	DEFINE_GRADIENT_PALETTE(electricBlueFirePal){
-			0,   0,   0,   0,   
-			32,  0,   0,   70,  
-			128, 20,  57,  255, 
-			255, 255, 255, 255 
-	};
+static_assert(gGradientPaletteCount == gGradientPaletteNameCount,
+              "Palette and palette-name counts must match");
 
-	DEFINE_GRADIENT_PALETTE(electricGreenFirePal){
-			0,   0,   0,   0,  
-			8,   128, 64,  64,  
-			16,  225, 200, 200, 
-			100,  250, 250, 250, 
-			255, 255, 255, 255  
-	};
-  
 #endif

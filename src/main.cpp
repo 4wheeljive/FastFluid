@@ -30,8 +30,8 @@ extern const TProgmemRGBGradientPaletteRef gGradientPalettes[];
 extern const uint8_t gGradientPaletteCount;
 uint8_t gCurrentPaletteNumber;
 uint8_t gTargetPaletteNumber;
-fl::CRGBPalette16 gCurrentPalette;
-fl::CRGBPalette16 gTargetPalette;
+fl::CRGBPalette32 gCurrentPalette;
+fl::CRGBPalette32 gTargetPalette;
 
 fl::CRGB leds[NUM_LEDS];
 uint16_t ledNum = 0;

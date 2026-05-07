@@ -360,6 +360,39 @@ namespace fluidSim {
         gTargetPalette = gGradientPalettes[gTargetPaletteNumber];
     }
 
+    inline void nblendPalette32TowardPalette32(
+        fl::CRGBPalette32& current,
+        const fl::CRGBPalette32& target,
+        fl::u8 maxChanges
+    ) {
+        fl::u8* currentBytes = reinterpret_cast<fl::u8*>(current.entries);
+        const fl::u8* targetBytes = reinterpret_cast<const fl::u8*>(target.entries);
+        fl::u8 changes = 0;
+
+        for (uint16_t i = 0; i < sizeof(fl::CRGBPalette32); i++) {
+            if (currentBytes[i] == targetBytes[i]) {
+                continue;
+            }
+
+            if (currentBytes[i] < targetBytes[i]) {
+                currentBytes[i]++;
+                changes++;
+            }
+
+            if (currentBytes[i] > targetBytes[i]) {
+                currentBytes[i]--;
+                changes++;
+                if (currentBytes[i] > targetBytes[i]) {
+                    currentBytes[i]--;
+                }
+            }
+
+            if (changes >= maxChanges) {
+                break;
+            }
+        }
+    }
+
     // ═══════════════════════════════════════════════════════════════════
     //  DRAWING PRIMITIVES
     // ═══════════════════════════════════════════════════════════════════
