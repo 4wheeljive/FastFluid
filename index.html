@@ -683,7 +683,7 @@
         // ******************************************************************************************************
         // EMITTER / FLOW NAMES (parallel to ESP32 enums) *******************************************************
 
-        const EMITTER_NAMES = ["FLUIDJET"];
+        const EMITTER_NAMES = ["FLUIDJET", "THREEJET"];
         const FLOW_NAMES    = ["FLUID"];
 
         // ******************************************************************************************************
@@ -712,6 +712,20 @@
             modAngleLevel:    {min: 0, max: 2.0, default: 2.0, step: 0.1},
             modJetSwingRate:  {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
             modJetSwingLevel: {min: 0, max: 2.0, default: 0.0, step: 0.1},
+
+            // EMITTER: threeJet
+            threeJetDensity:     {min: 0, max: 200, default: 50, step: 1},
+            threeJetForce:       {min: 0, max: 5, default: 0.7, step: 0.05},
+            threeJetRadius:      {min: 1, max: 15, default: 4, step: 0.5},
+            threeJetHueSpeed:    {min: 0, max: 1.5, default: 0.25, step: 0.05},
+            threeJetRingRadius:  {min: 2, max: 32, default: 12, step: 0.5},
+            threeJetColorMode:   {min: 0, max: 2, default: 0, step: 1},
+            modJet0AngleRate:    {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
+            modJet0AngleLevel:   {min: 0, max: 2.0, default: 1.0, step: 0.1},
+            modJet1AngleRate:    {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
+            modJet1AngleLevel:   {min: 0, max: 2.0, default: 1.0, step: 0.1},
+            modJet2AngleRate:    {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
+            modJet2AngleLevel:   {min: 0, max: 2.0, default: 1.0, step: 0.1},
 
 
             // FLOW: fluid
@@ -755,7 +769,12 @@
                             "jetSwingRange",
                             "modJetForceRate", "modJetForceLevel",
                             "modAngleRate", "modAngleLevel",
-                            "modJetSwingRate", "modJetSwingLevel"]
+                            "modJetSwingRate", "modJetSwingLevel"],
+            "threejet":    ["threeJetDensity", "threeJetForce", "threeJetRadius",
+                            "threeJetHueSpeed", "threeJetRingRadius", "threeJetColorMode",
+                            "modJet0AngleRate", "modJet0AngleLevel",
+                            "modJet1AngleRate", "modJet1AngleLevel",
+                            "modJet2AngleRate", "modJet2AngleLevel"]
         };
 
         const FLOW_PARAMS = {

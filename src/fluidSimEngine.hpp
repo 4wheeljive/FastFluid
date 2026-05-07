@@ -5,7 +5,9 @@
 #include "flows/flow_fluid.h"
 #include "obstacles.h"
 #include "obstacles/obstacle_paddles.h"
+#include "emitters.h"
 #include "emitters/emitter_fluidJet.h"
+#include "emitters/emitter_threeJet.h"
 #include "noise.h"
 #include "modulators.h"
 
@@ -153,6 +155,33 @@ namespace fluidSim {
     FL_FAST_MATH_END
 
     // ═══════════════════════════════════════════════════════════════════
+    //  DISPATCH TABLES
+    // ═══════════════════════════════════════════════════════════════════
+    //
+    //  Each emitter exposes a prepare-modulators function (Phase 1 of
+    //  frame: writes timer slot ratios) and an emit function (Phase 3:
+    //  reads modulator output, splats dye/velocity). Indexed by
+    //  Emitter enum from componentEnums.h. Order MUST match the enum.
+    //
+    //  Flow and obstacle dispatch tables can be added the same way
+    //  when additional flows/obstacles arrive.
+
+    const EmitterFn EMITTER_PREPARE_MOD[] = {
+        fluidJetPrepareModulators,    // EMITTER_FLUIDJET = 0
+        threeJetPrepareModulators,    // EMITTER_THREEJET = 1
+    };
+
+    const EmitterFn EMITTER_RUN[] = {
+        emitFluidJet,                 // EMITTER_FLUIDJET = 0
+        emitThreeJet,                 // EMITTER_THREEJET = 1
+    };
+
+    static_assert(sizeof(EMITTER_RUN) / sizeof(EMITTER_RUN[0]) == EMITTER_COUNT,
+                  "EMITTER_RUN size must match EMITTER_COUNT");
+    static_assert(sizeof(EMITTER_PREPARE_MOD) / sizeof(EMITTER_PREPARE_MOD[0]) == EMITTER_COUNT,
+                  "EMITTER_PREPARE_MOD size must match EMITTER_COUNT");
+
+    // ═══════════════════════════════════════════════════════════════════
     //  INIT & MAIN LOOP
     // ═══════════════════════════════════════════════════════════════════
 
@@ -245,34 +274,64 @@ namespace fluidSim {
         paddles.colorB            = cPaddleB;
     }
 
+    // Push the active emitter's struct defaults into its cVars. Called on
+    // emitter change. Mirrors pushFlowDefaultsToCVars in structure.
     static void pushDefaultsToCVars() {
-        // Universal
+        // Universal (always)
         cGlobalSpeed = globalSpeed;
         cPersistence = fl::floorf(persistence);
         cPersistFine = persistence - cPersistence;
         cColorShift = colorShift;
-        // Emitter: fluidJet
-        cJetDensity = fluidJet.jetDensity;
-        cJetForce = fluidJet.jetForce;
-        cJetRadius = fluidJet.jetRadius;
-        cJetSpread = fluidJet.jetSpread;
-        cJetAngle = fluidJet.jetAngle;
-        cJetHueSpeed = fluidJet.jetHueSpeed;
-        cJetSwingRange = fluidJet.jetSwingRange;
-        cModJetForceRate = fluidJet.modJetForce.modRate;
-        cModJetForceLevel = fluidJet.modJetForce.modLevel;
-        cModAngleRate = fluidJet.modAngle.modRate;
-        cModAngleLevel = fluidJet.modAngle.modLevel;
-        cModJetSwingRate = fluidJet.modJetSwing.modRate;
-        cModJetSwingLevel = fluidJet.modJetSwing.modLevel;
+
+        // Emitter-specific
+        switch (activeEmitter) {
+            case EMITTER_FLUIDJET: {
+                fluidJet = FluidJetParams{};
+                cJetDensity = fluidJet.jetDensity;
+                cJetForce = fluidJet.jetForce;
+                cJetRadius = fluidJet.jetRadius;
+                cJetSpread = fluidJet.jetSpread;
+                cJetAngle = fluidJet.jetAngle;
+                cJetHueSpeed = fluidJet.jetHueSpeed;
+                cJetSwingRange = fluidJet.jetSwingRange;
+                cModJetForceRate = fluidJet.modJetForce.modRate;
+                cModJetForceLevel = fluidJet.modJetForce.modLevel;
+                cModAngleRate = fluidJet.modAngle.modRate;
+                cModAngleLevel = fluidJet.modAngle.modLevel;
+                cModJetSwingRate = fluidJet.modJetSwing.modRate;
+                cModJetSwingLevel = fluidJet.modJetSwing.modLevel;
+                break;
+            }
+            case EMITTER_THREEJET: {
+                threeJet = ThreeJetParams{};
+                cThreeJetDensity     = threeJet.density;
+                cThreeJetForce       = threeJet.force;
+                cThreeJetRadius      = threeJet.radius;
+                cThreeJetHueSpeed    = threeJet.hueSpeed;
+                cThreeJetRingRadius  = threeJet.ringRadius;
+                cThreeJetColorMode   = (float)threeJet.colorMode;
+                cModJet0AngleRate    = threeJet.modJet0Angle.modRate;
+                cModJet0AngleLevel   = threeJet.modJet0Angle.modLevel;
+                cModJet1AngleRate    = threeJet.modJet1Angle.modRate;
+                cModJet1AngleLevel   = threeJet.modJet1Angle.modLevel;
+                cModJet2AngleRate    = threeJet.modJet2Angle.modRate;
+                cModJet2AngleLevel   = threeJet.modJet2Angle.modLevel;
+                break;
+            }
+            default: break;
+        }
     }
 
+    // Sync ALL emitters' cVars into their structs every frame. Inactive
+    // emitters' state is updated harmlessly — only EMITTER_RUN[activeEmitter]
+    // actually consumes them this frame.
     static void syncFromCVars() {
-
         globalSpeed = cGlobalSpeed;
         persistence = cPersistence + cPersistFine;
         colorShift = cColorShift;
         useRainbow = cUseRainbow;
+
+        // fluidJet
         fluidJet.jetDensity = cJetDensity;
         fluidJet.jetForce = cJetForce;
         fluidJet.jetRadius = cJetRadius;
@@ -286,6 +345,20 @@ namespace fluidSim {
         fluidJet.modAngle.modLevel = cModAngleLevel;
         fluidJet.modJetSwing.modRate = cModJetSwingRate;
         fluidJet.modJetSwing.modLevel = cModJetSwingLevel;
+
+        // threeJet
+        threeJet.density    = cThreeJetDensity;
+        threeJet.force      = cThreeJetForce;
+        threeJet.radius     = cThreeJetRadius;
+        threeJet.hueSpeed   = cThreeJetHueSpeed;
+        threeJet.ringRadius = cThreeJetRingRadius;
+        threeJet.colorMode  = (uint8_t)cThreeJetColorMode;
+        threeJet.modJet0Angle.modRate  = cModJet0AngleRate;
+        threeJet.modJet0Angle.modLevel = cModJet0AngleLevel;
+        threeJet.modJet1Angle.modRate  = cModJet1AngleRate;
+        threeJet.modJet1Angle.modLevel = cModJet1AngleLevel;
+        threeJet.modJet2Angle.modRate  = cModJet2AngleRate;
+        threeJet.modJet2Angle.modLevel = cModJet2AngleLevel;
 
         syncFlowFromCVars();
     }
@@ -349,15 +422,15 @@ namespace fluidSim {
         // Avoids the previous shared-slot fragility (flow + emitter
         // both writing slots 0+1, working only by capture-before-overwrite).
         fluidPrepareModulators();
-        emitterPrepareModulators();
+        EMITTER_PREPARE_MOD[activeEmitter]();
         paddlesPrepareModulators();
         calculate_modulators(timings, TOTAL_ACTIVE_SLOTS);
 
         // Pipeline: obstacle → prepare → emit → advect → render → overlay
         updateObstacle(t);
         fluidPrepare();
-        PROFILE_START("emitFluidJet");
-        emitFluidJet();
+        PROFILE_START("emitter");
+        EMITTER_RUN[activeEmitter]();
         PROFILE_END();
 
         PROFILE_START("fluidAdvect");

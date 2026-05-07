@@ -19,19 +19,21 @@ const char* const GLOBAL_PARAMS[] PROGMEM = {
    "globalSpeed", "persistence", "persistFine", "colorShift", "paletteBlendRate"
 };
 
-const uint8_t GLOBAL_PARAM_COUNT = 4;
+const uint8_t GLOBAL_PARAM_COUNT = 5;
 
 // ═══════════════════════════════════════════════════════════════════
 //  EMITTERS
 // ═══════════════════════════════════════════════════════════════════
 
 const char fluidjet_str[] PROGMEM = "fluidjet";
+const char threejet_str[] PROGMEM = "threejet";
 
 const char* const EMITTERS[] PROGMEM = {
-      fluidjet_str
+      fluidjet_str,
+      threejet_str
    };
 
-const uint8_t EMITTER_COUNTS[] = {1};
+const uint8_t EMITTER_COUNTS[] = {2};
 
 const char* const FLUIDJET_PARAMS[] PROGMEM = {
    "jetDensity", "jetForce", "jetRadius", "jetSpread", "jetHueSpeed",
@@ -39,6 +41,14 @@ const char* const FLUIDJET_PARAMS[] PROGMEM = {
    "modJetForceRate", "modJetForceLevel",
    "modAngleRate", "modAngleLevel",
    "modJetSwingRate", "modJetSwingLevel"
+};
+
+const char* const THREEJET_PARAMS[] PROGMEM = {
+   "threeJetDensity", "threeJetForce", "threeJetRadius",
+   "threeJetHueSpeed", "threeJetRingRadius", "threeJetColorMode",
+   "modJet0AngleRate", "modJet0AngleLevel",
+   "modJet1AngleRate", "modJet1AngleLevel",
+   "modJet2AngleRate", "modJet2AngleLevel"
 };
 
 struct EmitterParamEntry {
@@ -49,6 +59,7 @@ struct EmitterParamEntry {
 
 const EmitterParamEntry EMITTER_PARAM_LOOKUP[] PROGMEM = {
    {"fluidjet", FLUIDJET_PARAMS, 12},
+   {"threejet", THREEJET_PARAMS, 12},
 };
 
 static const EmitterParamEntry* getEmitterParams(uint8_t emitterIdx) {
@@ -135,6 +146,20 @@ float cModAngleLevel = 0.0f;
 float cModJetSwingRate = 0.3f;
 float cModJetSwingLevel = 0.0f;
 
+// EMITTER: threeJet --------------
+float cThreeJetDensity     = 50.0f;
+float cThreeJetForce       = 0.7f;
+float cThreeJetRadius      = 4.0f;
+float cThreeJetHueSpeed    = 0.25f;
+float cThreeJetRingRadius  = 12.0f;
+float cThreeJetColorMode   = 0.0f;     // 0=triple, 1=double, 2=orange
+float cModJet0AngleRate    = 0.3f;
+float cModJet0AngleLevel   = 1.0f;
+float cModJet1AngleRate    = 0.3f;
+float cModJet1AngleLevel   = 1.0f;
+float cModJet2AngleRate    = 0.3f;
+float cModJet2AngleLevel   = 1.0f;
+
 // FLOW: fluid --------------------
 float cViscosity = 0.0f;
 float cDiffusion = 0.0f;
@@ -193,6 +218,18 @@ bool  cPaddleOverlay = true;
    X(float, ModAngleLevel, 2.0f) \
    X(float, ModJetSwingRate, 0.3f) \
    X(float, ModJetSwingLevel, 0.0f) \
+   X(float, ThreeJetDensity, 50.0f) \
+   X(float, ThreeJetForce, 0.7f) \
+   X(float, ThreeJetRadius, 4.0f) \
+   X(float, ThreeJetHueSpeed, 0.25f) \
+   X(float, ThreeJetRingRadius, 12.0f) \
+   X(float, ThreeJetColorMode, 0.0f) \
+   X(float, ModJet0AngleRate, 0.3f) \
+   X(float, ModJet0AngleLevel, 1.0f) \
+   X(float, ModJet1AngleRate, 0.3f) \
+   X(float, ModJet1AngleLevel, 1.0f) \
+   X(float, ModJet2AngleRate, 0.3f) \
+   X(float, ModJet2AngleLevel, 1.0f) \
    X(float, Viscosity, 0.0005f) \
    X(float, Diffusion, 0.0005f) \
    X(float, VelocityDissipation, 0.75f) \

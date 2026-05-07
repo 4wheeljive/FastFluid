@@ -3,6 +3,7 @@
 
 enum Emitter : uint8_t {
     EMITTER_FLUIDJET = 0,
+    EMITTER_THREEJET = 1,
     EMITTER_COUNT
 };
 
