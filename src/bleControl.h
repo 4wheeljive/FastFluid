@@ -2,6 +2,7 @@
 
 #include <NimBLEDevice.h>
 #include "parameterSchema.h"
+#include "fluidSimTypes.h"
 
 #if __has_include("hosted_ble_bridge.h")
     #include "hosted_ble_bridge.h"
@@ -489,17 +490,14 @@ void processNumber(String receivedID, float receivedValue) {
       FastLED.setBrightness(BRIGHTNESS);
    };
 
-
-   /*
    if (receivedID == "inPalNum") {
       uint8_t newPalNum = receivedValue;
-      gTargetPalette = gGradientPalettes[ newPalNum ];
+      fluidSim::setTargetPalette(newPalNum);
       if(debug) {
          Serial.print("newPalNum: ");
          Serial.println(newPalNum);
       }
    };
-   */
 
    //-------------------------------------------------------
    // Auto-generated custom parameter handling using X-macros
@@ -516,6 +514,8 @@ void processCheckbox(String receivedID, bool receivedValue ) {
 
    if (receivedID == "cx11") {mappingOverride = receivedValue;};
    if (receivedID == "cx32") {cUseRainbow = receivedValue;};
+   if (receivedID == "cx33") {cPaletteMode = receivedValue;};
+   if (receivedID == "cx34") {cRotatePalette = receivedValue;};
    if (receivedID == "cx40") {cPaddleEnable = receivedValue;};
    if (receivedID == "cx41") {cPaddleOverlay = receivedValue;};
 

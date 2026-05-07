@@ -21,17 +21,22 @@ namespace fluidSim {
 
     struct FluidJetParams {
         // Density and force are grid-independent (forces, not sizes).
-        float jetDensity   = 50.0f;     // dye magnitude (per layer-weighted)
-        float jetForce     = 0.25f;     // velocity magnitude
+        float jetDensity    = 50.0f;     // dye magnitude (per layer-weighted)
+        float jetForce      = 0.25f;     // velocity magnitude
         // Radius and spread scale with grid so plume looks proportional
         // across boards (22→1.8, 32→2.7, 48→4.0, 64→5.3 cells radius).
-        float jetRadius    = (float)MIN_DIMENSION / 12.0f;
-        float jetSpread    = (float)MIN_DIMENSION / 22.0f;
-        float jetAngle     = 0.0f;      // base direction (radians; 0 = straight up)
-        float jetHueSpeed  = 0.7f;      // hue rotation rate (Hz)
+        float jetRadius     = (float)MIN_DIMENSION / 12.0f;
+        float jetSpread     = (float)MIN_DIMENSION / 22.0f;
+        float jetAngle      = 0.0f;      // base direction (radians; 0 = straight up)
+        float jetHueSpeed   = 0.7f;      // hue rotation rate (Hz)
+        // Lateral position swing: plume slides side-to-side along the wall
+        // it emits from. Grid-aware max amplitude (22→2.75, 48→6, 64→8 cells).
+        // Off by default — modJetSwing.modLevel = 0. Set modLevel > 0 to enable.
+        float jetSwingRange = (float)MIN_DIMENSION / 8.0f;
 
         ModConfig modJetForce = {EMITTER_SLOT_BASE + 0, 0.3f, 0.1f};   // modTimer, modRate, modLevel
         ModConfig modAngle    = {EMITTER_SLOT_BASE + 1, 0.3f, 2.0f};   // modLevel: 0 = no movement, 2 = full ±90°
+        ModConfig modJetSwing = {EMITTER_SLOT_BASE + 2, 0.3f, 0.0f};   // modLevel: 0 = no swing, 1 = full range
     };
 
     FluidJetParams fluidJet;
@@ -93,16 +98,19 @@ namespace fluidSim {
     static void emitterPrepareModulators() {
         timings.ratio[fluidJet.modJetForce.modTimer] = 0.0004f  * fluidJet.modJetForce.modRate;
         timings.ratio[fluidJet.modAngle.modTimer]    = 0.00045f * fluidJet.modAngle.modRate;
+        timings.ratio[fluidJet.modJetSwing.modTimer] = 0.0004f  * fluidJet.modJetSwing.modRate;
     }
 
     static void emitFluidJet() {
         const ModConfig& forceMod = fluidJet.modJetForce;
         const ModConfig& angleMod = fluidJet.modAngle;
+        const ModConfig& swingMod = fluidJet.modJetSwing;
 
         // ─── 2) Signal acquisition ─────────────────────────────────
         //const float forceSignal = move.directional_noise[forceMod.modTimer];
         const float forceSignal = move.normalized_noise[forceMod.modTimer];
         const float angleSignal = move.directional_noise[angleMod.modTimer];
+        const float swingSignal = move.directional_noise[swingMod.modTimer];
 
         // ─── 3) Artistic application ───────────────────────────────
         // Force: orbitalDots-style bipolar modulation
@@ -130,9 +138,14 @@ namespace fluidSim {
         // so we just pass a per-layer density magnitude.
         const float density = fluidJet.jetDensity;
 
-        // Jet position: bottom-center
-        const float jx = (float)WIDTH * 0.5f;
-        const float jy = (float)HEIGHT - 3.0f;
+        // Lateral position swing: plume slides side-to-side around base position.
+        // Independent of angle modulation — both can run simultaneously, or
+        // either alone. modLevel=0 disables swing without affecting angle.
+        const float swingOffset = swingSignal * swingMod.modLevel * fluidJet.jetSwingRange;
+
+        // Jet position: bottom-center, offset horizontally by swing.
+        const float jx = (float)WIDTH * 0.5f + swingOffset;
+        const float jy = (float)HEIGHT - 2.0f;
 
         // ─── 4) 3-layered Gaussian splat ──────────────────────────
         // Each layer is shifted along the jet axis. Offsets scale with

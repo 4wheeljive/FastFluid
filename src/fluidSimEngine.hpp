@@ -172,6 +172,7 @@ namespace fluidSim {
 
         timings = timers();
         move = modulators();
+        startingPalette();
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -189,7 +190,8 @@ namespace fluidSim {
         cVorticity = fluid.vorticity;
         cGravityForce = fluid.gravityForce;
         cGravityAngle = fluid.gravityAngle;
-        cSolverIterations = (float)fluid.solverIterations;
+        cDiffuseIterations = (float)fluid.diffuseIterations;
+        cProjectIterations = (float)fluid.projectIterations;
         cModVelDissipRate = fluid.modVelDissip.modRate;
         cModVelDissipLevel = fluid.modVelDissip.modLevel;
         cModDyeDissipRate = fluid.modDyeDissip.modRate;
@@ -219,7 +221,8 @@ namespace fluidSim {
         fluid.vorticity = cVorticity;
         fluid.gravityForce = cGravityForce;
         fluid.gravityAngle = cGravityAngle;
-        fluid.solverIterations = (uint8_t)cSolverIterations;
+        fluid.diffuseIterations = (uint8_t)cDiffuseIterations;
+        fluid.projectIterations = (uint8_t)cProjectIterations;
         fluid.modVelDissip.modRate = cModVelDissipRate;
         fluid.modVelDissip.modLevel = cModVelDissipLevel;
         fluid.modDyeDissip.modRate = cModDyeDissipRate;
@@ -254,10 +257,13 @@ namespace fluidSim {
         cJetSpread = fluidJet.jetSpread;
         cJetAngle = fluidJet.jetAngle;
         cJetHueSpeed = fluidJet.jetHueSpeed;
+        cJetSwingRange = fluidJet.jetSwingRange;
         cModJetForceRate = fluidJet.modJetForce.modRate;
         cModJetForceLevel = fluidJet.modJetForce.modLevel;
         cModAngleRate = fluidJet.modAngle.modRate;
         cModAngleLevel = fluidJet.modAngle.modLevel;
+        cModJetSwingRate = fluidJet.modJetSwing.modRate;
+        cModJetSwingLevel = fluidJet.modJetSwing.modLevel;
     }
 
     static void syncFromCVars() {
@@ -265,19 +271,49 @@ namespace fluidSim {
         globalSpeed = cGlobalSpeed;
         persistence = cPersistence + cPersistFine;
         colorShift = cColorShift;
-
+        useRainbow = cUseRainbow;
         fluidJet.jetDensity = cJetDensity;
         fluidJet.jetForce = cJetForce;
         fluidJet.jetRadius = cJetRadius;
         fluidJet.jetSpread = cJetSpread;
         fluidJet.jetAngle = cJetAngle;
         fluidJet.jetHueSpeed = cJetHueSpeed;
+        fluidJet.jetSwingRange = cJetSwingRange;
         fluidJet.modJetForce.modRate = cModJetForceRate;
         fluidJet.modJetForce.modLevel = cModJetForceLevel;
         fluidJet.modAngle.modRate = cModAngleRate;
         fluidJet.modAngle.modLevel = cModAngleLevel;
+        fluidJet.modJetSwing.modRate = cModJetSwingRate;
+        fluidJet.modJetSwing.modLevel = cModJetSwingLevel;
 
         syncFlowFromCVars();
+    }
+
+    static void updatePaletteState() {
+        if (gGradientPaletteCount == 0) {return;}
+
+        if (cPaletteMode && cRotatePalette) {
+            EVERY_N_SECONDS(15) {
+                gCurrentPaletteNumber = gTargetPaletteNumber;
+                gTargetPaletteNumber = addmod8(gTargetPaletteNumber, 1, gGradientPaletteCount);
+                gTargetPalette = gGradientPalettes[gTargetPaletteNumber];
+            }
+        }
+
+        int maxChanges = (int)(cPaletteBlendRate + 0.5f);
+        if (maxChanges < 1) {
+            maxChanges = 1;
+        } else if (maxChanges > 255) {
+            maxChanges = 255;
+        }
+
+        EVERY_N_MILLISECONDS(40) {
+            if (gCurrentPalette != gTargetPalette) {
+                nblendPaletteTowardPalette(gCurrentPalette, gTargetPalette, (uint8_t)maxChanges);
+            } else {
+                gCurrentPaletteNumber = gTargetPaletteNumber;
+            }
+        }
     }
 
     void runFluidSim() {
@@ -304,6 +340,7 @@ namespace fluidSim {
         }
 
         syncFromCVars();
+        updatePaletteState();
 
         // ─── Modulator pipeline (Phase 4.5 consolidation) ──────────
         // 1. Each component writes its slot ratios. 2. Single

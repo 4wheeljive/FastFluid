@@ -36,8 +36,8 @@ namespace fluidSim {
         float colorB     = 240.0f;
 
         // Paddle-specific.
-        // Width scales with grid (~1/3 of WIDTH): 22→7, 38→13, 48→16, 64→21.
-        float width      = (float)WIDTH / 3.0f;
+        // Width scales with grid (~55% of WIDTH): 22→12, 38→21, 48→26, 64→35.
+        float width      = (float)WIDTH * 0.55f;
         float softEdge   = 0.22f;     // inner-corner soft-mask intensity
 
         // Sliding motion: noise-driven horizontal position.

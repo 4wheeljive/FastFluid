@@ -16,7 +16,7 @@ extern uint8_t FLOW;
 // ═══════════════════════════════════════════════════════════════════
 
 const char* const GLOBAL_PARAMS[] PROGMEM = {
-   "globalSpeed", "persistence", "persistFine", "colorShift"
+   "globalSpeed", "persistence", "persistFine", "colorShift", "paletteBlendRate"
 };
 
 const uint8_t GLOBAL_PARAM_COUNT = 4;
@@ -35,8 +35,10 @@ const uint8_t EMITTER_COUNTS[] = {1};
 
 const char* const FLUIDJET_PARAMS[] PROGMEM = {
    "jetDensity", "jetForce", "jetRadius", "jetSpread", "jetHueSpeed",
+   "jetSwingRange",
    "modJetForceRate", "modJetForceLevel",
-   "modAngleRate", "modAngleLevel"
+   "modAngleRate", "modAngleLevel",
+   "modJetSwingRate", "modJetSwingLevel"
 };
 
 struct EmitterParamEntry {
@@ -46,7 +48,7 @@ struct EmitterParamEntry {
 };
 
 const EmitterParamEntry EMITTER_PARAM_LOOKUP[] PROGMEM = {
-   {"fluidjet", FLUIDJET_PARAMS, 9},
+   {"fluidjet", FLUIDJET_PARAMS, 12},
 };
 
 static const EmitterParamEntry* getEmitterParams(uint8_t emitterIdx) {
@@ -68,7 +70,8 @@ const char* const FLOWS[] PROGMEM = {
 
 const char* const FLUID_PARAMS[] PROGMEM = {
    "viscosity", "diffusion", "velocityDissipation", "dyeDissipation",
-   "vorticity", "gravityForce", "gravityAngle", "solverIterations",
+   "vorticity", "gravityForce", "gravityAngle",
+   "diffuseIterations", "projectIterations",
    "modVelDissipRate", "modVelDissipLevel",
    "modDyeDissipRate", "modDyeDissipLevel",
    "colorContrast", "blackPoint", "flowSat", "flowBright",
@@ -84,7 +87,7 @@ struct FlowParamEntry {
 };
 
 const FlowParamEntry FLOW_PARAM_LOOKUP[] PROGMEM = {
-   {"fluid", FLUID_PARAMS, 25}
+   {"fluid", FLUID_PARAMS, 26}
 };
 
 static const FlowParamEntry* getFlowParams(uint8_t flowIdx) {
@@ -113,6 +116,9 @@ float cPersistence = 0.0f;
 float cPersistFine = 0.05f;
 float cColorShift = 0.10f;
 bool cUseRainbow = false;
+bool cPaletteMode = false;
+bool cRotatePalette = false;
+float cPaletteBlendRate = 16.0f;
 
 // EMITTER: fluidJet --------------
 float cJetDensity = 60.0f;
@@ -121,10 +127,13 @@ float cJetRadius = 2.0f;
 float cJetSpread = 1.0f;
 float cJetAngle = 0.0f;
 float cJetHueSpeed = 0.69f;
+float cJetSwingRange = 4.0f;
 float cModJetForceRate = 0.5f;
 float cModJetForceLevel = 0.0f;
 float cModAngleRate = 0.5f;
 float cModAngleLevel = 0.0f;
+float cModJetSwingRate = 0.3f;
+float cModJetSwingLevel = 0.0f;
 
 // FLOW: fluid --------------------
 float cViscosity = 0.0f;
@@ -134,7 +143,8 @@ float cDyeDissipation = 0.5f;
 float cVorticity = 7.0f;
 float cGravityForce = 1.0f;
 float cGravityAngle = 180.0f;
-float cSolverIterations = 5.0f;
+float cDiffuseIterations = 6.0f;
+float cProjectIterations = 20.0f;
 float cModVelDissipRate = 0.5f;
 float cModVelDissipLevel = 0.0f;
 float cModDyeDissipRate = 0.5f;
@@ -169,16 +179,20 @@ bool  cPaddleOverlay = true;
    X(float, Persistence, 0.0f) \
    X(float, PersistFine, 0.05f) \
    X(float, ColorShift, 0.10f) \
+   X(float, PaletteBlendRate, 16.0f) \
    X(float, JetDensity, 50.0f) \
    X(float, JetForce, 0.25f) \
    X(float, JetRadius, 2.0f) \
    X(float, JetSpread, 1.0f) \
    X(float, JetAngle, 0.0f) \
    X(float, JetHueSpeed, 0.7f) \
+   X(float, JetSwingRange, 4.0f) \
    X(float, ModJetForceRate, 0.3f) \
    X(float, ModJetForceLevel, 0.1f) \
    X(float, ModAngleRate, 0.3f) \
    X(float, ModAngleLevel, 2.0f) \
+   X(float, ModJetSwingRate, 0.3f) \
+   X(float, ModJetSwingLevel, 0.0f) \
    X(float, Viscosity, 0.0005f) \
    X(float, Diffusion, 0.0005f) \
    X(float, VelocityDissipation, 0.75f) \
@@ -186,7 +200,8 @@ bool  cPaddleOverlay = true;
    X(float, Vorticity, 7.0f) \
    X(float, GravityForce, 1.0f) \
    X(float, GravityAngle, 180.0f) \
-   X(float, SolverIterations, 5.0f) \
+   X(float, DiffuseIterations, 6.0f) \
+   X(float, ProjectIterations, 20.0f) \
    X(float, ModVelDissipRate, 0.5f) \
    X(float, ModVelDissipLevel, 0.0f) \
    X(float, ModDyeDissipRate, 0.5f) \

@@ -33,7 +33,12 @@ namespace fluidSim {
         // Angle convention matches jetAngle: 0°=up, 90°=right, 180°=down, 270°=left.
         float gravityForce        = 1.0f;     // intensity (0 = disabled)
         float gravityAngle        = 180.0f;   // direction in degrees (default = down)
-        uint8_t solverIterations  = 5;        // Jacobi passes per lin_solve
+        // Split iteration counts. Diffuse is well-conditioned and converges
+        // in a handful of passes; pressure projection (incompressibility)
+        // benefits from many more. Decoupling lets you crank projection
+        // without paying for it on diffuse when viscosity > 0.
+        uint8_t diffuseIterations = 6;        // Jacobi passes for diffuse
+        uint8_t projectIterations = 20;       // Jacobi passes for pressure projection
 
         ModConfig modVelDissip = {FLOW_SLOT_BASE + 0, 0.5f, 0.0f};   // modTimer, modRate, modLevel
         ModConfig modDyeDissip = {FLOW_SLOT_BASE + 1, 0.5f, 0.0f};
@@ -120,7 +125,7 @@ namespace fluidSim {
             setBnd(b, x);
             return;
         }
-        linSolve(b, x, x0, a, 1.0f + 4.0f * a, fluid.solverIterations);
+        linSolve(b, x, x0, a, 1.0f + 4.0f * a, fluid.diffuseIterations);
     }
 
     // Semi-Lagrangian advection: backtrace each cell along velocity field, bilinearly sample source
@@ -257,7 +262,7 @@ namespace fluidSim {
         setBnd(0, pressure);
 
         // 2. Solve Poisson equation for pressure
-        linSolve(0, pressure, divergence, 1.0f, 4.0f, fluid.solverIterations);
+        linSolve(0, pressure, divergence, 1.0f, 4.0f, fluid.projectIterations);
 
         // 3. Subtract pressure gradient from velocity
         for (int y = 0; y < HEIGHT; y++) {

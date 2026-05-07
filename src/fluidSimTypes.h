@@ -266,9 +266,8 @@ namespace fluidSim {
     static float xProf[WIDTH];    // one noise value per column
     static float yProf[HEIGHT];   // one noise value per row
 
-
     // ═══════════════════════════════════════════════════════════════════
-    //  DRAWING PRIMITIVES
+    //  COLOR MANAGEMENT
     // ═══════════════════════════════════════════════════════════════════
 
     // Spectrum: standard HSV with even 60° sectors.
@@ -313,6 +312,7 @@ namespace fluidSim {
         return ColorF{r, g, b};
     }
 
+    /*
     // Full-saturation, full-brightness rainbow from a continuous hue.
     // Float-precision HSV→RGB eliminates banding from uint8 hue quantization.
     // useRainbow toggles between even spectrum and FastLED rainbow character.
@@ -320,6 +320,46 @@ namespace fluidSim {
         float hue = fmodPos(t * speed + phase, 1.0f);
         return useRainbow ? hsvRainbow(hue) : hsvSpectrum(hue);
     }
+    */
+
+    // Full-saturation, full-brightness rainbow from a continuous hue.
+    // Float-precision HSV→RGB eliminates banding from uint8 hue quantization.
+    // useRainbow toggles between even spectrum and FastLED rainbow character.
+    static ColorF paletteColor(float hue) {
+        uint16_t index = (uint16_t)(fmodPos(hue, 1.0f) * 65535.0f + 0.5f);
+        fl::CRGB16 c = fl::ColorFromPaletteHD(gCurrentPalette, index, 255, LINEARBLEND_NOWRAP);
+        return ColorF{
+            c.r.raw() * (1.0f / 256.0f),
+            c.g.raw() * (1.0f / 256.0f),
+            c.b.raw() * (1.0f / 256.0f)
+        };
+    }
+
+    static ColorF rainbow(float t, float speed, float phase) {
+        float hue = fmodPos(t * speed + phase, 1.0f);
+        if (cPaletteMode) {
+            return paletteColor(hue);
+        }
+        return useRainbow ? hsvRainbow(hue) : hsvSpectrum(hue);
+    }
+
+    inline void startingPalette() {
+        if (gGradientPaletteCount == 0) {return;}
+        gCurrentPaletteNumber = random(0, gGradientPaletteCount);
+        gTargetPaletteNumber = gCurrentPaletteNumber;
+        gCurrentPalette = gGradientPalettes[gCurrentPaletteNumber];
+        gTargetPalette = gCurrentPalette;
+    }
+
+    inline void setTargetPalette(uint8_t paletteNumber) {
+        if (gGradientPaletteCount == 0) {return;}
+        gTargetPaletteNumber = paletteNumber % gGradientPaletteCount;
+        gTargetPalette = gGradientPalettes[gTargetPaletteNumber];
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  DRAWING PRIMITIVES
+    // ═══════════════════════════════════════════════════════════════════
 
     // Draw an anti-aliased sub-pixel dot into the float grid.
     static void drawDot(float cx, float cy, float diam,
@@ -399,6 +439,8 @@ namespace fluidSim {
             blendPixelWeighted(xi + 1, yi + 1, c.r, c.g, c.b, fx * fy);
         }
     }
+
+    
 
     // ═══════════════════════════════════════════════════════════════════
     //  COMPONENT TYPES & ENUMS

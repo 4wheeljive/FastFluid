@@ -208,7 +208,8 @@
                     default-value="35"
                     data-used="true">
                 </control-slider>
-                <control-dropdown 
+                
+                <!--<control-dropdown 
                     label="Ease Sat" 
                     parameter-id="inEaseSat"
                     default-value="0">
@@ -238,7 +239,8 @@
                     In Sine, 
                     Out Sine, 
                     In-Out Sine
-                </control-dropdown>
+                </control-dropdown>-->
+
             </div>
 
             <div class = "control-group">
@@ -261,6 +263,60 @@
                 </control-dropdown>
             </div>
    
+            <div class = "control-group">
+                 <control-checkbox
+                    label="Palette Mode"
+                    data-my-number="33"
+                    unchecked>
+                </control-checkbox>
+
+                <control-checkbox
+                    label="Rotate Palette"
+                    data-my-number="34"
+                    unchecked>
+                </control-checkbox>
+                <control-dropdown
+                    label="Color Palette"
+                    parameter-id="inPalNum"
+                    default-value="0">
+                    Sunset_Real,
+                    es_rivendell_15,
+                    es_ocean_breeze_036,
+                    rgi_15,
+                    retro2_16,
+                    Analogous_1,
+                    es_pinksplash_08,
+                    Coral_reef,
+                    es_ocean_breeze_068,
+                    es_pinksplash_07,
+                    es_vintage_01,
+                    departure,
+                    es_landscape_64,
+                    es_landscape_33,
+                    rainbowsherbet,
+                    gr65_hult,
+                    gr64_hult,
+                    GMT_drywet,
+                    ib_jul01,
+                    es_vintage_57,
+                    ib15,
+                    Fuschia_7,
+                    es_emerald_dragon_08,
+                    lava,
+                    fire,
+                    Colorfull,
+                    Magenta_Evening,
+                    Pink_Purple,
+                    es_autumn_19,
+                    BlacK_Blue_Magenta_White,
+                    BlacK_Magenta_Red,
+                    BlacK_Red_Magenta_Yellow,
+                    Blue_Cyan_Yellow
+                </control-dropdown>
+
+            </div>
+
+
             <div class = "control-group">
                 <preset-controls></preset-controls>
             </div>
@@ -638,6 +694,8 @@
             persistence:  {min: 0, max: 20, default: 0, step: 1},
             persistFine:  {min: 0.01, max: 0.99, default: 0.05, step: 0.01},
             colorShift:  {min: 0.01, max: 1, default: 0.10, step: 0.01},
+            paletteBlendRate: {min: 1, max: 64, default: 16, step: 1},
+
 
  
             // EMITTER: fluidJet
@@ -646,10 +704,13 @@
             jetRadius:     {min: 1, max: 15, default: 4, step: 0.5},
             jetSpread:     {min: 0, max: 60, default: 1.5, step: 0.5},
             jetHueSpeed:   {min: 0, max: 1.5, default: 0.7, step: 0.05},
+            jetSwingRange: {min: 0, max: 30, default: 4, step: 0.5},
             modJetForceRate:  {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
             modJetForceLevel: {min: 0, max: 2.0, default: 0.1, step: 0.1},
             modAngleRate:     {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
             modAngleLevel:    {min: 0, max: 2.0, default: 2.0, step: 0.1},
+            modJetSwingRate:  {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
+            modJetSwingLevel: {min: 0, max: 2.0, default: 0.0, step: 0.1},
 
 
             // FLOW: fluid
@@ -660,7 +721,8 @@
             vorticity:           {min: 0, max: 30, default: 10, step: 0.1},
             gravityForce:        {min: 0, max: 2.0, default: 1.0, step: 0.05},
             gravityAngle:        {min: 0, max: 360, default: 180, step: 1},
-            solverIterations:    {min: 2, max: 20, default: 5, step: 1},
+            diffuseIterations:   {min: 2, max: 30, default: 6, step: 1},
+            projectIterations:   {min: 2, max: 30, default: 20, step: 1},
             modVelDissipRate:    {min: 0.1, max: 3.0, default: 0.5, step: 0.1},
             modVelDissipLevel:   {min: 0, max: 1.0, default: 0.0, step: 0.05},
             modDyeDissipRate:    {min: 0.1, max: 3.0, default: 0.5, step: 0.1},
@@ -685,17 +747,20 @@
         };
 
         // Parameter lists per component
-        const GLOBAL_PARAMS  = ["globalSpeed", "persistence", "persistFine", "colorShift"];
+        const GLOBAL_PARAMS  = ["globalSpeed", "persistence", "persistFine", "colorShift", "paletteBlendRate"];
 
         const EMITTER_PARAMS = {
             "fluidjet":     ["jetDensity", "jetForce", "jetRadius", "jetSpread", "jetHueSpeed",
+                            "jetSwingRange",
                             "modJetForceRate", "modJetForceLevel",
-                            "modAngleRate", "modAngleLevel"]
+                            "modAngleRate", "modAngleLevel",
+                            "modJetSwingRate", "modJetSwingLevel"]
         };
 
         const FLOW_PARAMS = {
             "fluid":       ["viscosity", "diffusion", "velocityDissipation", "dyeDissipation",
-                            "vorticity", "gravityForce", "gravityAngle", "solverIterations",
+                            "vorticity", "gravityForce", "gravityAngle",
+                            "diffuseIterations", "projectIterations",
                             "modVelDissipRate", "modVelDissipLevel",
                             "modDyeDissipRate", "modDyeDissipLevel",
                             "colorContrast", "blackPoint", "flowSat", "flowBright",
