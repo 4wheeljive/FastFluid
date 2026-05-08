@@ -29,11 +29,11 @@ namespace fastFluid {
 
     struct PaddleParams {
         // Common bits (mirrored into obstacleCommon each frame).
-        bool  enable     = true;
-        bool  overlay    = true;
+        bool  enable     = false;
+        bool  overlay    = false;
         float colorR     = 220.0f;    // overlay color (0..255)
         float colorG     = 220.0f;
-        float colorB     = 240.0f;
+        float colorB     = 220.0f;
 
         // Paddle-specific.
         // Width scales with grid (~55% of WIDTH): 22→12, 38→21, 48→26, 64→35.

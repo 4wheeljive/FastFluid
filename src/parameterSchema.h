@@ -10,32 +10,33 @@ bool displayOn = true;
 
 extern uint8_t EMITTER;
 extern uint8_t FLOW;
+extern uint8_t OBSTACLE;
 
 // ═══════════════════════════════════════════════════════════════════
 // GLOBAL PARAMETERS
 // ═══════════════════════════════════════════════════════════════════
 
 const char* const GLOBAL_PARAMS[] PROGMEM = {
-   "globalSpeed", "paletteBlendRate"      // "persistence", "persistFine", "colorShift", 
+   "globalSpeed", "paletteBlendRate", "debugView" 
 };
 
-const uint8_t GLOBAL_PARAM_COUNT = 2;
+const uint8_t GLOBAL_PARAM_COUNT = 3;
 
 // ═══════════════════════════════════════════════════════════════════
 //  EMITTERS
 // ═══════════════════════════════════════════════════════════════════
 
-const char fluidjet_str[] PROGMEM = "fluidjet";
+const char singlejet_str[] PROGMEM = "singlejet";
 const char threejet_str[] PROGMEM = "threejet";
 
 const char* const EMITTERS[] PROGMEM = {
-      fluidjet_str,
+      singlejet_str,
       threejet_str
    };
 
 const uint8_t EMITTER_COUNTS[] = {2};
 
-const char* const FLUIDJET_PARAMS[] PROGMEM = {
+const char* const SINGLEJET_PARAMS[] PROGMEM = {
    "jetDensity", "jetForce", "jetRadius", "jetSpread", "jetHueSpeed",
    "jetSwingRange",
    "modJetForceRate", "modJetForceLevel",
@@ -58,7 +59,7 @@ struct EmitterParamEntry {
 };
 
 const EmitterParamEntry EMITTER_PARAM_LOOKUP[] PROGMEM = {
-   {"fluidjet", FLUIDJET_PARAMS, 12},
+   {"fluidjet", SINGLEJET_PARAMS, 12},
    {"threejet", THREEJET_PARAMS, 12},
 };
 
@@ -71,15 +72,15 @@ static const EmitterParamEntry* getEmitterParams(uint8_t emitterIdx) {
 //  FLOWS
 // ═══════════════════════════════════════════════════════════════════
 
-const char fluid_str[] PROGMEM = "fluid";
+const char smoke_str[] PROGMEM = "smoke";
 
 const uint8_t FLOW_COUNTS[] = {1};
 
 const char* const FLOWS[] PROGMEM = {
-      fluid_str
+      smoke_str
    };
 
-const char* const FLUID_PARAMS[] PROGMEM = {
+const char* const SMOKE_PARAMS[] PROGMEM = {
    "viscosity", "diffusion", "velocityDissipation", "dyeDissipation",
    "vorticity", "gravityForce", "gravityAngle",
    "diffuseIterations", "projectIterations",
@@ -98,7 +99,7 @@ struct FlowParamEntry {
 };
 
 const FlowParamEntry FLOW_PARAM_LOOKUP[] PROGMEM = {
-   {"fluid", FLUID_PARAMS, 26}
+   {"smoke", SMOKE_PARAMS, 26}
 };
 
 static const FlowParamEntry* getFlowParams(uint8_t flowIdx) {
@@ -123,12 +124,13 @@ uint8_t cEaseLum = 0;
 
 // GLOBAL -------------------------
 float cGlobalSpeed = 1.0f;
-bool cUseRainbow = false;
+//bool cUseRainbow = false;
 bool cPaletteMode = false;
 bool cRotatePalette = false;
 uint8_t cPaletteBlendRate = 16;
+uint8_t cDebugView = 0;
 
-// EMITTER: fluidJet --------------
+// EMITTER: singleJet --------------
 float cJetDensity = 60.0f;
 float cJetForce = 0.35f;
 float cJetRadius = 2.0f;
@@ -149,7 +151,7 @@ float cThreeJetForce       = 0.7f;
 float cThreeJetRadius      = 4.0f;
 float cThreeJetHueSpeed    = 0.25f;
 float cThreeJetRingRadius  = 12.0f;
-float cThreeJetColorMode   = 0.0f;     // 0=triple, 1=double, 2=orange
+uint8_t cThreeJetColorMode   = 0;     // 0=triple, 1=double, 2=orange
 float cModJet0AngleRate    = 0.3f;
 float cModJet0AngleLevel   = 1.0f;
 float cModJet1AngleRate    = 0.3f;
@@ -157,7 +159,7 @@ float cModJet1AngleLevel   = 1.0f;
 float cModJet2AngleRate    = 0.3f;
 float cModJet2AngleLevel   = 1.0f;
 
-// FLOW: fluid --------------------
+// FLOW: smoke --------------------
 float cViscosity = 0.0f;
 float cDiffusion = 0.0f;
 float cVelocityDissipation = 0.75f;
@@ -165,8 +167,8 @@ float cDyeDissipation = 0.25f;
 float cVorticity = 10.0f;
 float cGravityForce = 1.0f;
 float cGravityAngle = 180.0f;
-float cDiffuseIterations = 6.0f;
-float cProjectIterations = 20.0f;
+uint8_t cDiffuseIterations = 6;
+uint8_t cProjectIterations = 20;
 float cModVelDissipRate = 0.5f;
 float cModVelDissipLevel = 0.0f;
 float cModDyeDissipRate = 0.5f;
@@ -178,7 +180,7 @@ float cFlowBright = 0.18f;
 float cGlowStrength = 0.0f;
 float cHighlightSat = 0.22f;
 
-// Paddles obstacle (sliders; checkboxes below)
+// OBSTACLE: Paddles
 float cPaddleWidth      = 10.0f;
 float cPaddleSlideRate  = 0.3f;     // modulator rate — how fast the noise evolves
 float cPaddleSlideLevel = 0.85f;    // amplitude of slide as fraction of travel range
@@ -199,6 +201,7 @@ bool  cPaddleOverlay = false;
    X(uint8_t, OverrideMapping, 0) \
    X(float, GlobalSpeed, 0.5f) \
    X(float, PaletteBlendRate, 16.0f) \
+   X(uint8_t, DebugView, 0) \
    X(float, JetDensity, 50.0f) \
    X(float, JetForce, 0.25f) \
    X(float, JetRadius, 2.0f) \
@@ -217,7 +220,7 @@ bool  cPaddleOverlay = false;
    X(float, ThreeJetRadius, 4.0f) \
    X(float, ThreeJetHueSpeed, 0.25f) \
    X(float, ThreeJetRingRadius, 12.0f) \
-   X(float, ThreeJetColorMode, 0.0f) \
+   X(uint8_t, ThreeJetColorMode, 0) \
    X(float, ModJet0AngleRate, 0.3f) \
    X(float, ModJet0AngleLevel, 1.0f) \
    X(float, ModJet1AngleRate, 0.3f) \
@@ -231,8 +234,8 @@ bool  cPaddleOverlay = false;
    X(float, Vorticity, 10.0f) \
    X(float, GravityForce, 1.0f) \
    X(float, GravityAngle, 180.0f) \
-   X(float, DiffuseIterations, 6.0f) \
-   X(float, ProjectIterations, 20.0f) \
+   X(uint8_t, DiffuseIterations, 6) \
+   X(uint8_t, ProjectIterations, 10) \
    X(float, ModVelDissipRate, 0.5f) \
    X(float, ModVelDissipLevel, 0.0f) \
    X(float, ModDyeDissipRate, 0.5f) \

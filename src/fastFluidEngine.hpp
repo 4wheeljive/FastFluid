@@ -45,6 +45,112 @@ namespace fastFluid {
     FL_FAST_MATH_BEGIN
     FL_OPTIMIZATION_LEVEL_O3_BEGIN
 
+    static void renderFluidToLeds();
+
+    enum DebugView : uint8_t {
+        DEBUG_VIEW_COLOR = 0,
+        DEBUG_VIEW_VELOCITY = 1,
+        DEBUG_VIEW_VORTICITY = 2,
+        DEBUG_VIEW_PRESSURE = 3,
+        DEBUG_VIEW_DIVERGENCE = 4,
+        DEBUG_VIEW_DIVERGENCE_SIGNED = 5,
+        DEBUG_VIEW_DYE_DENSITY = 6
+    };
+
+    static inline void writeDebugPixel(uint8_t xc, uint8_t y, float r, float g, float b) {
+        const uint16_t idx = xyFunc(xc, y);
+        if (idx >= NUM_LEDS) return;
+
+        leds[idx].r = f2u8d(clampf(r, 0.0f, 1.0f) * 255.0f, xc, y);
+        leds[idx].g = f2u8d(clampf(g, 0.0f, 1.0f) * 255.0f, xc, y);
+        leds[idx].b = f2u8d(clampf(b, 0.0f, 1.0f) * 255.0f, xc, y);
+    }
+
+    static inline float debugVelocityMagnitude(uint8_t xc, uint8_t y) {
+        const float vu = u[y][xc];
+        const float vv = v[y][xc];
+        return fl::sqrtf(vu * vu + vv * vv);
+    }
+
+    static inline float debugDyeDensity(uint8_t xc, uint8_t y) {
+        return gR[y][xc] + gG[y][xc] + gB[y][xc];
+    }
+
+    static inline float debugVorticity(uint8_t xc, uint8_t y) {
+        const float vxp = (xc < WIDTH  - 1) ? v[y][xc + 1] : v[y][xc];
+        const float vxm = (xc > 0)          ? v[y][xc - 1] : v[y][xc];
+        const float uyp = (y  < HEIGHT - 1) ? u[y + 1][xc] : u[y][xc];
+        const float uym = (y  > 0)          ? u[y - 1][xc] : u[y][xc];
+        return 0.5f * (vxp - vxm - (uyp - uym));
+    }
+
+    static inline float debugDivergence(uint8_t xc, uint8_t y) {
+        const float h = 1.0f / SIM_SIZE;
+        const float uxp = (xc < WIDTH  - 1) ? u[y][xc + 1] : u[y][xc];
+        const float uxm = (xc > 0)          ? u[y][xc - 1] : u[y][xc];
+        const float vyp = (y  < HEIGHT - 1) ? v[y + 1][xc] : v[y][xc];
+        const float vym = (y  > 0)          ? v[y - 1][xc] : v[y][xc];
+        return -0.5f * h * (uxp - uxm + vyp - vym);
+    }
+
+    static inline float debugScalarValue(uint8_t view, uint8_t xc, uint8_t y) {
+        switch (view) {
+            case DEBUG_VIEW_VELOCITY: return debugVelocityMagnitude(xc, y);
+            case DEBUG_VIEW_VORTICITY: return debugVorticity(xc, y);
+            case DEBUG_VIEW_PRESSURE: return pressure[y][xc];
+            case DEBUG_VIEW_DIVERGENCE:
+            case DEBUG_VIEW_DIVERGENCE_SIGNED: return debugDivergence(xc, y);
+            case DEBUG_VIEW_DYE_DENSITY: return debugDyeDensity(xc, y);
+            default: return 0.0f;
+        }
+    }
+
+    static inline bool debugViewIsSigned(uint8_t view) {
+        return view == DEBUG_VIEW_VORTICITY ||
+               view == DEBUG_VIEW_PRESSURE ||
+               view == DEBUG_VIEW_DIVERGENCE_SIGNED;
+    }
+
+    static void renderDebugView(uint8_t view) {
+        if (view > DEBUG_VIEW_DYE_DENSITY) view = DEBUG_VIEW_COLOR;
+        if (view == DEBUG_VIEW_COLOR) {
+            renderFluidToLeds();
+            return;
+        }
+
+        const bool signedView = debugViewIsSigned(view);
+        float maxValue = 1e-6f;
+
+        for (uint8_t y = 0; y < HEIGHT; y++) {
+            for (uint8_t xc = 0; xc < WIDTH; xc++) {
+                float value = debugScalarValue(view, xc, y);
+                if (view == DEBUG_VIEW_DIVERGENCE) value = fl::fabsf(value);
+                if (signedView) value = fl::fabsf(value);
+                if (value > maxValue) maxValue = value;
+            }
+        }
+
+        const float invMax = 1.0f / maxValue;
+        for (uint8_t y = 0; y < HEIGHT; y++) {
+            for (uint8_t xc = 0; xc < WIDTH; xc++) {
+                float value = debugScalarValue(view, xc, y);
+
+                if (signedView) {
+                    const float mag = clampf(fl::fabsf(value) * invMax, 0.0f, 1.0f);
+                    if (value >= 0.0f) {
+                        writeDebugPixel(xc, y, mag, mag * 0.18f, 0.0f);
+                    } else {
+                        writeDebugPixel(xc, y, 0.0f, mag * 0.35f, mag);
+                    }
+                } else {
+                    if (view == DEBUG_VIEW_DIVERGENCE) value = fl::fabsf(value);
+                    const float mag = clampf(value * invMax, 0.0f, 1.0f);
+                    writeDebugPixel(xc, y, mag, mag, mag);
+                }
+            }
+        }
+    }
+
     static void renderFluidToLeds() {
         const float invBlack = 1.0f / fmaxf(1e-3f, 1.0f - render.blackPoint);
         const float gamma    = 1.0f / fmaxf(0.2f, render.colorContrast);
@@ -259,8 +365,8 @@ namespace fastFluid {
         cVorticity = smoke.vorticity;
         cGravityForce = smoke.gravityForce;
         cGravityAngle = smoke.gravityAngle;
-        cDiffuseIterations = (float)smoke.diffuseIterations;
-        cProjectIterations = (float)smoke.projectIterations;
+        cDiffuseIterations = smoke.diffuseIterations;
+        cProjectIterations = smoke.projectIterations;
         cModVelDissipRate = smoke.modVelDissip.modRate;
         cModVelDissipLevel = smoke.modVelDissip.modLevel;
         cModDyeDissipRate = smoke.modDyeDissip.modRate;
@@ -290,8 +396,8 @@ namespace fastFluid {
         smoke.vorticity = cVorticity;
         smoke.gravityForce = cGravityForce;
         smoke.gravityAngle = cGravityAngle;
-        smoke.diffuseIterations = (uint8_t)cDiffuseIterations;
-        smoke.projectIterations = (uint8_t)cProjectIterations;
+        smoke.diffuseIterations = cDiffuseIterations;
+        smoke.projectIterations = cProjectIterations;
         smoke.modVelDissip.modRate = cModVelDissipRate;
         smoke.modVelDissip.modLevel = cModVelDissipLevel;
         smoke.modDyeDissip.modRate = cModDyeDissipRate;
@@ -346,7 +452,7 @@ namespace fastFluid {
                 cThreeJetRadius      = threeJet.radius;
                 cThreeJetHueSpeed    = threeJet.hueSpeed;
                 cThreeJetRingRadius  = threeJet.ringRadius;
-                cThreeJetColorMode   = (float)threeJet.colorMode;
+                cThreeJetColorMode   = threeJet.colorMode;
                 cModJet0AngleRate    = threeJet.modJet0Angle.modRate;
                 cModJet0AngleLevel   = threeJet.modJet0Angle.modLevel;
                 cModJet1AngleRate    = threeJet.modJet1Angle.modRate;
@@ -365,7 +471,7 @@ namespace fastFluid {
     static void syncFromCVars() {
         globalSpeed = cGlobalSpeed;
         paletteBlendRate = cPaletteBlendRate;
-        useRainbow = cUseRainbow;
+        //useRainbow = cUseRainbow;
 
         // singleJet
         singleJet.jetDensity = cJetDensity;
@@ -388,7 +494,7 @@ namespace fastFluid {
         threeJet.radius     = cThreeJetRadius;
         threeJet.hueSpeed   = cThreeJetHueSpeed;
         threeJet.ringRadius = cThreeJetRingRadius;
-        threeJet.colorMode  = (uint8_t)cThreeJetColorMode;
+        threeJet.colorMode  = cThreeJetColorMode;
         threeJet.modJet0Angle.modRate  = cModJet0AngleRate;
         threeJet.modJet0Angle.modLevel = cModJet0AngleLevel;
         threeJet.modJet1Angle.modRate  = cModJet1AngleRate;
@@ -469,8 +575,12 @@ namespace fastFluid {
         fluidAdvect();
         PROFILE_END();
 
-        PROFILE_START("renderFluidToLeds");
-        renderFluidToLeds();
+        PROFILE_START("render");
+        if (cDebugView == DEBUG_VIEW_COLOR) {
+            renderFluidToLeds();
+        } else {
+            renderDebugView(cDebugView);
+        }
         PROFILE_END();
 
         // Obstacle overlay: write color over the rendered dye at solid

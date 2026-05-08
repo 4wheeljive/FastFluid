@@ -30,7 +30,7 @@ namespace fastFluid {
     static unsigned long lastFrameMs;
     uint8_t lastEmitter = 255;  // force initial setup on first frame
     uint8_t lastFlow = 255;  // force initial setup on first frame
-    bool useRainbow = false;  // false = spectrum (even HSV), true = FastLED rainbow character
+    //bool useRainbow = false;  // false = spectrum (even HSV), true = FastLED rainbow character
 
     // Shared frame timing — set once per frame in runfastFluid(), read by all emitters and flows.
     // Scaled by globalSpeed so all time-based behavior respects the master clock.
@@ -175,13 +175,15 @@ namespace fastFluid {
         };
     }
 
+    
     static ColorF rainbow(float t, float speed, float phase) {
         float hue = fmodPos(t * speed + phase, 1.0f);
         if (cPaletteMode) {
             return paletteColor(hue);
         }
-        return useRainbow ? hsvRainbow(hue) : hsvSpectrum(hue);
+        return hsvSpectrum(hue); // useRainbow ? hsvRainbow(hue) :
     }
+    
 
     inline void startingPalette() {
         if (gGradientPaletteCount == 0) {return;}

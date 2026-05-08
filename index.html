@@ -244,11 +244,11 @@
             </div>
    
             <div class = "control-group">
-                <control-checkbox
+                <!--<control-checkbox
                     label="Rainbow Mode"
                     data-my-number="32"
                     unchecked>
-                </control-checkbox>
+                </control-checkbox>-->
                 <control-checkbox
                     label="Palette Mode"
                     data-my-number="33"
@@ -670,8 +670,8 @@
         // ******************************************************************************************************
         // EMITTER / FLOW NAMES (parallel to ESP32 enums) *******************************************************
 
-        const EMITTER_NAMES = ["FLUIDJET", "THREEJET"];
-        const FLOW_NAMES    = ["FLUID"];
+        const EMITTER_NAMES = ["SINGLEJET", "THREEJET"];
+        const FLOW_NAMES    = ["SMOKE"];
 
         // ******************************************************************************************************
         // PARAMETER REGISTRY *******************************************************************************
@@ -679,12 +679,15 @@
         const PARAMETER_REGISTRY = {
             // GLOBAL
             globalSpeed: {min: 0.1, max: 5.0, default: 0.5, step: 0.1},
-            //persistence:  {min: 0, max: 20, default: 0, step: 1},
-            //persistFine:  {min: 0.01, max: 0.99, default: 0.05, step: 0.01},
-            //colorShift:  {min: 0.01, max: 1, default: 0.10, step: 0.01},
             paletteBlendRate: {min: 1, max: 64, default: 16, step: 1},
+            debugView: {
+                min: 0, max: 6, default: 0, step: 1,
+                type: 'dropdown',
+                label: 'View',
+                options: ['Normal', 'Velocity', 'Vorticity', 'Pressure', 'Divergence', 'Divergence Signed', 'Dye Density']
+            },
  
-            // EMITTER: fluidJet
+            // EMITTER: singleJet
             jetDensity:    {min: 0, max: 200, default: 50, step: 1},
             jetForce:      {min: 0, max: 5, default: 0.25, step: 0.05},
             jetRadius:     {min: 1, max: 15, default: 4, step: 0.5},
@@ -712,7 +715,7 @@
             modJet2AngleRate:    {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
             modJet2AngleLevel:   {min: 0, max: 2.0, default: 1.0, step: 0.1},
 
-            // FLOW: fluid
+            // FLOW: smoke
             viscosity:           {min: 0, max: 0.01, default: 0.0, step: 0.0005},
             diffusion:           {min: 0, max: 0.01, default: 0.0, step: 0.0005},
             velocityDissipation: {min: 0.01, max: 1.0, default: 0.75, step: 0.01},
@@ -721,13 +724,13 @@
             gravityForce:        {min: 0, max: 2.0, default: 1.0, step: 0.05},
             gravityAngle:        {min: 0, max: 360, default: 180, step: 1},
             diffuseIterations:   {min: 2, max: 30, default: 6, step: 1},
-            projectIterations:   {min: 2, max: 30, default: 20, step: 1},
+            projectIterations:   {min: 2, max: 30, default: 10, step: 1},
             modVelDissipRate:    {min: 0.1, max: 3.0, default: 0.5, step: 0.1},
             modVelDissipLevel:   {min: 0, max: 1.0, default: 0.0, step: 0.05},
             modDyeDissipRate:    {min: 0.1, max: 3.0, default: 0.5, step: 0.1},
             modDyeDissipLevel:   {min: 0, max: 1.0, default: 0.0, step: 0.05},
 
-            // FLOW: fluid (display pipeline)
+            // Render parameters
             colorContrast:       {min: 0.8, max: 1.8, default: 0.8, step: 0.01},
             blackPoint:          {min: 0.0, max: 0.12, default: 0.0897, step: 0.005},
             flowSat:             {min: 0.0, max: 2.0, default: 0.5583, step: 0.01},
@@ -735,7 +738,7 @@
             glowStrength:        {min: 0.0, max: 2.0, default: 0.0, step: 0.01},
             highlightSat:        {min: 0.0, max: 2.0, default: 0.22, step: 0.01},
 
-            // FLOW: fluid (paddles obstacle)
+            // OBSTACLE: paddles
             paddleWidth:         {min: 1, max: 64, default: 16, step: 1},
             paddleSlideRate:     {min: 0, max: 3.0, default: 0.3, step: 0.05},
             paddleSlideLevel:    {min: 0, max: 1.0, default: 0.85, step: 0.05},
@@ -746,10 +749,10 @@
         };
 
         // Parameter lists per component
-        const GLOBAL_PARAMS  = ["globalSpeed", "paletteBlendRate"]; // "persistence", "persistFine", "colorShift", 
+        const GLOBAL_PARAMS  = ["globalSpeed", "paletteBlendRate", "debugView"];
 
         const EMITTER_PARAMS = {
-            "fluidjet":     ["jetDensity", "jetForce", "jetRadius", "jetSpread", "jetHueSpeed",
+            "singlejet":     ["jetDensity", "jetForce", "jetRadius", "jetSpread", "jetHueSpeed",
                             "jetSwingRange",
                             "modJetForceRate", "modJetForceLevel",
                             "modAngleRate", "modAngleLevel",
@@ -762,7 +765,7 @@
         };
 
         const FLOW_PARAMS = {
-            "fluid":       ["viscosity", "diffusion", "velocityDissipation", "dyeDissipation",
+            "smoke":       ["viscosity", "diffusion", "velocityDissipation", "dyeDissipation",
                             "vorticity", "gravityForce", "gravityAngle",
                             "diffuseIterations", "projectIterations",
                             "modVelDissipRate", "modVelDissipLevel",
@@ -777,6 +780,8 @@
         // Helper functions *********************************************
 
         function getParameterLabel(paramName) {
+            const config = PARAMETER_REGISTRY[paramName];
+            if (config && config.label) return config.label;
             return paramName.charAt(0).toUpperCase() + paramName.slice(1);
         }
 
@@ -1665,6 +1670,28 @@
                     if (!config) return '';
                     const pLabel = getParameterLabel(paramName);
                     const pId    = getParameterId(paramName);
+                    if (config.type === 'dropdown') {
+                        const options = (config.options || []).map((option, index) =>
+                            `<option value="${index}" ${index === config.default ? 'selected' : ''}>${option}</option>`
+                        ).join('');
+                        return `
+                        <div class="parameter-dropdown-container" style="
+                            display:flex;align-items:center;gap:0px;padding:5px;
+                            background-color:rgb(36,36,36);border-radius:4px;
+                            border:1px solid #696969;margin-bottom:3px;
+                            transition:border-color 0.3s ease;">
+                            <label style="flex:0 0 100px;color:#d1d1d1;">${pLabel}:</label>
+                            <select class="param-dropdown"
+                                data-param-name="${paramName}" data-param-id="${pId}"
+                                style="flex:1;background-color:#2a2a2a;color:white;
+                                border:1px solid #696969;border-radius:3px;padding:7px;">
+                                ${options}
+                            </select>
+                            <button class="param-reset" data-param-name="${paramName}" data-default="${config.default}"
+                                style="flex:0 0 40px;background-color:#1d1d1d;color:white;
+                                border:none;border-radius:4px;padding:4px;cursor:pointer;">&#x21bb;</button>
+                        </div>`;
+                    }
                     return `
                         <div class="parameter-slider-container" style="
                             display:flex;align-items:center;gap:0px;padding:5px;
@@ -1730,6 +1757,16 @@
                     });
                 });
 
+                this.querySelectorAll('.param-dropdown').forEach(select => {
+                    select.addEventListener('change', (e) => {
+                        const value = parseInt(e.target.value);
+                        const paramId = e.target.getAttribute('data-param-id');
+                        if (!isNaN(value)) {
+                            this.sendValue(paramId, value);
+                        }
+                    });
+                });
+
                 this.querySelectorAll('.param-reset').forEach(button => {
                     button.addEventListener('click', (e) => {
                         const paramName = e.target.getAttribute('data-param-name');
@@ -1745,15 +1782,19 @@
             updateSliderValues(paramName, value) {
                 const r = this.querySelector(`input[type="range"][data-param-name="${paramName}"]`);
                 const n = this.querySelector(`input[type="number"][data-param-name="${paramName}"]`);
+                const d = this.querySelector(`select[data-param-name="${paramName}"]`);
                 if (r) r.value = value;
                 if (n) n.value = value;
+                if (d) d.value = value;
             }
 
             updateParameterValues(paramId, value) {
                 const r = this.querySelector(`input[type="range"][data-param-id="${paramId}"]`);
                 const n = this.querySelector(`input[type="number"][data-param-id="${paramId}"]`);
+                const d = this.querySelector(`select[data-param-id="${paramId}"]`);
                 if (r) r.value = value;
                 if (n) n.value = value;
+                if (d) d.value = value;
             }
 
             debouncedSend(paramId, value) {
@@ -1768,7 +1809,8 @@
             }
 
             setSendingState(paramId, isSending) {
-                const container = this.querySelector(`input[data-param-id="${paramId}"]`)?.closest('.parameter-slider-container');
+                const control = this.querySelector(`[data-param-id="${paramId}"]`);
+                const container = control?.closest('.parameter-slider-container, .parameter-dropdown-container');
                 if (container) container.style.borderColor = isSending ? '#ffa500' : '#696969';
             }
 
