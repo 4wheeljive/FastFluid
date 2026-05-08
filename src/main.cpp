@@ -16,7 +16,7 @@
 //#include "LittleFS.h"
 //#define FORMAT_LITTLEFS_IF_FAILED true
 
-bool debug = false;
+bool debug = true;
 
 #include "profiler.h"
 #ifdef PROFILING_ENABLED
@@ -41,7 +41,7 @@ uint16_t ledNum = 0;
 
 uint8_t EMITTER = 0;
 uint8_t FLOW = 0;
-uint8_t BRIGHTNESS = 35;
+uint8_t BRIGHTNESS = 50;
 
 uint8_t defaultMapping = 0;
 bool mappingOverride = false;

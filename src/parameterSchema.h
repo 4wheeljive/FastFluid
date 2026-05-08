@@ -16,10 +16,10 @@ extern uint8_t FLOW;
 // ═══════════════════════════════════════════════════════════════════
 
 const char* const GLOBAL_PARAMS[] PROGMEM = {
-   "globalSpeed", "persistence", "persistFine", "colorShift", "paletteBlendRate"
+   "globalSpeed", "paletteBlendRate"      // "persistence", "persistFine", "colorShift", 
 };
 
-const uint8_t GLOBAL_PARAM_COUNT = 5;
+const uint8_t GLOBAL_PARAM_COUNT = 2;
 
 // ═══════════════════════════════════════════════════════════════════
 //  EMITTERS
@@ -110,7 +110,7 @@ static const FlowParamEntry* getFlowParams(uint8_t flowIdx) {
 //  MISCELLANEOUS CONTROLS
 // ═══════════════════════════════════════════════════════════════════
 
-uint8_t cBright = 35;
+uint8_t cBright = 50;
 uint8_t cMapping = 0;
 uint8_t cOverrideMapping = 0;
 
@@ -123,13 +123,13 @@ uint8_t cEaseLum = 0;
 
 // GLOBAL -------------------------
 float cGlobalSpeed = 1.0f;
-float cPersistence = 0.0f;
-float cPersistFine = 0.05f;
-float cColorShift = 0.10f;
+//float cPersistence = 0.0f;
+//float cPersistFine = 0.05f;
+//float cColorShift = 0.10f;
 bool cUseRainbow = false;
 bool cPaletteMode = false;
 bool cRotatePalette = false;
-float cPaletteBlendRate = 16.0f;
+uint8_t cPaletteBlendRate = 16;
 
 // EMITTER: fluidJet --------------
 float cJetDensity = 60.0f;
@@ -198,12 +198,15 @@ bool  cPaddleOverlay = true;
 //  X-MACRO PARAMETER TABLE
 // ═══════════════════════════════════════════════════════════════════
 
+
+//   X(float, Persistence, 0.0f) \
+//   X(float, PersistFine, 0.05f) \
+//   X(float, ColorShift, 0.10f) \
+
+
 #define PARAMETER_TABLE \
    X(uint8_t, OverrideMapping, 0) \
    X(float, GlobalSpeed, 1.0f) \
-   X(float, Persistence, 0.0f) \
-   X(float, PersistFine, 0.05f) \
-   X(float, ColorShift, 0.10f) \
    X(float, PaletteBlendRate, 16.0f) \
    X(float, JetDensity, 50.0f) \
    X(float, JetForce, 0.25f) \

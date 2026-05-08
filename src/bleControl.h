@@ -455,8 +455,9 @@ void processButton(uint8_t receivedValue) {
 
    if (receivedValue == 91) { sendGlobalState(); }
    if (receivedValue == 92) { sendEmitterState(); }
+   if (receivedValue == 93) { sendFlowState(); }
    //if (receivedValue == 95) { resetAll(); }
-   if (receivedValue == 96) { sendFlowState(); }
+
 
    if (receivedValue == 98) { displayOn = true; }
    if (receivedValue == 99) { displayOn = false; }
@@ -509,16 +510,13 @@ void processNumber(String receivedID, float receivedValue) {
 }
 
 void processCheckbox(String receivedID, bool receivedValue ) {
-
    sendReceiptCheckbox(receivedID, receivedValue);
-
    if (receivedID == "cx11") {mappingOverride = receivedValue;};
    if (receivedID == "cx32") {cUseRainbow = receivedValue;};
    if (receivedID == "cx33") {cPaletteMode = receivedValue;};
    if (receivedID == "cx34") {cRotatePalette = receivedValue;};
    if (receivedID == "cx40") {cPaddleEnable = receivedValue;};
    if (receivedID == "cx41") {cPaddleOverlay = receivedValue;};
-
 }
 
 void processString(String receivedID, String receivedValue ) {

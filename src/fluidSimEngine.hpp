@@ -181,6 +181,43 @@ namespace fluidSim {
     static_assert(sizeof(EMITTER_PREPARE_MOD) / sizeof(EMITTER_PREPARE_MOD[0]) == EMITTER_COUNT,
                   "EMITTER_PREPARE_MOD size must match EMITTER_COUNT");
 
+    static uint8_t configureActiveModulatorSlots() {
+        uint8_t nextSlot = 0;
+
+        activeEmitterTimers = 0;
+        activeFlowTimers = 0;
+        activeObstacleTimers = 0;
+
+        switch (activeEmitter) {
+            case EMITTER_FLUIDJET:
+                nextSlot = assignModSlots(fluidJet.mods, nextSlot);
+                activeEmitterTimers = fluidJet.numActiveTimers();
+                break;
+            case EMITTER_THREEJET:
+                nextSlot = assignModSlots(threeJet.mods, nextSlot);
+                activeEmitterTimers = threeJet.numActiveTimers();
+                break;
+            default:
+                break;
+        }
+
+        switch (activeFlow) {
+            case FLOW_FLUID:
+                nextSlot = assignModSlots(fluid.mods, nextSlot);
+                activeFlowTimers = fluid.numActiveTimers();
+                break;
+            default:
+                break;
+        }
+
+        if (paddles.enable) {
+            nextSlot = assignModSlots(paddles.mods, nextSlot);
+            activeObstacleTimers = paddles.numActiveTimers();
+        }
+
+        return nextSlot;
+    }
+
     // ═══════════════════════════════════════════════════════════════════
     //  INIT & MAIN LOOP
     // ═══════════════════════════════════════════════════════════════════
@@ -203,6 +240,7 @@ namespace fluidSim {
         timings = timers();
         move = modulators();
         startingPalette();
+
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -279,9 +317,10 @@ namespace fluidSim {
     static void pushDefaultsToCVars() {
         // Universal (always)
         cGlobalSpeed = globalSpeed;
-        cPersistence = fl::floorf(persistence);
-        cPersistFine = persistence - cPersistence;
-        cColorShift = colorShift;
+        cPaletteBlendRate = paletteBlendRate;
+        //cPersistence = fl::floorf(persistence);
+        //cPersistFine = persistence - cPersistence;
+        //cColorShift = colorShift;
 
         // Emitter-specific
         switch (activeEmitter) {
@@ -327,9 +366,10 @@ namespace fluidSim {
     // actually consumes them this frame.
     static void syncFromCVars() {
         globalSpeed = cGlobalSpeed;
-        persistence = cPersistence + cPersistFine;
-        colorShift = cColorShift;
+        //persistence = cPersistence + cPersistFine;
+        //colorShift = cColorShift;
         useRainbow = cUseRainbow;
+        paletteBlendRate = cPaletteBlendRate;
 
         // fluidJet
         fluidJet.jetDensity = cJetDensity;
@@ -374,16 +414,17 @@ namespace fluidSim {
             }
         }
 
-        int maxChanges = (int)(cPaletteBlendRate + 0.5f);
+        /*//int maxChanges = (int)(cPaletteBlendRate + 0.5f);
+        int maxChanges = cPaletteBlendRate;
         if (maxChanges < 1) {
             maxChanges = 1;
         } else if (maxChanges > 255) {
             maxChanges = 255;
-        }
+        }*/
 
         EVERY_N_MILLISECONDS(40) {
             if (gCurrentPalette != gTargetPalette) {
-                nblendPalette32TowardPalette32(gCurrentPalette, gTargetPalette, (uint8_t)maxChanges);
+                nblendPalette32TowardPalette32(gCurrentPalette, gTargetPalette, cPaletteBlendRate);
             } else {
                 gCurrentPaletteNumber = gTargetPaletteNumber;
             }
@@ -415,16 +456,19 @@ namespace fluidSim {
 
         syncFromCVars();
         updatePaletteState();
+        uint8_t totalActiveTimers = configureActiveModulatorSlots();
 
         // ─── Modulator pipeline (Phase 4.5 consolidation) ──────────
         // 1. Each component writes its slot ratios. 2. Single
         // calculate_modulators pass. 3. Components run, reading move[*].
         // Avoids the previous shared-slot fragility (flow + emitter
         // both writing slots 0+1, working only by capture-before-overwrite).
-        fluidPrepareModulators();
         EMITTER_PREPARE_MOD[activeEmitter]();
-        paddlesPrepareModulators();
-        calculate_modulators(timings, TOTAL_ACTIVE_SLOTS);
+        fluidPrepareModulators();
+        if (activeObstacleTimers > 0) {
+            paddlesPrepareModulators();
+        }
+        calculate_modulators(timings, totalActiveTimers);
 
         // Pipeline: obstacle → prepare → emit → advect → render → overlay
         updateObstacle(t);

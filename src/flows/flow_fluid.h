@@ -40,8 +40,53 @@ namespace fluidSim {
         uint8_t diffuseIterations = 6;        // Jacobi passes for diffuse
         uint8_t projectIterations = 20;       // Jacobi passes for pressure projection
 
-        ModConfig modVelDissip = {FLOW_SLOT_BASE + 0, 0.5f, 0.0f};   // modTimer, modRate, modLevel
-        ModConfig modDyeDissip = {FLOW_SLOT_BASE + 1, 0.5f, 0.0f};
+        ModConfig modVelDissip = {0, 0.5f, 0.0f};   // modTimer, modRate, modLevel
+        ModConfig modDyeDissip = {1, 0.5f, 0.0f};
+        ModConfig* mods[2] = {&modVelDissip, &modDyeDissip};
+
+        FluidParams() = default;
+
+        FluidParams(const FluidParams& other)
+            : viscosity(other.viscosity),
+              diffusion(other.diffusion),
+              velocityDissipation(other.velocityDissipation),
+              dyeDissipation(other.dyeDissipation),
+              vorticity(other.vorticity),
+              gravityForce(other.gravityForce),
+              gravityAngle(other.gravityAngle),
+              diffuseIterations(other.diffuseIterations),
+              projectIterations(other.projectIterations),
+              modVelDissip(other.modVelDissip),
+              modDyeDissip(other.modDyeDissip) {
+            bindMods();
+        }
+
+        FluidParams& operator=(const FluidParams& other) {
+            if (this != &other) {
+                viscosity = other.viscosity;
+                diffusion = other.diffusion;
+                velocityDissipation = other.velocityDissipation;
+                dyeDissipation = other.dyeDissipation;
+                vorticity = other.vorticity;
+                gravityForce = other.gravityForce;
+                gravityAngle = other.gravityAngle;
+                diffuseIterations = other.diffuseIterations;
+                projectIterations = other.projectIterations;
+                modVelDissip = other.modVelDissip;
+                modDyeDissip = other.modDyeDissip;
+                bindMods();
+            }
+            return *this;
+        }
+
+        void bindMods() {
+            mods[0] = &modVelDissip;
+            mods[1] = &modDyeDissip;
+        }
+
+        uint8_t numActiveTimers() const {
+            return sizeof(mods) / sizeof(mods[0]);
+        }
     };
 
     FluidParams fluid;

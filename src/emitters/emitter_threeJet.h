@@ -49,9 +49,51 @@ namespace fluidSim {
 
         // Per-jet angle modulators — independent noise drives each jet's
         // rotation around its ring anchor point.
-        ModConfig modJet0Angle = {EMITTER_SLOT_BASE + 0, 0.3f, 1.0f};
-        ModConfig modJet1Angle = {EMITTER_SLOT_BASE + 1, 0.3f, 1.0f};
-        ModConfig modJet2Angle = {EMITTER_SLOT_BASE + 2, 0.3f, 1.0f};
+        ModConfig modJet0Angle = {0, 0.3f, 1.0f};
+        ModConfig modJet1Angle = {1, 0.3f, 1.0f};
+        ModConfig modJet2Angle = {2, 0.3f, 1.0f};
+        ModConfig* mods[3] = {&modJet0Angle, &modJet1Angle, &modJet2Angle};
+
+        ThreeJetParams() = default;
+
+        ThreeJetParams(const ThreeJetParams& other)
+            : density(other.density),
+              force(other.force),
+              radius(other.radius),
+              hueSpeed(other.hueSpeed),
+              ringRadius(other.ringRadius),
+              colorMode(other.colorMode),
+              modJet0Angle(other.modJet0Angle),
+              modJet1Angle(other.modJet1Angle),
+              modJet2Angle(other.modJet2Angle) {
+            bindMods();
+        }
+
+        ThreeJetParams& operator=(const ThreeJetParams& other) {
+            if (this != &other) {
+                density = other.density;
+                force = other.force;
+                radius = other.radius;
+                hueSpeed = other.hueSpeed;
+                ringRadius = other.ringRadius;
+                colorMode = other.colorMode;
+                modJet0Angle = other.modJet0Angle;
+                modJet1Angle = other.modJet1Angle;
+                modJet2Angle = other.modJet2Angle;
+                bindMods();
+            }
+            return *this;
+        }
+
+        void bindMods() {
+            mods[0] = &modJet0Angle;
+            mods[1] = &modJet1Angle;
+            mods[2] = &modJet2Angle;
+        }
+
+        uint8_t numActiveTimers() const {
+            return sizeof(mods) / sizeof(mods[0]);
+        }
     };
 
     ThreeJetParams threeJet;
