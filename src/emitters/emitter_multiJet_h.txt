@@ -1,74 +1,148 @@
 #pragma once
 
 // ═══════════════════════════════════════════════════════════════════
-//  THREE-JET EMITTER — emitter_threeJet.h
+//  MULTI-JET EMITTER — emitter_multiJet.h
 // ═══════════════════════════════════════════════════════════════════
-//
-//  Three jets evenly spaced on a virtual ring around the grid center,
-//  each rotating freely around its anchor via independent noise. Color
-//  per jet is determined by ColorMode (TRIPLE / DOUBLE / ORANGE).
-//
-//  Anchor angles: 90° (bottom), 210° (top-left), 330° (top-right).
-//  Jets point radially outward from the ring center by default; the
-//  per-jet angle modulator rotates them around the anchor point.
-//
-//  Ported from colorTrailsOrig/solver_debug_views.py — three jets
-//  with full-360° angle wandering + per-jet hue offsets.
 
 #include "fastFluidTypes.h"
 #include "modulators.h"
-#include "../emitters.h"   // shared fluidJetSplat()
+#include "../emitters.h"
+#include "../jets.h"
+
 
 namespace fastFluid {
+
+    static constexpr uint8_t MAX_MULTI_JETS = 5;
+
+    JetParams multiJet[MAX_MULTI_JETS];
+    JetPack jetPack;
+
+    static constexpr ModConfig JetPack::* MULTI_JET_MODS[] = {
+        &JetPack::modJetRadialAngle,
+        &JetPack::modJetRadius,
+        &JetPack::modJetWobble,
+        &JetPack::modJetAngle,
+        &JetPack::modJetDensity,
+        &JetPack::modJetForce,
+        &JetPack::modJetHueSpeed
+    };
+
+
     FL_FAST_MATH_BEGIN
     FL_OPTIMIZATION_LEVEL_O3_BEGIN
 
-    // Color modes for three-jet hue assignment.
-    //   TRIPLE: per-jet offsets at 0, 1/3, 2/3 (relative to time-rotating base hue)
-    //   DOUBLE: per-jet offsets at 0, 170/360, 190/360 (relative; "near-opposite" pair)
-    //   ORANGE: per-jet absolute hues at 0/360, 32/360, 54/360 (red/orange/yellow,
-    //           do NOT rotate over time)
-    enum ThreeJetColorMode : uint8_t {
-        THREEJET_COLOR_TRIPLE = 0,
-        THREEJET_COLOR_DOUBLE = 1,
-        THREEJET_COLOR_ORANGE = 2
+
+
+
+    // Phase 1 of frame: write this component's timer slot ratios.
+    static void multiJetPrepareModulators() {
+        timings.ratio[jetPack.modJetRadialAngle.modTimer] = 0.00045f * jetPack.modJetRadialAngle.modRate;
+        timings.ratio[jetPack.modJetRadius.modTimer] = 0.00045f * jetPack.modJetRadius.modRate;
+        timings.ratio[jetPack.modJetWobble.modTimer] = 0.00045f * jetPack.modJetWobble.modRate;
+        timings.ratio[jetPack.modJetAngle.modTimer] = 0.00040f * jetPack.modJetAngle.modRate;
+        timings.ratio[jetPack.modJetDensity.modTimer] = 0.00050f * jetPack.modJetDensity.modRate;
+        timings.ratio[jetPack.modJetForce.modTimer] = 0.00050f * jetPack.modJetForce.modRate;
+        timings.ratio[jetPack.modJetHueSpeed.modTimer] = 0.00050f * jetPack.modJetHueSpeed.modRate;
+    }
+
+
+
+    static void loadMultiJets() {
+        const uint8_t count = min<uint8_t>(jetPack.numJets, MAX_MULTI_JETS);
+
+        for (uint8_t i = 0; i < count; i++) {
+            JetParams& jet = multiJet[i];
+
+            jet.angle =
+                jetPack.angle +
+                move.directional_noise[multiJet.modJetAngle.modTimer] *
+                multiJet.varianceAngle *
+                jet.angleFactor;
+
+            jet.radius =
+                multiJet.radius *
+                (1.0f + move.directional_noise[multiJet.modJetRadius.modTimer] *
+                multiJet.varianceRadius *
+                jet.radiusFactor);
+
+            jet.density =
+                multiJet.density *
+                (1.0f + move.directional_noise[multiJet.modJetDensity.modTimer] *
+                multiJet.varianceDensity *
+                jet.densityFactor);
+
+            jet.force =
+                multiJet.force *
+                (1.0f + move.directional_noise[multiJet.modJetForce.modTimer] *
+                multiJet.varianceForce *
+                jet.forceFactor);
+
+            jet.hueSpeed =
+                multiJet.hueSpeed *
+                (1.0f + move.directional_noise[multiJet.modJetHueSpeed.modTimer] *
+                multiJet.varianceHueSpeed *
+                jet.hueSpeedFactor);
+        }
+    }
+
+
+
+
+
+    JetParams jet[5];
+    jet[0]; 
+    jet[1]; 
+    jet[2]; 
+    jet[3];
+    jet[4]; 
+
+
+    JetPack jetPack {
+        numJets = 3;
+        varianceRadialAngle = 0.1f;
+        varianceRadius = 0.1f;
+        varianceWobble = 0.1f;
+        varianceJetAngle = 0.1f;			
+        varianceDensity = 0.1f;
+        varianceForce = 0.1f;
+        varianceHueSpeed = 0.1f;
+        modJetRadialAngle = {0, 0.3f, 1.0f};
+        modJetRadius  = {0, 0.3f, 1.0f};
+        modJetWobble  = {0, 0.3f, 1.0f};
+        modJetAngle  = {0, 0.3f, 1.0f};
+        modJetDensity  = {0, 0.3f, 1.0f};
+        modJetForce  = {0, 0.3f, 1.0f};
+        modJetHueSpeed  = {0, 0.3f, 1.0f};
     };
 
-    struct ThreeJetParams {
-        // Shared across all 3 jets (sizes / forces / hue).
-        float density       = 50.0f;
-        float force         = 0.7f;       // base velocity magnitude per jet
-        float radius        = (float)MIN_DIMENSION / 12.0f;
-        float hueSpeed      = 0.25f;      // base hue rotation rate (Hz)
-        // Ring radius — distance from grid center to each jet anchor, in cells.
-        // Defaults to 25% of MIN_DIMENSION (matches solver_debug_views.py: GRID_SIZE * 0.25).
-        float ringRadius    = (float)MIN_DIMENSION * 0.25f;
 
-        // Color mode selects per-jet hue offset scheme.
-        uint8_t colorMode = THREEJET_COLOR_TRIPLE;
 
-        // Per-jet angle modulators — independent noise drives each jet's
-        // rotation around its ring anchor point.
-        ModConfig modJet0Angle = {0, 0.3f, 1.0f};
-        ModConfig modJet1Angle = {1, 0.3f, 1.0f};
-        ModConfig modJet2Angle = {2, 0.3f, 1.0f};
-    };
 
-    static constexpr ModConfig ThreeJetParams::* THREE_JET_MODS[] = {
+    /*static constexpr ModConfig ThreeJetParams::* THREE_JET_MODS[] = {
         &ThreeJetParams::modJet0Angle,
         &ThreeJetParams::modJet1Angle,
         &ThreeJetParams::modJet2Angle
-    };
+    };*/
 
-    ThreeJetParams threeJet;
 
-    // Phase 1 of frame: write this component's timer slot ratios.
-    static void threeJetPrepareModulators() {
-        timings.ratio[threeJet.modJet0Angle.modTimer] = 0.00040f * threeJet.modJet0Angle.modRate;
-        timings.ratio[threeJet.modJet1Angle.modTimer] = 0.00045f * threeJet.modJet1Angle.modRate;
-        timings.ratio[threeJet.modJet2Angle.modTimer] = 0.00050f * threeJet.modJet2Angle.modRate;
-    }
 
+
+
+        void loadJets() {
+            for (uint8_t i=0; i<numActiveJets; i++) {
+                jet[i].angle = jetPack.angle * jetPack.varianceAngle * jet[i].angleFactor;
+                jet[i].radius = jetPack.radius * jetPack.varianceRadius * jet[i].radiusFactor;
+                jet[i].density = jetPack.density * jetPack.varianceDensity * jet[i].densityFactor;
+                jet[i].force = jetPack.force * jetPack.varianceForce * jet[i].forceFactor;
+                jet[i].hueSpeed = jetPack.hueSpeed * jetPack.varianceHueSpeed * jet[i].hueSpeedFactor;
+            }
+
+
+        }
+
+
+
+    /*
     // Compute per-jet hue based on color mode.
     //   jetIndex: 0/1/2
     //   baseHue:  current time-rotating hue (already `t * hueSpeed` mod 1)
@@ -89,7 +163,12 @@ namespace fastFluid {
                 return fmodPos(baseHue + offsets[jetIndex], 1.0f);
             }
         }
-    }
+    }*/
+
+
+
+
+
 
     // Emit one jet at a ring anchor point. The jet points radially OUTWARD
     // by default; the angle modulator rotates that direction around its anchor.
@@ -120,25 +199,29 @@ namespace fastFluid {
         const float layerMid = r * 0.6f;
         const float layerOut = r * 1.1f;
         // Core
-        jetSplat(anchorCol, anchorRow, r,
+        fluidJetSplat(anchorCol, anchorRow, r,
                       density * 0.55f,
                       velX, velY, baseHue);
         // Middle layer (shifted along jet's velocity direction)
-        jetSplat(anchorCol + velCol * layerMid, anchorRow + velRow * layerMid, r,
+        fluidJetSplat(anchorCol + velCol * layerMid, anchorRow + velRow * layerMid, r,
                       density * 0.30f,
                       velX * 0.82f, velY * 0.82f, baseHue);
         // Outer layer
-        jetSplat(anchorCol + velCol * layerOut, anchorRow + velRow * layerOut, r,
+        fluidJetSplat(anchorCol + velCol * layerOut, anchorRow + velRow * layerOut, r,
                       density * 0.15f,
                       velX * 0.65f, velY * 0.65f, baseHue);
     }
 
-    static void emitThreeJet() {
-        // ─── Signal acquisition ────────────────────────────────────
-        const float angle0 = move.directional_noise[threeJet.modJet0Angle.modTimer];
-        const float angle1 = move.directional_noise[threeJet.modJet1Angle.modTimer];
-        const float angle2 = move.directional_noise[threeJet.modJet2Angle.modTimer];
+    static void emitMultiJet() {
 
+
+        
+
+        // ─── Signal acquisition ────────────────────────────────────
+        
+        const float jetPack.angle = move.directional_noise[jetPack.modJetAngle.modTimer];
+        
+        
         // ─── Ring geometry ─────────────────────────────────────────
         // Three anchors evenly spaced on a circle. Anchor angles match
         // solver_debug_views.py: 90° (bottom), 210° (top-left), 330° (top-right).

@@ -27,7 +27,7 @@
 //  Ported from colorTrailsOrig/navier_stokes_3.py
 //  (apply_obstacle_boundary).
 
-#include "flows/flow_fluid.h"
+#include "flows/flow_smoke.h"
 
 namespace fastFluid {
     FL_FAST_MATH_BEGIN

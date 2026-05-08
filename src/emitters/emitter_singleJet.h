@@ -1,7 +1,7 @@
 #pragma once
 
 // ═══════════════════════════════════════════════════════════════════
-//  FLUID JET EMITTER — emitter_fluidJet.h
+//  SINGLE JET EMITTER — emitter_singleJet.h
 // ═══════════════════════════════════════════════════════════════════
 //
 //  Injects dye (RGB) and momentum (u,v) at a fixed bottom-center
@@ -13,13 +13,13 @@
 
 #include "fastFluidTypes.h"
 #include "modulators.h"
-#include "../emitters.h"   // shared fluidJetSplat()
+#include "../emitters.h"
 
 namespace fastFluid {
     FL_FAST_MATH_BEGIN
     FL_OPTIMIZATION_LEVEL_O3_BEGIN
 
-    struct FluidJetParams {
+    struct SingleJetParams {
         // Density and force are grid-independent (forces, not sizes).
         float jetDensity    = 50.0f;     // dye magnitude (per layer-weighted)
         float jetForce      = 0.25f;     // velocity magnitude
@@ -39,25 +39,25 @@ namespace fastFluid {
         ModConfig modJetSwing = {2, 0.3f, 0.0f};   // modLevel: 0 = no swing, 1 = full range
     };
 
-    static constexpr ModConfig FluidJetParams::* FLUID_JET_MODS[] = {
-        &FluidJetParams::modJetForce,
-        &FluidJetParams::modAngle,
-        &FluidJetParams::modJetSwing
+    static constexpr ModConfig SingleJetParams::* SINGLE_JET_MODS[] = {
+        &SingleJetParams::modJetForce,
+        &SingleJetParams::modAngle,
+        &SingleJetParams::modJetSwing
     };
 
-    FluidJetParams fluidJet;
+    SingleJetParams singleJet;
 
     // Phase 1 of frame: write this component's timer slot ratios.
-    static void fluidJetPrepareModulators() {
-        timings.ratio[fluidJet.modJetForce.modTimer] = 0.0004f  * fluidJet.modJetForce.modRate;
-        timings.ratio[fluidJet.modAngle.modTimer]    = 0.00045f * fluidJet.modAngle.modRate;
-        timings.ratio[fluidJet.modJetSwing.modTimer] = 0.0004f  * fluidJet.modJetSwing.modRate;
+    static void singleJetPrepareModulators() {
+        timings.ratio[singleJet.modJetForce.modTimer] = 0.0004f  * singleJet.modJetForce.modRate;
+        timings.ratio[singleJet.modAngle.modTimer]    = 0.00045f * singleJet.modAngle.modRate;
+        timings.ratio[singleJet.modJetSwing.modTimer] = 0.0004f  * singleJet.modJetSwing.modRate;
     }
 
-    static void emitFluidJet() {
-        const ModConfig& forceMod = fluidJet.modJetForce;
-        const ModConfig& angleMod = fluidJet.modAngle;
-        const ModConfig& swingMod = fluidJet.modJetSwing;
+    static void emitSingleJet() {
+        const ModConfig& forceMod = singleJet.modJetForce;
+        const ModConfig& angleMod = singleJet.modAngle;
+        const ModConfig& swingMod = singleJet.modJetSwing;
 
         // ─── Signal acquisition ────────────────────────────────────
         const float forceSignal = move.normalized_noise[forceMod.modTimer];
@@ -66,7 +66,7 @@ namespace fastFluid {
 
         // ─── Artistic application ──────────────────────────────────
         // Force: orbitalDots-style bipolar modulation
-        const float currentForce = fluidJet.jetForce * (1.0f + forceSignal * 0.4f);
+        const float currentForce = singleJet.jetForce * (1.0f + forceSignal * 0.4f);
 
         // Angle: noise-based offset around base direction.
         // Coefficient π/4 per modLevel unit → modLevel=2 reaches full ±π/2 (±90°).
@@ -75,7 +75,7 @@ namespace fastFluid {
 
         // Wrap final angle to [0, 2π) for sincos_fast (UB for negative inputs).
         constexpr float INV_2PI = 1.0f / CT_2PI;
-        float angle = fluidJet.jetAngle + angleOffset;
+        float angle = singleJet.jetAngle + angleOffset;
         angle -= fl::floorf(angle * INV_2PI) * CT_2PI;
 
         // Direction decomposition: angle 0 = straight up (negative y)
@@ -85,15 +85,15 @@ namespace fastFluid {
         const float velX = dirX * currentForce;
         const float velY = dirY * currentForce;
 
-        const float density = fluidJet.jetDensity;
+        const float density = singleJet.jetDensity;
 
         // Per-frame base hue. Each splat call dithers around this in the cell loop.
-        const float baseHue = fmodPos(t * fluidJet.jetHueSpeed, 1.0f);
+        const float baseHue = fmodPos(t * singleJet.jetHueSpeed, 1.0f);
 
         // Lateral position swing: plume slides side-to-side around base position.
         // Independent of angle modulation — both can run simultaneously, or
         // either alone. modLevel=0 disables swing without affecting angle.
-        const float swingOffset = swingSignal * swingMod.modLevel * fluidJet.jetSwingRange;
+        const float swingOffset = swingSignal * swingMod.modLevel * singleJet.jetSwingRange;
 
         // Jet position: bottom-center, offset horizontally by swing.
         const float jx = (float)WIDTH * 0.5f + swingOffset;
@@ -104,39 +104,39 @@ namespace fastFluid {
         // jetRadius so plume structure stays proportional to its core
         // size across grid sizes (was fixed 1.2/2.2 cells, calibrated
         // for a small grid).
-        const float r = fluidJet.jetRadius;
+        const float r = singleJet.jetRadius;
         const float layerMid  = r * 0.6f;
         const float layerOut  = r * 1.1f;
         // Core layer: 55% density, 100% velocity
-        fluidJetSplat(jx, jy, r,
+        jetSplat(jx, jy, r,
                       density * 0.55f,
                       velX,         velY,
                       baseHue);
         // Middle layer: 30% density, 82% velocity, shifted along jet
-        fluidJetSplat(jx + dirX * layerMid, jy + dirY * layerMid, r,
+        jetSplat(jx + dirX * layerMid, jy + dirY * layerMid, r,
                       density * 0.30f,
                       velX * 0.82f, velY * 0.82f,
                       baseHue);
         // Outer layer: 15% density, 65% velocity, shifted further
-        fluidJetSplat(jx + dirX * layerOut, jy + dirY * layerOut, r,
+        jetSplat(jx + dirX * layerOut, jy + dirY * layerOut, r,
                       density * 0.15f,
                       velX * 0.65f, velY * 0.65f,
                       baseHue);
 
         // ─── Side injections (lateral push outward) ────────────────
-        if (fluidJet.jetSpread > 0.0f) {
+        if (singleJet.jetSpread > 0.0f) {
             // Perpendicular to jet axis: rotate (dirX,dirY) by 90°: (-dirY, dirX)
             const float perpX = -dirY;
             const float perpY =  dirX;
-            const float side = fluidJet.jetSpread;
+            const float side = singleJet.jetSpread;
             const float sideOff = r * 0.75f;
             // Left side: push left (negative perp)
-            fluidJetSplat(jx - perpX * sideOff, jy - perpY * sideOff, r * 0.7f,
+            jetSplat(jx - perpX * sideOff, jy - perpY * sideOff, r * 0.7f,
                           density * 0.15f,
                           -perpX * side * 0.35f, -perpY * side * 0.35f,
                           baseHue);
             // Right side: push right (positive perp)
-            fluidJetSplat(jx + perpX * sideOff, jy + perpY * sideOff, r * 0.7f,
+            jetSplat(jx + perpX * sideOff, jy + perpY * sideOff, r * 0.7f,
                           density * 0.15f,
                            perpX * side * 0.35f,  perpY * side * 0.35f,
                           baseHue);

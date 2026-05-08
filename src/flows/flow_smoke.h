@@ -1,7 +1,7 @@
 #pragma once
 
 // ═══════════════════════════════════════════════════════════════════
-//  FLUID (NAVIER-STOKES) SOLVER — flow_fluid.h
+//  SMOKE (NAVIER-STOKES) SOLVER — flow_smoke.h
 // ═══════════════════════════════════════════════════════════════════
 //
 //  Stable-fluids simulation (Jos Stam, 1999).  Maintains a persistent
@@ -10,9 +10,6 @@
 //    - optional vorticity confinement → project
 //    - dye diffuse + advect through final velocity field
 //    - per-frame dissipation
-//
-//  This flow expects pairing with emitter_fluidJet, which writes to
-//  both gR/gG/gB (dye) and u/v (velocity).
 //
 //  Ported from colorTrailsOrig/navier_stokes_1.py.
 
@@ -23,7 +20,7 @@ namespace fastFluid {
     FL_FAST_MATH_BEGIN
     FL_OPTIMIZATION_LEVEL_O3_BEGIN
 
-    struct FluidParams {
+    struct SmokeParams {
         float viscosity           = 0.0f;     // velocity diffusion coefficient
         float diffusion           = 0.0f;     // dye diffusion coefficient
         float velocityDissipation = 0.75f;     // per-second velocity decay (0..1, 1=no decay)
@@ -44,14 +41,14 @@ namespace fastFluid {
         ModConfig modDyeDissip = {1, 0.5f, 0.0f};
     };
 
-    static constexpr ModConfig FluidParams::* FLUID_MODS[] = {
-        &FluidParams::modVelDissip,
-        &FluidParams::modDyeDissip
+    static constexpr ModConfig SmokeParams::* SMOKE_MODS[] = {
+        &SmokeParams::modVelDissip,
+        &SmokeParams::modDyeDissip
     };
 
-    FluidParams fluid;
+    SmokeParams smoke;
 
-    // Working values prepared each frame by fluidPrepare()
+    // Working values prepared each frame by smokePrepare()
     static float workVelDissip = 0.5f;
     static float workDyeDissip = 0.5f;
 
@@ -130,7 +127,7 @@ namespace fastFluid {
             setBnd(b, x);
             return;
         }
-        linSolve(b, x, x0, a, 1.0f + 4.0f * a, fluid.diffuseIterations);
+        linSolve(b, x, x0, a, 1.0f + 4.0f * a, smoke.diffuseIterations);
     }
 
     // Semi-Lagrangian advection: backtrace each cell along velocity field, bilinearly sample source
@@ -267,7 +264,7 @@ namespace fastFluid {
         setBnd(0, pressure);
 
         // 2. Solve Poisson equation for pressure
-        linSolve(0, pressure, divergence, 1.0f, 4.0f, fluid.projectIterations);
+        linSolve(0, pressure, divergence, 1.0f, 4.0f, smoke.projectIterations);
 
         // 3. Subtract pressure gradient from velocity
         for (int y = 0; y < HEIGHT; y++) {
@@ -299,7 +296,7 @@ namespace fastFluid {
         }
 
         // 2. Compute gradient of |curl|, normalize, apply force
-        const float strength = fluid.vorticity;
+        const float strength = smoke.vorticity;
         for (int y = 0; y < HEIGHT; y++) {
             for (int xc = 0; xc < WIDTH; xc++) {
                 float gxp = fl::fabsf(sampleClamped(divergence, y,     xc + 1));
@@ -336,15 +333,15 @@ namespace fastFluid {
     // Engine collects all components' ratios, then runs ONE central
     // calculate_modulators call before any component reads `move[*]`.
     static void fluidPrepareModulators() {
-        timings.ratio[fluid.modVelDissip.modTimer] = 0.0004f  * fluid.modVelDissip.modRate;
-        timings.ratio[fluid.modDyeDissip.modTimer] = 0.00045f * fluid.modDyeDissip.modRate;
+        timings.ratio[smoke.modVelDissip.modTimer] = 0.0004f  * smoke.modVelDissip.modRate;
+        timings.ratio[smoke.modDyeDissip.modTimer] = 0.00045f * smoke.modDyeDissip.modRate;
     }
 
     // Phase 3 of frame: read modulator output and compute work values.
     // Called AFTER calculate_modulators has run.
     static void fluidPrepare() {
-        const ModConfig& velMod = fluid.modVelDissip;
-        const ModConfig& dyeMod = fluid.modDyeDissip;
+        const ModConfig& velMod = smoke.modVelDissip;
+        const ModConfig& dyeMod = smoke.modDyeDissip;
 
         // Signal acquisition: bipolar [-1, 1]
         const float velSignal = move.directional_noise[velMod.modTimer];
@@ -352,11 +349,11 @@ namespace fastFluid {
 
         // Artistic application: orbitalDots-style bipolar modulation,
         // clamped to [0.01, 1.0] to keep dissipation values stable.
-        workVelDissip = fluid.velocityDissipation *
+        workVelDissip = smoke.velocityDissipation *
             ((1.0f - velMod.modLevel) + velMod.modLevel * velSignal);
         workVelDissip = fmaxf(0.01f, fminf(1.0f, workVelDissip));
 
-        workDyeDissip = fluid.dyeDissipation *
+        workDyeDissip = smoke.dyeDissipation *
             ((1.0f - dyeMod.modLevel) + dyeMod.modLevel * dySignal);
         workDyeDissip = fmaxf(0.01f, fminf(1.0f, workDyeDissip));
     }
@@ -368,23 +365,23 @@ namespace fastFluid {
         //   v (vertical,   +y = down ): -cos(angle) * force
         float gravityU = 0.0f;
         float gravityV = 0.0f;
-        if (fluid.gravityForce != 0.0f) {
-            const float angleRad = fluid.gravityAngle * (CT_PI / 180.0f);
+        if (smoke.gravityForce != 0.0f) {
+            const float angleRad = smoke.gravityAngle * (CT_PI / 180.0f);
             SinCosResult sc = sincos_fast(angleRad);
-            gravityU =  sc.sin_val * fluid.gravityForce;
-            gravityV = -sc.cos_val * fluid.gravityForce;
+            gravityU =  sc.sin_val * smoke.gravityForce;
+            gravityV = -sc.cos_val * smoke.gravityForce;
         }
 
         // ─── VELOCITY STEP ─────────────────────────────────────────
-        const float viscosityA = dt * fluid.viscosity * SIM_SIZE * SIM_SIZE;
+        const float viscosityA = dt * smoke.viscosity * SIM_SIZE * SIM_SIZE;
         if (viscosityA <= FAST_DIFFUSION_THRESHOLD) {
             setBnd(1, u);
             setBnd(2, v);
         } else {
             fl::memcpy(uPrev, u, sizeof(u));
             fl::memcpy(vPrev, v, sizeof(v));
-            diffuse(1, u, uPrev, fluid.viscosity, dt);
-            diffuse(2, v, vPrev, fluid.viscosity, dt);
+            diffuse(1, u, uPrev, smoke.viscosity, dt);
+            diffuse(2, v, vPrev, smoke.viscosity, dt);
         }
 
         // Gravity applied between diffuse and project (matches ns_3 step()).
@@ -410,7 +407,7 @@ namespace fastFluid {
         applyObstacleVelocity();   // hook 2: after self-advect
         project();
 
-        if (fluid.vorticity > 0.0f) {
+        if (smoke.vorticity > 0.0f) {
             applyVorticityConfinement(dt);
             applyObstacleVelocity(); // hook 3: after vorticity confinement
             project();
@@ -419,13 +416,13 @@ namespace fastFluid {
         // ─── DYE STEP ──────────────────────────────────────────────
         // For each channel: optionally diffuse, then advect through u,v.
         // Use tR/tG/tB as the previous-frame buffer.
-        if (fluid.diffusion > 0.0f) {
+        if (smoke.diffusion > 0.0f) {
             fl::memcpy(tR, gR, sizeof(gR));
             fl::memcpy(tG, gG, sizeof(gG));
             fl::memcpy(tB, gB, sizeof(gB));
-            diffuse(0, gR, tR, fluid.diffusion, dt);
-            diffuse(0, gG, tG, fluid.diffusion, dt);
-            diffuse(0, gB, tB, fluid.diffusion, dt);
+            diffuse(0, gR, tR, smoke.diffusion, dt);
+            diffuse(0, gG, tG, smoke.diffusion, dt);
+            diffuse(0, gB, tB, smoke.diffusion, dt);
         }
 
         fl::memcpy(tR, gR, sizeof(gR));

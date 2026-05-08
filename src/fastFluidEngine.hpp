@@ -2,14 +2,15 @@
 
 #include "parameterSchema.h"
 #include "fastFluidTypes.h"
-#include "flows/flow_fluid.h"
-#include "obstacles.h"
-#include "obstacles/obstacle_paddles.h"
-#include "emitters.h"
-#include "emitters/emitter_fluidJet.h"
-#include "emitters/emitter_threeJet.h"
 #include "noise.h"
 #include "modulators.h"
+#include "emitters.h"
+#include "obstacles.h"
+#include "emitters/emitter_singleJet.h"
+#include "emitters/emitter_threeJet.h"
+//#include "emitters/emitter_multiJet.h"
+#include "flows/flow_smoke.h"
+#include "obstacles/obstacle_paddles.h"
 
 namespace fastFluid {
 
@@ -167,12 +168,12 @@ namespace fastFluid {
     //  when additional flows/obstacles arrive.
 
     const EmitterFn EMITTER_PREPARE_MOD[] = {
-        fluidJetPrepareModulators,    // EMITTER_FLUIDJET = 0
+        singleJetPrepareModulators,    // EMITTER_SINGLEJET = 0
         threeJetPrepareModulators,    // EMITTER_THREEJET = 1
     };
 
     const EmitterFn EMITTER_RUN[] = {
-        emitFluidJet,                 // EMITTER_FLUIDJET = 0
+        emitSingleJet,                 // EMITTER_SINGLEJET = 0
         emitThreeJet,                 // EMITTER_THREEJET = 1
     };
 
@@ -189,9 +190,9 @@ namespace fastFluid {
         activeObstacleTimers = 0;
 
         switch (activeEmitter) {
-            case EMITTER_FLUIDJET:
-                nextSlot = assignModSlots(fluidJet, FLUID_JET_MODS, nextSlot);
-                activeEmitterTimers = modCount(FLUID_JET_MODS);
+            case EMITTER_SINGLEJET:
+                nextSlot = assignModSlots(singleJet, SINGLE_JET_MODS, nextSlot);
+                activeEmitterTimers = modCount(SINGLE_JET_MODS);
                 break;
             case EMITTER_THREEJET:
                 nextSlot = assignModSlots(threeJet, THREE_JET_MODS, nextSlot);
@@ -202,9 +203,9 @@ namespace fastFluid {
         }
 
         switch (activeFlow) {
-            case FLOW_FLUID:
-                nextSlot = assignModSlots(fluid, FLUID_MODS, nextSlot);
-                activeFlowTimers = modCount(FLUID_MODS);
+            case FLOW_SMOKE:
+                nextSlot = assignModSlots(smoke, SMOKE_MODS, nextSlot);
+                activeFlowTimers = modCount(SMOKE_MODS);
                 break;
             default:
                 break;
@@ -248,22 +249,22 @@ namespace fastFluid {
     // ═══════════════════════════════════════════════════════════════════
 
     static void pushFlowDefaultsToCVars() {
-        fluid = FluidParams{};
+        smoke = SmokeParams{};
         render = RenderParams{};
         paddles = PaddleParams{};
-        cViscosity = fluid.viscosity;
-        cDiffusion = fluid.diffusion;
-        cVelocityDissipation = fluid.velocityDissipation;
-        cDyeDissipation = fluid.dyeDissipation;
-        cVorticity = fluid.vorticity;
-        cGravityForce = fluid.gravityForce;
-        cGravityAngle = fluid.gravityAngle;
-        cDiffuseIterations = (float)fluid.diffuseIterations;
-        cProjectIterations = (float)fluid.projectIterations;
-        cModVelDissipRate = fluid.modVelDissip.modRate;
-        cModVelDissipLevel = fluid.modVelDissip.modLevel;
-        cModDyeDissipRate = fluid.modDyeDissip.modRate;
-        cModDyeDissipLevel = fluid.modDyeDissip.modLevel;
+        cViscosity = smoke.viscosity;
+        cDiffusion = smoke.diffusion;
+        cVelocityDissipation = smoke.velocityDissipation;
+        cDyeDissipation = smoke.dyeDissipation;
+        cVorticity = smoke.vorticity;
+        cGravityForce = smoke.gravityForce;
+        cGravityAngle = smoke.gravityAngle;
+        cDiffuseIterations = (float)smoke.diffuseIterations;
+        cProjectIterations = (float)smoke.projectIterations;
+        cModVelDissipRate = smoke.modVelDissip.modRate;
+        cModVelDissipLevel = smoke.modVelDissip.modLevel;
+        cModDyeDissipRate = smoke.modDyeDissip.modRate;
+        cModDyeDissipLevel = smoke.modDyeDissip.modLevel;
         cColorContrast = render.colorContrast;
         cBlackPoint    = render.blackPoint;
         cFlowSat       = render.flowSat;
@@ -282,19 +283,19 @@ namespace fastFluid {
     }
 
     static void syncFlowFromCVars() {
-        fluid.viscosity = cViscosity;
-        fluid.diffusion = cDiffusion;
-        fluid.velocityDissipation = cVelocityDissipation;
-        fluid.dyeDissipation = cDyeDissipation;
-        fluid.vorticity = cVorticity;
-        fluid.gravityForce = cGravityForce;
-        fluid.gravityAngle = cGravityAngle;
-        fluid.diffuseIterations = (uint8_t)cDiffuseIterations;
-        fluid.projectIterations = (uint8_t)cProjectIterations;
-        fluid.modVelDissip.modRate = cModVelDissipRate;
-        fluid.modVelDissip.modLevel = cModVelDissipLevel;
-        fluid.modDyeDissip.modRate = cModDyeDissipRate;
-        fluid.modDyeDissip.modLevel = cModDyeDissipLevel;
+        smoke.viscosity = cViscosity;
+        smoke.diffusion = cDiffusion;
+        smoke.velocityDissipation = cVelocityDissipation;
+        smoke.dyeDissipation = cDyeDissipation;
+        smoke.vorticity = cVorticity;
+        smoke.gravityForce = cGravityForce;
+        smoke.gravityAngle = cGravityAngle;
+        smoke.diffuseIterations = (uint8_t)cDiffuseIterations;
+        smoke.projectIterations = (uint8_t)cProjectIterations;
+        smoke.modVelDissip.modRate = cModVelDissipRate;
+        smoke.modVelDissip.modLevel = cModVelDissipLevel;
+        smoke.modDyeDissip.modRate = cModDyeDissipRate;
+        smoke.modDyeDissip.modLevel = cModDyeDissipLevel;
         render.colorContrast = cColorContrast;
         render.blackPoint    = cBlackPoint;
         render.flowSat       = cFlowSat;
@@ -318,27 +319,24 @@ namespace fastFluid {
         // Universal (always)
         cGlobalSpeed = globalSpeed;
         cPaletteBlendRate = paletteBlendRate;
-        //cPersistence = fl::floorf(persistence);
-        //cPersistFine = persistence - cPersistence;
-        //cColorShift = colorShift;
 
         // Emitter-specific
         switch (activeEmitter) {
-            case EMITTER_FLUIDJET: {
-                fluidJet = FluidJetParams{};
-                cJetDensity = fluidJet.jetDensity;
-                cJetForce = fluidJet.jetForce;
-                cJetRadius = fluidJet.jetRadius;
-                cJetSpread = fluidJet.jetSpread;
-                cJetAngle = fluidJet.jetAngle;
-                cJetHueSpeed = fluidJet.jetHueSpeed;
-                cJetSwingRange = fluidJet.jetSwingRange;
-                cModJetForceRate = fluidJet.modJetForce.modRate;
-                cModJetForceLevel = fluidJet.modJetForce.modLevel;
-                cModAngleRate = fluidJet.modAngle.modRate;
-                cModAngleLevel = fluidJet.modAngle.modLevel;
-                cModJetSwingRate = fluidJet.modJetSwing.modRate;
-                cModJetSwingLevel = fluidJet.modJetSwing.modLevel;
+            case EMITTER_SINGLEJET: {
+                singleJet = SingleJetParams{};
+                cJetDensity = singleJet.jetDensity;
+                cJetForce = singleJet.jetForce;
+                cJetRadius = singleJet.jetRadius;
+                cJetSpread = singleJet.jetSpread;
+                cJetAngle = singleJet.jetAngle;
+                cJetHueSpeed = singleJet.jetHueSpeed;
+                cJetSwingRange = singleJet.jetSwingRange;
+                cModJetForceRate = singleJet.modJetForce.modRate;
+                cModJetForceLevel = singleJet.modJetForce.modLevel;
+                cModAngleRate = singleJet.modAngle.modRate;
+                cModAngleLevel = singleJet.modAngle.modLevel;
+                cModJetSwingRate = singleJet.modJetSwing.modRate;
+                cModJetSwingLevel = singleJet.modJetSwing.modLevel;
                 break;
             }
             case EMITTER_THREEJET: {
@@ -366,25 +364,23 @@ namespace fastFluid {
     // actually consumes them this frame.
     static void syncFromCVars() {
         globalSpeed = cGlobalSpeed;
-        //persistence = cPersistence + cPersistFine;
-        //colorShift = cColorShift;
-        useRainbow = cUseRainbow;
         paletteBlendRate = cPaletteBlendRate;
+        useRainbow = cUseRainbow;
 
-        // fluidJet
-        fluidJet.jetDensity = cJetDensity;
-        fluidJet.jetForce = cJetForce;
-        fluidJet.jetRadius = cJetRadius;
-        fluidJet.jetSpread = cJetSpread;
-        fluidJet.jetAngle = cJetAngle;
-        fluidJet.jetHueSpeed = cJetHueSpeed;
-        fluidJet.jetSwingRange = cJetSwingRange;
-        fluidJet.modJetForce.modRate = cModJetForceRate;
-        fluidJet.modJetForce.modLevel = cModJetForceLevel;
-        fluidJet.modAngle.modRate = cModAngleRate;
-        fluidJet.modAngle.modLevel = cModAngleLevel;
-        fluidJet.modJetSwing.modRate = cModJetSwingRate;
-        fluidJet.modJetSwing.modLevel = cModJetSwingLevel;
+        // singleJet
+        singleJet.jetDensity = cJetDensity;
+        singleJet.jetForce = cJetForce;
+        singleJet.jetRadius = cJetRadius;
+        singleJet.jetSpread = cJetSpread;
+        singleJet.jetAngle = cJetAngle;
+        singleJet.jetHueSpeed = cJetHueSpeed;
+        singleJet.jetSwingRange = cJetSwingRange;
+        singleJet.modJetForce.modRate = cModJetForceRate;
+        singleJet.modJetForce.modLevel = cModJetForceLevel;
+        singleJet.modAngle.modRate = cModAngleRate;
+        singleJet.modAngle.modLevel = cModAngleLevel;
+        singleJet.modJetSwing.modRate = cModJetSwingRate;
+        singleJet.modJetSwing.modLevel = cModJetSwingLevel;
 
         // threeJet
         threeJet.density    = cThreeJetDensity;
@@ -413,14 +409,6 @@ namespace fastFluid {
                 gTargetPalette = gGradientPalettes[gTargetPaletteNumber];
             }
         }
-
-        /*//int maxChanges = (int)(cPaletteBlendRate + 0.5f);
-        int maxChanges = cPaletteBlendRate;
-        if (maxChanges < 1) {
-            maxChanges = 1;
-        } else if (maxChanges > 255) {
-            maxChanges = 255;
-        }*/
 
         EVERY_N_MILLISECONDS(40) {
             if (gCurrentPalette != gTargetPalette) {

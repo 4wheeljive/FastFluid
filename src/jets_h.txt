@@ -1,0 +1,60 @@
+#pragma once
+
+// ═══════════════════════════════════════════════════════════════════
+//  JETS — jets.h
+// ═══════════════════════════════════════════════════════════════════
+
+#include "fastFluidTypes.h"
+
+namespace fastFluid {
+
+    struct JetParams {
+        float radialAngle = 0.0f;
+        float radius = 0.0f;
+        float wobble = 0.0f;
+        float angle = 0.0f;
+        float density = 0.0f;
+        float force = 0.0f;
+        float hueSpeed = 0.0f;
+
+        float radialAngleFactor = 1.0f;
+        float radiusFactor = 1.0f;
+        float wobbleFactor = 1.0f;
+        float angleFactor = 1.0f;
+        float densityFactor = 1.0f;
+        float forceFactor = 1.0f;
+        float hueSpeedFactor = 1.0f;
+    };
+
+    //uint8_t numActiveJets; 
+
+    struct JetPack {
+        
+        uint8_t numJets = 3;
+
+        float radialAngle = 0.0f;
+        float radius = (float)MIN_DIMENSION * 0.25f;
+        float wobble = 0.0f;
+        float angle = 0.0f;
+        float density = 50.0f;
+        float force = 0.7f;
+        float hueSpeed = 0.25f;
+
+        float varianceRadialAngle = 0.1f;
+        float varianceRadius = 0.1f;
+        float varianceWobble = 0.1f;
+        float varianceAngle = 0.1f;
+        float varianceDensity = 0.1f;
+        float varianceForce = 0.1f;
+        float varianceHueSpeed = 0.1f;
+
+        ModConfig modJetRadialAngle = {0, 0.3f, 1.0f};
+        ModConfig modJetRadius = {0, 0.3f, 1.0f};
+        ModConfig modJetWobble = {0, 0.3f, 1.0f};
+        ModConfig modJetAngle = {0, 0.3f, 1.0f};
+        ModConfig modJetDensity = {0, 0.3f, 1.0f};
+        ModConfig modJetForce = {0, 0.3f, 1.0f};
+        ModConfig modJetHueSpeed = {0, 0.3f, 1.0f};
+    };
+      
+} // namespace fastFluid

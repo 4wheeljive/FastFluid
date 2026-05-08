@@ -16,7 +16,7 @@
 //  after flow_fluid.h.
 
 #include "fastFluidTypes.h"
-#include "flows/flow_fluid.h"
+#include "flows/flow_smoke.h"
 
 namespace fastFluid {
     FL_FAST_MATH_BEGIN
@@ -40,7 +40,7 @@ namespace fastFluid {
     // per-emitter hue logic). Per-cell hue dither is applied here so
     // adjacent cells get distinct uint8 values at LED output, breaking
     // the banding inherent to single-color splats.
-    static void fluidJetSplat(float cx, float cy, float radius,
+    static void jetSplat(float cx, float cy, float radius,
                               float densityMag,
                               float velX, float velY,
                               float baseHue) {

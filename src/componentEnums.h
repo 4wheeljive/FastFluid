@@ -2,12 +2,17 @@
 #include <stdint.h>
 
 enum Emitter : uint8_t {
-    EMITTER_FLUIDJET = 0,
-    EMITTER_THREEJET = 1,
+    EMITTER_SINGLEJET = 0,
+    EMITTER_THREEJET,
     EMITTER_COUNT
 };
 
 enum Flow : uint8_t {
-    FLOW_FLUID = 0,
+    FLOW_SMOKE = 0,
     FLOW_COUNT
+};
+
+enum Obstacle : uint8_t {
+    OBSTACLE_PADDLE = 0,
+    OBSTACLE_COUNT
 };

@@ -355,7 +355,8 @@ namespace fastFluid {
     // ═══════════════════════════════════════════════════════════════════
 
     Emitter activeEmitter = EMITTER_THREEJET;
-    Flow    activeFlow    = FLOW_FLUID;
+    Flow    activeFlow    = FLOW_SMOKE;
+    Obstacle activeObstacle = OBSTACLE_PADDLE;
 
     uint8_t activeEmitterTimers = 0;
     uint8_t activeFlowTimers = 0;
