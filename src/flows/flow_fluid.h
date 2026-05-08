@@ -1,7 +1,7 @@
 #pragma once
 
 // ═══════════════════════════════════════════════════════════════════
-//  FLUID (NAVIER-STOKES) FLOW FIELD — flow_fluid.h
+//  FLUID (NAVIER-STOKES) SOLVER — flow_fluid.h
 // ═══════════════════════════════════════════════════════════════════
 //
 //  Stable-fluids simulation (Jos Stam, 1999).  Maintains a persistent
@@ -16,10 +16,10 @@
 //
 //  Ported from colorTrailsOrig/navier_stokes_1.py.
 
-#include "fluidSimTypes.h"
+#include "fastFluidTypes.h"
 #include "modulators.h"
 
-namespace fluidSim {
+namespace fastFluid {
     FL_FAST_MATH_BEGIN
     FL_OPTIMIZATION_LEVEL_O3_BEGIN
 
@@ -65,7 +65,7 @@ namespace fluidSim {
     static constexpr float SIM_SIZE = (float)MIN_DIMENSION;
 
     // Forward declarations of obstacle hooks (defined in obstacles/obstacle.h,
-    // which is included after this header in fluidSimEngine.hpp). The functions
+    // which is included after this header in fastFluidEngine.hpp). The functions
     // are no-ops when the obstacle module is disabled.
     extern bool obstacleHas;
     static void applyObstacleVelocity();
@@ -456,4 +456,4 @@ namespace fluidSim {
     FL_OPTIMIZATION_LEVEL_O3_END
     FL_FAST_MATH_END
 
-} // namespace fluidSim
+} // namespace fastFluid

@@ -4,10 +4,10 @@
 //  MODULATORS — modulators.h
 // ═══════════════════════════════════════════════════════════════════
 
-#include "fluidSimTypes.h"
+#include "fastFluidTypes.h"
 #include "noise.h"
 
-namespace fluidSim {
+namespace fastFluid {
 
     // ═══════════════════════════════════════════════════════════════════
     //  TIMER / MODULATOR ENGINE
@@ -70,7 +70,7 @@ namespace fluidSim {
             // Perlin1D raw output is roughly [-0.5, 0.5]
             // directional_noise normalizes that to roughly [-1, 1]
             // -----------------------------------------------------------------
-            const float rawNoise = fluidSim::noiseX.noise(move.linear[i]);
+            const float rawNoise = fastFluid::noiseX.noise(move.linear[i]);
 
             move.directional_noise[i] = 2.0f * rawNoise;
             move.normalized_noise[i] = 0.5f + 0.5f * move.directional_noise[i];
@@ -78,4 +78,4 @@ namespace fluidSim {
         }
     }
     
-} // namespace fluidSim
+} // namespace fastFluid

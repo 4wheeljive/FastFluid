@@ -11,11 +11,11 @@
 //  Ported from FluidApp.emit_stationary_source() in
 //  colorTrailsOrig/navier_stokes_1.py.
 
-#include "fluidSimTypes.h"
+#include "fastFluidTypes.h"
 #include "modulators.h"
 #include "../emitters.h"   // shared fluidJetSplat()
 
-namespace fluidSim {
+namespace fastFluid {
     FL_FAST_MATH_BEGIN
     FL_OPTIMIZATION_LEVEL_O3_BEGIN
 
@@ -146,4 +146,4 @@ namespace fluidSim {
     FL_OPTIMIZATION_LEVEL_O3_END
     FL_FAST_MATH_END
 
-} // namespace fluidSim
+} // namespace fastFluid

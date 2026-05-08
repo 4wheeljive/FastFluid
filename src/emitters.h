@@ -12,13 +12,13 @@
 //  Currently: Gaussian dye splat with per-cell Bayer hue dither.
 //
 //  This header references velocity (u, v from flow_fluid.h) and dye
-//  fields (gR/gG/gB from fluidSimTypes.h), so it must be included
+//  fields (gR/gG/gB from fastFluidTypes.h), so it must be included
 //  after flow_fluid.h.
 
-#include "fluidSimTypes.h"
+#include "fastFluidTypes.h"
 #include "flows/flow_fluid.h"
 
-namespace fluidSim {
+namespace fastFluid {
     FL_FAST_MATH_BEGIN
     FL_OPTIMIZATION_LEVEL_O3_BEGIN
 
@@ -83,4 +83,4 @@ namespace fluidSim {
     FL_OPTIMIZATION_LEVEL_O3_END
     FL_FAST_MATH_END
 
-} // namespace fluidSim
+} // namespace fastFluid

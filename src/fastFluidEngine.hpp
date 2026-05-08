@@ -1,7 +1,7 @@
 #pragma once
 
 #include "parameterSchema.h"
-#include "fluidSimTypes.h"
+#include "fastFluidTypes.h"
 #include "flows/flow_fluid.h"
 #include "obstacles.h"
 #include "obstacles/obstacle_paddles.h"
@@ -11,7 +11,7 @@
 #include "noise.h"
 #include "modulators.h"
 
-namespace fluidSim {
+namespace fastFluid {
 
     // ═══════════════════════════════════════════════════════════════════
     //  DISPLAY PIPELINE
@@ -222,8 +222,8 @@ namespace fluidSim {
     //  INIT & MAIN LOOP
     // ═══════════════════════════════════════════════════════════════════
 
-    void initFluidSim(uint16_t (*xy_func)(uint8_t, uint8_t)) {
-        fluidSimInstance = true;
+    void initfastFluid(uint16_t (*xy_func)(uint8_t, uint8_t)) {
+        fastFluidInstance = true;
         xyFunc = xy_func;
 
         for (int y = 0; y < HEIGHT; y++)
@@ -431,14 +431,14 @@ namespace fluidSim {
         }
     }
 
-    void runFluidSim() {
+    void runfastFluid() {
         unsigned long now = fl::millis();
         float rawDt = (now - lastFrameMs) * 0.001f;
         lastFrameMs = now;
         dt = rawDt * globalSpeed;
         t += dt;
 
-        // First-time setup of emitter/flow state. Only one of each in FluidSim,
+        // First-time setup of emitter/flow state. Only one of each in fastFluid,
         // but keep the trigger pattern to fire defaults push exactly once at start.
         if (EMITTER < EMITTER_COUNT && EMITTER != lastEmitter) {
             activeEmitter = (Emitter)EMITTER;
@@ -493,6 +493,6 @@ namespace fluidSim {
         PROFILE_START("applyObstacleOverlay");
         applyObstacleOverlay();
         PROFILE_END();
-    } // runFluidSim() 
+    } // runfastFluid() 
 
-} // namespace fluidSim
+} // namespace fastFluid

@@ -15,11 +15,11 @@
 //  Ported from colorTrailsOrig/solver_debug_views.py — three jets
 //  with full-360° angle wandering + per-jet hue offsets.
 
-#include "fluidSimTypes.h"
+#include "fastFluidTypes.h"
 #include "modulators.h"
 #include "../emitters.h"   // shared fluidJetSplat()
 
-namespace fluidSim {
+namespace fastFluid {
     FL_FAST_MATH_BEGIN
     FL_OPTIMIZATION_LEVEL_O3_BEGIN
 
@@ -184,4 +184,4 @@ namespace fluidSim {
     FL_OPTIMIZATION_LEVEL_O3_END
     FL_FAST_MATH_END
 
-} // namespace fluidSim
+} // namespace fastFluid

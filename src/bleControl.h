@@ -2,7 +2,7 @@
 
 #include <NimBLEDevice.h>
 #include "parameterSchema.h"
-#include "fluidSimTypes.h"
+#include "fastFluidTypes.h"
 
 #if __has_include("hosted_ble_bridge.h")
     #include "hosted_ble_bridge.h"
@@ -493,7 +493,7 @@ void processNumber(String receivedID, float receivedValue) {
 
    if (receivedID == "inPalNum") {
       uint8_t newPalNum = receivedValue;
-      fluidSim::setTargetPalette(newPalNum);
+      fastFluid::setTargetPalette(newPalNum);
       if(debug) {
          Serial.print("newPalNum: ");
          Serial.println(newPalNum);
@@ -653,7 +653,7 @@ void bleSetup() {
          return;
       }
 
-      NimBLEDevice::init("FluidSim");
+      NimBLEDevice::init("FastFluid");
       NimBLEDevice::setMTU(517);  // Request max MTU for larger JSON payloads
 
       pServer = NimBLEDevice::createServer();
@@ -701,13 +701,13 @@ void bleSetup() {
 
       // Set up advertisement data with device name for Web Bluetooth compatibility
       NimBLEAdvertisementData advertisementData;
-      advertisementData.setName("FluidSim");
+      advertisementData.setName("FastFluid");
       advertisementData.setCompleteServices(NimBLEUUID(SERVICE_UUID));
       pAdvertising->setAdvertisementData(advertisementData);
 
       // Set up scan response data
       NimBLEAdvertisementData scanResponseData;
-      scanResponseData.setName("FluidSim");
+      scanResponseData.setName("FastFluid");
       pAdvertising->setScanResponseData(scanResponseData);
 
       pAdvertising->start();

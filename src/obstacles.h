@@ -21,7 +21,7 @@
 //  them without knowing which generator owns the geometry.
 //
 //  This header references the velocity/dye fields (u, v, uPrev, vPrev,
-//  gR/gG/gB, tR/tG/tB) defined in flow_fluid.h / fluidSimTypes.h, so
+//  gR/gG/gB, tR/tG/tB) defined in flow_fluid.h / fastFluidTypes.h, so
 //  it must be included AFTER flow_fluid.h.
 //
 //  Ported from colorTrailsOrig/navier_stokes_3.py
@@ -29,7 +29,7 @@
 
 #include "flows/flow_fluid.h"
 
-namespace fluidSim {
+namespace fastFluid {
     FL_FAST_MATH_BEGIN
     FL_OPTIMIZATION_LEVEL_O3_BEGIN
 
@@ -192,7 +192,7 @@ namespace fluidSim {
     static void generatePaddleObstacle(float t);
 
     // Regenerate mask from the active generator + apply BC.
-    // Called from runFluidSim() each frame.
+    // Called from runfastFluid() each frame.
     static void updateObstacle(float t) {
         generatePaddleObstacle(t);
         applyObstacleVelocity();
@@ -201,4 +201,4 @@ namespace fluidSim {
     FL_OPTIMIZATION_LEVEL_O3_END
     FL_FAST_MATH_END
 
-} // namespace fluidSim
+} // namespace fastFluid

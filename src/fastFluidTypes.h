@@ -1,7 +1,7 @@
 #pragma once
 
 // ═══════════════════════════════════════════════════════════════════
-//  fluidSimTypes.h — Anchor header for the FluidSim system.
+//  fastFluidTypes.h — Anchor header for the fastFluid system.
 //  All shared types, constants, global instances, math helpers,
 //  and drawing primitives live here.
 //  Sub-headers (flow_fluid.h, emitter_fluidJet.h) include this.
@@ -10,7 +10,7 @@
 #include <FastLED.h>
 #include "componentEnums.h"
 
-namespace fluidSim {
+namespace fastFluid {
 
     constexpr float CT_PI = 3.14159265358979f;
     constexpr float CT_2PI = 6.28318530717958f;
@@ -19,7 +19,7 @@ namespace fluidSim {
     //  GRID STATE & TIMING
     // ═══════════════════════════════════════════════════════════════════
 
-    bool fluidSimInstance = false;
+    bool fastFluidInstance = false;
     uint16_t (*xyFunc)(uint8_t x, uint8_t y);
 
     // Floating-point RGB grid, row-major [y][x].
@@ -32,7 +32,7 @@ namespace fluidSim {
     uint8_t lastFlow = 255;  // force initial setup on first frame
     bool useRainbow = false;  // false = spectrum (even HSV), true = FastLED rainbow character
 
-    // Shared frame timing — set once per frame in runFluidSim(), read by all emitters and flows.
+    // Shared frame timing — set once per frame in runfastFluid(), read by all emitters and flows.
     // Scaled by globalSpeed so all time-based behavior respects the master clock.
     static float t  = 0.0f;   // virtual elapsed time (seconds), accumulated each frame
     static float dt = 0.0f;   // virtual frame delta (seconds), already scaled by globalSpeed
@@ -361,4 +361,4 @@ namespace fluidSim {
     uint8_t activeFlowTimers = 0;
     uint8_t activeObstacleTimers = 0;
 
-} // namespace fluidSim
+} // namespace fastFluid

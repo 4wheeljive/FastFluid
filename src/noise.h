@@ -4,11 +4,11 @@
 //  NOISE GENERATORS — noise.h
 // ═══════════════════════════════════════════════════════════════════
 
-//#include "fluidSimTypes.h"
+//#include "fastFluidTypes.h"
 #include <FastLED.h>
 #include "componentEnums.h"
 
-namespace fluidSim {
+namespace fastFluid {
    
     FL_FAST_MATH_BEGIN
     FL_OPTIMIZATION_LEVEL_O3_BEGIN
@@ -161,4 +161,4 @@ namespace fluidSim {
     FL_OPTIMIZATION_LEVEL_O3_END
     FL_FAST_MATH_END
 
-} // namespace fluidSim
+} // namespace fastFluid

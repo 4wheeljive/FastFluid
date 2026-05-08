@@ -47,7 +47,7 @@ uint8_t defaultMapping = 0;
 bool mappingOverride = false;
 
 #include "bleControl.h"
-#include "fluidSimEngine.hpp"
+#include "fastFluidEngine.hpp"
 
 using namespace fl;
 
@@ -183,10 +183,10 @@ void loop() {
 		mappingOverride ? cMapping = cOverrideMapping : cMapping = defaultMapping;
 		defaultMapping = Mapping::TopDownProgressive;
 
-		if (!fluidSim::fluidSimInstance) {
-			fluidSim::initFluidSim(myXY);
+		if (!fastFluid::fastFluidInstance) {
+			fastFluid::initfastFluid(myXY);
 		}
-		fluidSim::runFluidSim();
+		fastFluid::runfastFluid();
 	}
 
 	PROFILE_START("led_show");
