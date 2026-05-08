@@ -123,9 +123,6 @@ uint8_t cEaseLum = 0;
 
 // GLOBAL -------------------------
 float cGlobalSpeed = 1.0f;
-//float cPersistence = 0.0f;
-//float cPersistFine = 0.05f;
-//float cColorShift = 0.10f;
 bool cUseRainbow = false;
 bool cPaletteMode = false;
 bool cRotatePalette = false;
@@ -163,9 +160,9 @@ float cModJet2AngleLevel   = 1.0f;
 // FLOW: fluid --------------------
 float cViscosity = 0.0f;
 float cDiffusion = 0.0f;
-float cVelocityDissipation = 0.5f;
-float cDyeDissipation = 0.5f;
-float cVorticity = 7.0f;
+float cVelocityDissipation = 0.75f;
+float cDyeDissipation = 0.25f;
+float cVorticity = 10.0f;
 float cGravityForce = 1.0f;
 float cGravityAngle = 180.0f;
 float cDiffuseIterations = 6.0f;
@@ -178,7 +175,7 @@ float cColorContrast = 0.8f;
 float cBlackPoint = 0.0897f;
 float cFlowSat = 0.5583f;
 float cFlowBright = 0.18f;
-float cGlowStrength = 0.24f;
+float cGlowStrength = 0.0f;
 float cHighlightSat = 0.22f;
 
 // Paddles obstacle (sliders; checkboxes below)
@@ -191,22 +188,16 @@ float cPaddleG          = 220.0f;
 float cPaddleB          = 240.0f;
 
 // Paddles checkboxes (handled in processCheckbox via cx40/cx41)
-bool  cPaddleEnable  = true;
-bool  cPaddleOverlay = true;
+bool  cPaddleEnable  = false;
+bool  cPaddleOverlay = false;
 
 // ═══════════════════════════════════════════════════════════════════
 //  X-MACRO PARAMETER TABLE
 // ═══════════════════════════════════════════════════════════════════
 
-
-//   X(float, Persistence, 0.0f) \
-//   X(float, PersistFine, 0.05f) \
-//   X(float, ColorShift, 0.10f) \
-
-
 #define PARAMETER_TABLE \
    X(uint8_t, OverrideMapping, 0) \
-   X(float, GlobalSpeed, 1.0f) \
+   X(float, GlobalSpeed, 0.5f) \
    X(float, PaletteBlendRate, 16.0f) \
    X(float, JetDensity, 50.0f) \
    X(float, JetForce, 0.25f) \
@@ -233,11 +224,11 @@ bool  cPaddleOverlay = true;
    X(float, ModJet1AngleLevel, 1.0f) \
    X(float, ModJet2AngleRate, 0.3f) \
    X(float, ModJet2AngleLevel, 1.0f) \
-   X(float, Viscosity, 0.0005f) \
-   X(float, Diffusion, 0.0005f) \
+   X(float, Viscosity, 0.0f) \
+   X(float, Diffusion, 0.0f) \
    X(float, VelocityDissipation, 0.75f) \
    X(float, DyeDissipation, 0.25f) \
-   X(float, Vorticity, 7.0f) \
+   X(float, Vorticity, 10.0f) \
    X(float, GravityForce, 1.0f) \
    X(float, GravityAngle, 180.0f) \
    X(float, DiffuseIterations, 6.0f) \
@@ -250,7 +241,7 @@ bool  cPaddleOverlay = true;
    X(float, BlackPoint, 0.0897f) \
    X(float, FlowSat, 0.5583f) \
    X(float, FlowBright, 0.18f) \
-   X(float, GlowStrength, 0.24f) \
+   X(float, GlowStrength, 0.0f) \
    X(float, HighlightSat, 0.22f) \
    X(float, PaddleWidth, 10.0f) \
    X(float, PaddleSlideRate, 0.3f) \
@@ -258,4 +249,4 @@ bool  cPaddleOverlay = true;
    X(float, PaddleSoftEdge, 0.22f) \
    X(float, PaddleR, 220.0f) \
    X(float, PaddleG, 220.0f) \
-   X(float, PaddleB, 240.0f)
+   X(float, PaddleB, 220.0f)

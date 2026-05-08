@@ -332,12 +332,12 @@
                     <control-checkbox
                         label="Paddle Enable"
                         data-my-number="40"
-                        checked>
+                        unchecked>
                     </control-checkbox>
                     <control-checkbox
                         label="Paddle Overlay"
                         data-my-number="41"
-                        checked>
+                        unchecked>
                     </control-checkbox>
                 </div>
 
@@ -678,7 +678,7 @@
 
         const PARAMETER_REGISTRY = {
             // GLOBAL
-            globalSpeed: {min: 0.1, max: 5.0, default: 1.0, step: 0.1},
+            globalSpeed: {min: 0.1, max: 5.0, default: 0.5, step: 0.1},
             //persistence:  {min: 0, max: 20, default: 0, step: 1},
             //persistFine:  {min: 0.01, max: 0.99, default: 0.05, step: 0.01},
             //colorShift:  {min: 0.01, max: 1, default: 0.10, step: 0.01},
@@ -713,8 +713,8 @@
             modJet2AngleLevel:   {min: 0, max: 2.0, default: 1.0, step: 0.1},
 
             // FLOW: fluid
-            viscosity:           {min: 0, max: 0.01, default: 0.0005, step: 0.0005},
-            diffusion:           {min: 0, max: 0.01, default: 0.0005, step: 0.0005},
+            viscosity:           {min: 0, max: 0.01, default: 0.0, step: 0.0005},
+            diffusion:           {min: 0, max: 0.01, default: 0.0, step: 0.0005},
             velocityDissipation: {min: 0.01, max: 1.0, default: 0.75, step: 0.01},
             dyeDissipation:      {min: 0.01, max: 1.0, default: 0.25, step: 0.01},
             vorticity:           {min: 0, max: 30, default: 10, step: 0.1},
@@ -732,7 +732,7 @@
             blackPoint:          {min: 0.0, max: 0.12, default: 0.0897, step: 0.005},
             flowSat:             {min: 0.0, max: 2.0, default: 0.5583, step: 0.01},
             flowBright:          {min: 0.0, max: 1.0, default: 0.18, step: 0.01},
-            glowStrength:        {min: 0.0, max: 2.0, default: 0.24, step: 0.01},
+            glowStrength:        {min: 0.0, max: 2.0, default: 0.0, step: 0.01},
             highlightSat:        {min: 0.0, max: 2.0, default: 0.22, step: 0.01},
 
             // FLOW: fluid (paddles obstacle)

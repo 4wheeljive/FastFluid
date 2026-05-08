@@ -52,48 +52,12 @@ namespace fluidSim {
         ModConfig modJet0Angle = {0, 0.3f, 1.0f};
         ModConfig modJet1Angle = {1, 0.3f, 1.0f};
         ModConfig modJet2Angle = {2, 0.3f, 1.0f};
-        ModConfig* mods[3] = {&modJet0Angle, &modJet1Angle, &modJet2Angle};
+    };
 
-        ThreeJetParams() = default;
-
-        ThreeJetParams(const ThreeJetParams& other)
-            : density(other.density),
-              force(other.force),
-              radius(other.radius),
-              hueSpeed(other.hueSpeed),
-              ringRadius(other.ringRadius),
-              colorMode(other.colorMode),
-              modJet0Angle(other.modJet0Angle),
-              modJet1Angle(other.modJet1Angle),
-              modJet2Angle(other.modJet2Angle) {
-            bindMods();
-        }
-
-        ThreeJetParams& operator=(const ThreeJetParams& other) {
-            if (this != &other) {
-                density = other.density;
-                force = other.force;
-                radius = other.radius;
-                hueSpeed = other.hueSpeed;
-                ringRadius = other.ringRadius;
-                colorMode = other.colorMode;
-                modJet0Angle = other.modJet0Angle;
-                modJet1Angle = other.modJet1Angle;
-                modJet2Angle = other.modJet2Angle;
-                bindMods();
-            }
-            return *this;
-        }
-
-        void bindMods() {
-            mods[0] = &modJet0Angle;
-            mods[1] = &modJet1Angle;
-            mods[2] = &modJet2Angle;
-        }
-
-        uint8_t numActiveTimers() const {
-            return sizeof(mods) / sizeof(mods[0]);
-        }
+    static constexpr ModConfig ThreeJetParams::* THREE_JET_MODS[] = {
+        &ThreeJetParams::modJet0Angle,
+        &ThreeJetParams::modJet1Angle,
+        &ThreeJetParams::modJet2Angle
     };
 
     ThreeJetParams threeJet;

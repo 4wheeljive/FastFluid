@@ -36,7 +36,7 @@ namespace fluidSim {
     // Scaled by globalSpeed so all time-based behavior respects the master clock.
     static float t  = 0.0f;   // virtual elapsed time (seconds), accumulated each frame
     static float dt = 0.0f;   // virtual frame delta (seconds), already scaled by globalSpeed
-    float globalSpeed = 1.0f;  // master clock multiplier
+    float globalSpeed = 0.5f;  // master clock multiplier
     uint8_t paletteBlendRate = 16;
 
 
@@ -337,19 +337,24 @@ namespace fluidSim {
         float   modLevel = 0.0f;       // modulation depth (0 = mod off)
     };
 
-    template <size_t N>
-    inline uint8_t assignModSlots(ModConfig* (&mods)[N], uint8_t baseSlot) {
+    template <typename Params, size_t N>
+    inline uint8_t assignModSlots(Params& params, ModConfig Params::* const (&mods)[N], uint8_t baseSlot) {
         for (uint8_t i = 0; i < N; i++) {
-            mods[i]->modTimer = baseSlot + i;
+            (params.*mods[i]).modTimer = baseSlot + i;
         }
         return baseSlot + N;
+    }
+
+    template <typename Params, size_t N>
+    constexpr uint8_t modCount(ModConfig Params::* const (&)[N]) {
+        return static_cast<uint8_t>(N);
     }
 
     // ═══════════════════════════════════════════════════════════════════
     //  GLOBAL CONFIG
     // ═══════════════════════════════════════════════════════════════════
 
-    Emitter activeEmitter = EMITTER_FLUIDJET;
+    Emitter activeEmitter = EMITTER_THREEJET;
     Flow    activeFlow    = FLOW_FLUID;
 
     uint8_t activeEmitterTimers = 0;

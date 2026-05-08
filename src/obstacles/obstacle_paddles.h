@@ -45,44 +45,10 @@ namespace fluidSim {
         //   modLevel → amplitude as fraction of travel range (0=center, 1=full)
 
         ModConfig modSlide = {0, 0.3f, 0.85f};   // {modTimer, modRate, modLevel}
-        ModConfig* mods[1] = {&modSlide};
+    };
 
-        PaddleParams() = default;
-
-        PaddleParams(const PaddleParams& other)
-            : enable(other.enable),
-              overlay(other.overlay),
-              colorR(other.colorR),
-              colorG(other.colorG),
-              colorB(other.colorB),
-              width(other.width),
-              softEdge(other.softEdge),
-              modSlide(other.modSlide) {
-            bindMods();
-        }
-
-        PaddleParams& operator=(const PaddleParams& other) {
-            if (this != &other) {
-                enable = other.enable;
-                overlay = other.overlay;
-                colorR = other.colorR;
-                colorG = other.colorG;
-                colorB = other.colorB;
-                width = other.width;
-                softEdge = other.softEdge;
-                modSlide = other.modSlide;
-                bindMods();
-            }
-            return *this;
-        }
-
-        void bindMods() {
-            mods[0] = &modSlide;
-        }
-
-        uint8_t numActiveTimers() const {
-            return sizeof(mods) / sizeof(mods[0]);
-        }
+    static constexpr ModConfig PaddleParams::* PADDLE_MODS[] = {
+        &PaddleParams::modSlide
     };
 
     PaddleParams paddles;

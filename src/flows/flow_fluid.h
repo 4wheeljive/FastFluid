@@ -24,11 +24,11 @@ namespace fluidSim {
     FL_OPTIMIZATION_LEVEL_O3_BEGIN
 
     struct FluidParams {
-        float viscosity           = 0.0005f;     // velocity diffusion coefficient
-        float diffusion           = 0.0005f;     // dye diffusion coefficient
+        float viscosity           = 0.0f;     // velocity diffusion coefficient
+        float diffusion           = 0.0f;     // dye diffusion coefficient
         float velocityDissipation = 0.75f;     // per-second velocity decay (0..1, 1=no decay)
         float dyeDissipation      = 0.25f;     // per-second dye decay (overrides project persistence)
-        float vorticity           = 7.0f;     // confinement strength (0 = disabled)
+        float vorticity           = 10.0f;     // confinement strength (0 = disabled)
         // Directional gravity: applied as a uniform force inside the velocity step.
         // Angle convention matches jetAngle: 0°=up, 90°=right, 180°=down, 270°=left.
         float gravityForce        = 1.0f;     // intensity (0 = disabled)
@@ -42,51 +42,11 @@ namespace fluidSim {
 
         ModConfig modVelDissip = {0, 0.5f, 0.0f};   // modTimer, modRate, modLevel
         ModConfig modDyeDissip = {1, 0.5f, 0.0f};
-        ModConfig* mods[2] = {&modVelDissip, &modDyeDissip};
+    };
 
-        FluidParams() = default;
-
-        FluidParams(const FluidParams& other)
-            : viscosity(other.viscosity),
-              diffusion(other.diffusion),
-              velocityDissipation(other.velocityDissipation),
-              dyeDissipation(other.dyeDissipation),
-              vorticity(other.vorticity),
-              gravityForce(other.gravityForce),
-              gravityAngle(other.gravityAngle),
-              diffuseIterations(other.diffuseIterations),
-              projectIterations(other.projectIterations),
-              modVelDissip(other.modVelDissip),
-              modDyeDissip(other.modDyeDissip) {
-            bindMods();
-        }
-
-        FluidParams& operator=(const FluidParams& other) {
-            if (this != &other) {
-                viscosity = other.viscosity;
-                diffusion = other.diffusion;
-                velocityDissipation = other.velocityDissipation;
-                dyeDissipation = other.dyeDissipation;
-                vorticity = other.vorticity;
-                gravityForce = other.gravityForce;
-                gravityAngle = other.gravityAngle;
-                diffuseIterations = other.diffuseIterations;
-                projectIterations = other.projectIterations;
-                modVelDissip = other.modVelDissip;
-                modDyeDissip = other.modDyeDissip;
-                bindMods();
-            }
-            return *this;
-        }
-
-        void bindMods() {
-            mods[0] = &modVelDissip;
-            mods[1] = &modDyeDissip;
-        }
-
-        uint8_t numActiveTimers() const {
-            return sizeof(mods) / sizeof(mods[0]);
-        }
+    static constexpr ModConfig FluidParams::* FLUID_MODS[] = {
+        &FluidParams::modVelDissip,
+        &FluidParams::modDyeDissip
     };
 
     FluidParams fluid;

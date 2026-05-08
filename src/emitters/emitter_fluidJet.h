@@ -37,50 +37,12 @@ namespace fluidSim {
         ModConfig modJetForce = {0, 0.3f, 0.1f};   // modTimer, modRate, modLevel
         ModConfig modAngle    = {1, 0.3f, 2.0f};   // modLevel: 0 = no movement, 2 = full ±90°
         ModConfig modJetSwing = {2, 0.3f, 0.0f};   // modLevel: 0 = no swing, 1 = full range
-        ModConfig* mods[3] = {&modJetForce, &modAngle, &modJetSwing};
+    };
 
-        FluidJetParams() = default;
-
-        FluidJetParams(const FluidJetParams& other)
-            : jetDensity(other.jetDensity),
-              jetForce(other.jetForce),
-              jetRadius(other.jetRadius),
-              jetSpread(other.jetSpread),
-              jetAngle(other.jetAngle),
-              jetHueSpeed(other.jetHueSpeed),
-              jetSwingRange(other.jetSwingRange),
-              modJetForce(other.modJetForce),
-              modAngle(other.modAngle),
-              modJetSwing(other.modJetSwing) {
-            bindMods();
-        }
-
-        FluidJetParams& operator=(const FluidJetParams& other) {
-            if (this != &other) {
-                jetDensity = other.jetDensity;
-                jetForce = other.jetForce;
-                jetRadius = other.jetRadius;
-                jetSpread = other.jetSpread;
-                jetAngle = other.jetAngle;
-                jetHueSpeed = other.jetHueSpeed;
-                jetSwingRange = other.jetSwingRange;
-                modJetForce = other.modJetForce;
-                modAngle = other.modAngle;
-                modJetSwing = other.modJetSwing;
-                bindMods();
-            }
-            return *this;
-        }
-
-        void bindMods() {
-            mods[0] = &modJetForce;
-            mods[1] = &modAngle;
-            mods[2] = &modJetSwing;
-        }
-
-        uint8_t numActiveTimers() const {
-            return sizeof(mods) / sizeof(mods[0]);
-        }
+    static constexpr ModConfig FluidJetParams::* FLUID_JET_MODS[] = {
+        &FluidJetParams::modJetForce,
+        &FluidJetParams::modAngle,
+        &FluidJetParams::modJetSwing
     };
 
     FluidJetParams fluidJet;

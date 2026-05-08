@@ -35,7 +35,7 @@ namespace fluidSim {
         float blackPoint    = 0.0897f;
         float flowSat       = 0.5583f;
         float flowBright    = 0.18f;
-        float glowStrength  = 0.24f;
+        float glowStrength  = 0.0f; // was 0.24
         float highlightSat  = 0.22f;
     };
 
@@ -190,12 +190,12 @@ namespace fluidSim {
 
         switch (activeEmitter) {
             case EMITTER_FLUIDJET:
-                nextSlot = assignModSlots(fluidJet.mods, nextSlot);
-                activeEmitterTimers = fluidJet.numActiveTimers();
+                nextSlot = assignModSlots(fluidJet, FLUID_JET_MODS, nextSlot);
+                activeEmitterTimers = modCount(FLUID_JET_MODS);
                 break;
             case EMITTER_THREEJET:
-                nextSlot = assignModSlots(threeJet.mods, nextSlot);
-                activeEmitterTimers = threeJet.numActiveTimers();
+                nextSlot = assignModSlots(threeJet, THREE_JET_MODS, nextSlot);
+                activeEmitterTimers = modCount(THREE_JET_MODS);
                 break;
             default:
                 break;
@@ -203,16 +203,16 @@ namespace fluidSim {
 
         switch (activeFlow) {
             case FLOW_FLUID:
-                nextSlot = assignModSlots(fluid.mods, nextSlot);
-                activeFlowTimers = fluid.numActiveTimers();
+                nextSlot = assignModSlots(fluid, FLUID_MODS, nextSlot);
+                activeFlowTimers = modCount(FLUID_MODS);
                 break;
             default:
                 break;
         }
 
         if (paddles.enable) {
-            nextSlot = assignModSlots(paddles.mods, nextSlot);
-            activeObstacleTimers = paddles.numActiveTimers();
+            nextSlot = assignModSlots(paddles, PADDLE_MODS, nextSlot);
+            activeObstacleTimers = modCount(PADDLE_MODS);
         }
 
         return nextSlot;
