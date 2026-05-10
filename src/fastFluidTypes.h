@@ -38,6 +38,7 @@ namespace fastFluid {
     static float dt = 0.0f;   // virtual frame delta (seconds), already scaled by globalSpeed
     float globalSpeed = 0.5f;  // master clock multiplier
     uint8_t paletteBlendRate = 16;
+    float paletteFloor = 0.0f;
 
 
     // ═══════════════════════════════════════════════════════════════════
@@ -166,7 +167,9 @@ namespace fastFluid {
     // Float-precision HSV→RGB eliminates banding from uint8 hue quantization.
     // useRainbow toggles between even spectrum and FastLED rainbow character.
     static ColorF paletteColor(float hue) {
-        uint16_t index = (uint16_t)(fmodPos(hue, 1.0f) * 65535.0f + 0.5f);
+        const float trim = clampf(paletteFloor, 0.0f, 0.49f);
+        const float sampledHue = trim + fmodPos(hue, 1.0f) * (1.0f - 2.0f * trim);
+        uint16_t index = (uint16_t)(sampledHue * 65535.0f + 0.5f);
         fl::CRGB16 c = fl::ColorFromPaletteHD(gCurrentPalette, index, 255, LINEARBLEND_NOWRAP);
         return ColorF{
             c.r.raw() * (1.0f / 256.0f),

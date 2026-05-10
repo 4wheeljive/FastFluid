@@ -47,26 +47,26 @@ namespace fastFluid {
         // Color mode selects per-jet hue offset scheme.
         uint8_t colorMode = THREEJET_COLOR_TRIPLE;
 
-        // Per-jet angle modulators — independent noise drives each jet's
-        // rotation around its ring anchor point.
-        ModConfig modJet0Angle = {0, 0.3f, 1.0f};
-        ModConfig modJet1Angle = {1, 0.3f, 1.0f};
-        ModConfig modJet2Angle = {2, 0.3f, 1.0f};
+        // Shared modulation signals. Each signal is applied to all three jets
+        // with small per-jet variations below.
+        ModConfig modRingRadius = {0, 0.3f, 1.0f};
+        ModConfig modJetAngle = {1, 0.3f, 1.0f};
+        ModConfig modJetForce = {2, 0.3f, 1.0f};
     };
 
     static constexpr ModConfig ThreeJetParams::* THREE_JET_MODS[] = {
-        &ThreeJetParams::modJet0Angle,
-        &ThreeJetParams::modJet1Angle,
-        &ThreeJetParams::modJet2Angle
+        &ThreeJetParams::modRingRadius,
+        &ThreeJetParams::modJetAngle,
+        &ThreeJetParams::modJetForce
     };
 
     ThreeJetParams threeJet;
 
     // Phase 1 of frame: write this component's timer slot ratios.
     static void threeJetPrepareModulators() {
-        timings.ratio[threeJet.modJet0Angle.modTimer] = 0.00040f * threeJet.modJet0Angle.modRate;
-        timings.ratio[threeJet.modJet1Angle.modTimer] = 0.00045f * threeJet.modJet1Angle.modRate;
-        timings.ratio[threeJet.modJet2Angle.modTimer] = 0.00050f * threeJet.modJet2Angle.modRate;
+        timings.ratio[threeJet.modRingRadius.modTimer] = 0.00045f * threeJet.modRingRadius.modRate;
+        timings.ratio[threeJet.modJetAngle.modTimer] = 0.00040f * threeJet.modJetAngle.modRate;
+        timings.ratio[threeJet.modJetForce.modTimer] = 0.00050f * threeJet.modJetForce.modRate;
     }
 
     // Compute per-jet hue based on color mode.
@@ -135,50 +135,71 @@ namespace fastFluid {
 
     static void emitThreeJet() {
         // ─── Signal acquisition ────────────────────────────────────
-        const float angle0 = move.directional_noise[threeJet.modJet0Angle.modTimer];
-        const float angle1 = move.directional_noise[threeJet.modJet1Angle.modTimer];
-        const float angle2 = move.directional_noise[threeJet.modJet2Angle.modTimer];
+        const float ringRadiusSignal = move.directional_noise[threeJet.modRingRadius.modTimer];
+        const float angleSignal = move.directional_noise[threeJet.modJetAngle.modTimer];
+        const float forceSignal = move.directional_noise[threeJet.modJetForce.modTimer];
 
         // ─── Ring geometry ─────────────────────────────────────────
         // Three anchors evenly spaced on a circle. Anchor angles match
         // solver_debug_views.py: 90° (bottom), 210° (top-left), 330° (top-right).
         const float centerRow = (float)HEIGHT * 0.5f;
         const float centerCol = (float)WIDTH  * 0.5f;
-        const float ringR     = threeJet.ringRadius;
+//        const float ringRadiusBase = threeJet.ringRadius;
+
+        // Modulate around the configured radius, not by signed noise directly.
+        // Otherwise half the cycle goes negative and gets pinned to min radius.
+        const float ringDepth = clampf(threeJet.modRingRadius.modLevel, 0.0f, 1.0f);
+        const float ringRadiusBase = threeJet.ringRadius * (1.0f + ringDepth * 0.50f * ringRadiusSignal);
+        const float minRingRadius = fmaxf(1.0f, ringRadiusBase * 0.6f);
+        const float maxRingRadius = fmaxf(minRingRadius, (float)MIN_DIMENSION * 0.48f);
+        const float ringRadius0 = clampf(ringRadiusBase,         minRingRadius, maxRingRadius);
+        const float ringRadius1 = clampf(ringRadiusBase * 0.92f, minRingRadius, maxRingRadius);
+        const float ringRadius2 = clampf(ringRadiusBase * 1.08f, minRingRadius, maxRingRadius);
 
         // Pre-computed sin/cos of 90°, 210°, 330° (in screen coords:
         // sin = vertical from center, cos = horizontal from center).
         // 90° → row = +1*r, col = 0     (bottom)
         // 210° → row = -0.5*r, col = -0.866*r  (top-left)
         // 330° → row = -0.5*r, col = +0.866*r  (top-right)
-        const float bottomRow    = centerRow + 1.0f       * ringR;
-        const float bottomCol    = centerCol + 0.0f       * ringR;
-        const float topLeftRow   = centerRow + (-0.5f)    * ringR;
-        const float topLeftCol   = centerCol + (-0.86603f)* ringR;
-        const float topRightRow  = centerRow + (-0.5f)    * ringR;
-        const float topRightCol  = centerCol + (+0.86603f)* ringR;
+        const float bottomRow    = centerRow + 1.0f       * ringRadius0;
+        const float bottomCol    = centerCol + 0.0f       * ringRadius0;
+        const float topLeftRow   = centerRow + (-0.5f)    * ringRadius1;
+        const float topLeftCol   = centerCol + (-0.86603f)* ringRadius1;
+        const float topRightRow  = centerRow + (-0.5f)    * ringRadius2;
+        const float topRightCol  = centerCol + (+0.86603f)* ringRadius2;
 
-        const float baseHue = fmodPos(t * threeJet.hueSpeed, 1.0f);
+        const float radius = threeJet.radius;
         const float density = threeJet.density;
-        const float force   = threeJet.force;
-        const float radius  = threeJet.radius;
-
+       
+        const float baseHue = fmodPos(t * threeJet.hueSpeed, 1.0f);       
+       
         // Per-jet hue (depends on color mode).
         const float hue0 = threeJetHueForJet(0, baseHue);
         const float hue1 = threeJetHueForJet(1, baseHue);
         const float hue2 = threeJetHueForJet(2, baseHue);
 
+        const float angleBase = angleSignal * threeJet.modJetAngle.modLevel;
+        const float angle0 = angleBase;
+        const float angle1 = angleBase * 1.08f;
+        const float angle2 = angleBase * 0.92f;
+        
+        const float forceDepth = clampf(threeJet.modJetForce.modLevel, 0.0f, 1.0f);
+        const float forceScale = fmaxf(0.05f, 1.0f + forceDepth * 0.85f * forceSignal);
+        const float force0 = threeJet.force * forceScale;
+        const float force1 = force0 * 0.92f;
+        const float force2 = force0 * 1.08f;
+
         // Scale angle noise by modLevel — modLevel=0 disables rotation, jet
         // points purely outward; modLevel=1 lets it wander a full ±π.
         emitOneRingJet(bottomRow,   bottomCol,
-                       angle0 * threeJet.modJet0Angle.modLevel, hue0,
-                       density, force, radius);
+                       angle0, hue0,
+                       density, force0, radius);
         emitOneRingJet(topLeftRow,  topLeftCol,
-                       angle1 * threeJet.modJet1Angle.modLevel, hue1,
-                       density, force, radius);
+                       angle1, hue1,
+                       density, force1, radius);
         emitOneRingJet(topRightRow, topRightCol,
-                       angle2 * threeJet.modJet2Angle.modLevel, hue2,
-                       density, force, radius);
+                       angle2, hue2,
+                       density, force2, radius);
     }
 
     FL_OPTIMIZATION_LEVEL_O3_END

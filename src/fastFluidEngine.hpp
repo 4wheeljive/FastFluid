@@ -425,6 +425,7 @@ namespace fastFluid {
         // Universal (always)
         cGlobalSpeed = globalSpeed;
         cPaletteBlendRate = paletteBlendRate;
+        cPaletteFloor = paletteFloor;
 
         // Emitter-specific
         switch (activeEmitter) {
@@ -437,12 +438,12 @@ namespace fastFluid {
                 cJetAngle = singleJet.jetAngle;
                 cJetHueSpeed = singleJet.jetHueSpeed;
                 cJetSwingRange = singleJet.jetSwingRange;
-                cModJetForceRate = singleJet.modJetForce.modRate;
-                cModJetForceLevel = singleJet.modJetForce.modLevel;
+                cModForceRate = singleJet.modForce.modRate;
+                cModForceLevel = singleJet.modForce.modLevel;
                 cModAngleRate = singleJet.modAngle.modRate;
                 cModAngleLevel = singleJet.modAngle.modLevel;
-                cModJetSwingRate = singleJet.modJetSwing.modRate;
-                cModJetSwingLevel = singleJet.modJetSwing.modLevel;
+                cModSwingRate = singleJet.modSwing.modRate;
+                cModSwingLevel = singleJet.modSwing.modLevel;
                 break;
             }
             case EMITTER_THREEJET: {
@@ -453,12 +454,12 @@ namespace fastFluid {
                 cThreeJetHueSpeed    = threeJet.hueSpeed;
                 cThreeJetRingRadius  = threeJet.ringRadius;
                 cThreeJetColorMode   = threeJet.colorMode;
-                cModJet0AngleRate    = threeJet.modJet0Angle.modRate;
-                cModJet0AngleLevel   = threeJet.modJet0Angle.modLevel;
-                cModJet1AngleRate    = threeJet.modJet1Angle.modRate;
-                cModJet1AngleLevel   = threeJet.modJet1Angle.modLevel;
-                cModJet2AngleRate    = threeJet.modJet2Angle.modRate;
-                cModJet2AngleLevel   = threeJet.modJet2Angle.modLevel;
+                cModJetAngleRate    = threeJet.modJetAngle.modRate;
+                cModJetAngleLevel   = threeJet.modJetAngle.modLevel;
+                cModRingRadiusRate   = threeJet.modRingRadius.modRate;
+                cModRingRadiusLevel   = threeJet.modRingRadius.modLevel;
+                cModJetForceRate    = threeJet.modJetForce.modRate;
+                cModJetForceLevel    = threeJet.modJetForce.modLevel;
                 break;
             }
             default: break;
@@ -471,6 +472,7 @@ namespace fastFluid {
     static void syncFromCVars() {
         globalSpeed = cGlobalSpeed;
         paletteBlendRate = cPaletteBlendRate;
+        paletteFloor = cPaletteFloor;
         //useRainbow = cUseRainbow;
 
         // singleJet
@@ -481,12 +483,12 @@ namespace fastFluid {
         singleJet.jetAngle = cJetAngle;
         singleJet.jetHueSpeed = cJetHueSpeed;
         singleJet.jetSwingRange = cJetSwingRange;
-        singleJet.modJetForce.modRate = cModJetForceRate;
-        singleJet.modJetForce.modLevel = cModJetForceLevel;
+        singleJet.modForce.modRate = cModForceRate;
+        singleJet.modForce.modLevel = cModForceLevel;
         singleJet.modAngle.modRate = cModAngleRate;
         singleJet.modAngle.modLevel = cModAngleLevel;
-        singleJet.modJetSwing.modRate = cModJetSwingRate;
-        singleJet.modJetSwing.modLevel = cModJetSwingLevel;
+        singleJet.modSwing.modRate = cModSwingRate;
+        singleJet.modSwing.modLevel = cModSwingLevel;
 
         // threeJet
         threeJet.density    = cThreeJetDensity;
@@ -495,13 +497,13 @@ namespace fastFluid {
         threeJet.hueSpeed   = cThreeJetHueSpeed;
         threeJet.ringRadius = cThreeJetRingRadius;
         threeJet.colorMode  = cThreeJetColorMode;
-        threeJet.modJet0Angle.modRate  = cModJet0AngleRate;
-        threeJet.modJet0Angle.modLevel = cModJet0AngleLevel;
-        threeJet.modJet1Angle.modRate  = cModJet1AngleRate;
-        threeJet.modJet1Angle.modLevel = cModJet1AngleLevel;
-        threeJet.modJet2Angle.modRate  = cModJet2AngleRate;
-        threeJet.modJet2Angle.modLevel = cModJet2AngleLevel;
-
+        threeJet.modRingRadius.modRate = cModRingRadiusRate;
+        threeJet.modRingRadius.modLevel = cModRingRadiusLevel;
+        threeJet.modJetAngle.modRate  = cModJetAngleRate;
+        threeJet.modJetAngle.modLevel  = cModJetAngleLevel;
+        threeJet.modJetForce.modRate  = cModJetForceRate;
+        threeJet.modJetForce.modLevel  = cModJetForceLevel;
+        
         syncFlowFromCVars();
     }
 

@@ -680,6 +680,7 @@
             // GLOBAL
             globalSpeed: {min: 0.1, max: 5.0, default: 0.5, step: 0.1},
             paletteBlendRate: {min: 1, max: 64, default: 16, step: 1},
+            paletteFloor: {min: 0.0, max: 0.45, default: 0.0, step: 0.01},
             debugView: {
                 min: 0, max: 6, default: 0, step: 1,
                 type: 'dropdown',
@@ -694,12 +695,12 @@
             jetSpread:     {min: 0, max: 60, default: 1.5, step: 0.5},
             jetHueSpeed:   {min: 0, max: 1.5, default: 0.7, step: 0.05},
             jetSwingRange: {min: 0, max: 30, default: 4, step: 0.5},
-            modJetForceRate:  {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
-            modJetForceLevel: {min: 0, max: 2.0, default: 0.1, step: 0.1},
+            modForceRate:  {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
+            modForceLevel: {min: 0, max: 2.0, default: 0.1, step: 0.1},
             modAngleRate:     {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
             modAngleLevel:    {min: 0, max: 2.0, default: 2.0, step: 0.1},
-            modJetSwingRate:  {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
-            modJetSwingLevel: {min: 0, max: 2.0, default: 0.0, step: 0.1},
+            modSwingRate:  {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
+            modSwingLevel: {min: 0, max: 2.0, default: 0.0, step: 0.1},
 
             // EMITTER: threeJet
             threeJetDensity:     {min: 0, max: 200, default: 50, step: 1},
@@ -708,12 +709,12 @@
             threeJetHueSpeed:    {min: 0, max: 1.5, default: 0.25, step: 0.05},
             threeJetRingRadius:  {min: 2, max: 32, default: 12, step: 0.5},
             threeJetColorMode:   {min: 0, max: 2, default: 0, step: 1},
-            modJet0AngleRate:    {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
-            modJet0AngleLevel:   {min: 0, max: 2.0, default: 1.0, step: 0.1},
-            modJet1AngleRate:    {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
-            modJet1AngleLevel:   {min: 0, max: 2.0, default: 1.0, step: 0.1},
-            modJet2AngleRate:    {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
-            modJet2AngleLevel:   {min: 0, max: 2.0, default: 1.0, step: 0.1},
+            modJetAngleRate:    {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
+            modJetAngleLevel:   {min: 0, max: 2.0, default: 1.0, step: 0.1},
+            modRingRadiusRate:   {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
+            modRingRadiusLevel:  {min: 0, max: 2.0, default: 1.0, step: 0.1},
+            modJetForceRate:    {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
+            modJetForceLevel:   {min: 0, max: 2.0, default: 1.0, step: 0.1},
 
             // FLOW: smoke
             viscosity:           {min: 0, max: 0.01, default: 0.0, step: 0.0005},
@@ -749,19 +750,19 @@
         };
 
         // Parameter lists per component
-        const GLOBAL_PARAMS  = ["globalSpeed", "paletteBlendRate", "debugView"];
+        const GLOBAL_PARAMS  = ["globalSpeed", "paletteBlendRate", "paletteFloor", "debugView"];
 
         const EMITTER_PARAMS = {
             "singlejet":     ["jetDensity", "jetForce", "jetRadius", "jetSpread", "jetHueSpeed",
                             "jetSwingRange",
-                            "modJetForceRate", "modJetForceLevel",
+                            "modForceRate", "modForceLevel",
                             "modAngleRate", "modAngleLevel",
-                            "modJetSwingRate", "modJetSwingLevel"],
+                            "modSwingRate", "modSwingLevel"],
             "threejet":    ["threeJetDensity", "threeJetForce", "threeJetRadius",
                             "threeJetHueSpeed", "threeJetRingRadius", "threeJetColorMode",
-                            "modJet0AngleRate", "modJet0AngleLevel",
-                            "modJet1AngleRate", "modJet1AngleLevel",
-                            "modJet2AngleRate", "modJet2AngleLevel"]
+                            "modJetAngleRate", "modJetAngleLevel",
+                            "modRingRadiusRate", "modRingRadiusLevel",
+                            "modJetForceRate", "modJetForceLevel"]
         };
 
         const FLOW_PARAMS = {
