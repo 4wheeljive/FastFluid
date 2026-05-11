@@ -252,13 +252,13 @@
                 <control-checkbox
                     label="Palette Mode"
                     data-my-number="33"
-                    unchecked>
+                    checked>
                 </control-checkbox>
 
                 <control-checkbox
                     label="Rotate Palette"
                     data-my-number="34"
-                    unchecked>
+                    checked>
                 </control-checkbox>
                 <control-dropdown
                     label="Color Palette"
@@ -682,10 +682,10 @@
             paletteBlendRate: {min: 1, max: 64, default: 32, step: 1},
             paletteFloor: {min: 0.0, max: 0.45, default: 0.0, step: 0.01},
             debugView: {
-                min: 0, max: 6, default: 0, step: 1,
+                min: 0, max: 7, default: 0, step: 1,
                 type: 'dropdown',
                 label: 'View',
-                options: ['Normal', 'Velocity', 'Vorticity', 'Pressure', 'Divergence', 'Divergence Signed', 'Dye Density']
+                options: ['Normal', 'Velocity', 'Vorticity', 'Pressure', 'Divergence', 'Divergence Signed', 'Dye Density', 'Emitter Overlay']
             },
  
             // EMITTER: singleJet
@@ -864,20 +864,22 @@
         // FUNCTIONS TO APPLY NOTIFICATIONS FROM PROGRAM ***************************************
 
         function applyReceivedButton(changeReceived){
+            const buttonValue = parseInt(changeReceived, 10);
+            if (isNaN(buttonValue)) return;
 
             // Emitter selection receipt (0-19)
-            if ( changeReceived < 20 ) {
+            if ( buttonValue < 20 ) {
                 const sel = document.querySelector('emitter-selector');
-                if (sel) sel.highlightButton(changeReceived);
+                if (sel) sel.highlightButton(buttonValue);
 
                 const ps = document.querySelector('parameter-settings');
-                if (ps) ps.updateForEmitter(changeReceived);
+                if (ps) ps.updateForEmitter(buttonValue);
                 updateDynamicControls();
             }
 
             // Flow selection receipt (20-39)
-            if ( changeReceived >= 20 && changeReceived < 40 ) {
-                const flowIdx = changeReceived - 20;
+            if ( buttonValue >= 20 && buttonValue < 40 ) {
+                const flowIdx = buttonValue - 20;
                 const sel = document.querySelector('flow-selector');
                 if (sel) sel.highlightButton(flowIdx);
 
@@ -1565,6 +1567,8 @@
             }
 
             highlightButton(idx) {
+                idx = parseInt(idx, 10);
+                if (isNaN(idx)) return;
                 this.current = idx;
                 this.querySelectorAll('.sel-btn').forEach((btn, i) => {
                     btn.style.backgroundColor = i === idx ? '#7f7f7f' : '#2e2e2e';
@@ -1629,6 +1633,8 @@
             }
 
             highlightButton(idx) {
+                idx = parseInt(idx, 10);
+                if (isNaN(idx)) return;
                 this.current = idx;
                 this.querySelectorAll('.sel-btn').forEach((btn, i) => {
                     btn.style.backgroundColor = i === idx ? '#7f7f7f' : '#2e2e2e';
