@@ -670,7 +670,7 @@
         // ******************************************************************************************************
         // EMITTER / FLOW NAMES (parallel to ESP32 enums) *******************************************************
 
-        const EMITTER_NAMES = ["SINGLEJET", "THREEJET"];
+        const EMITTER_NAMES = ["SINGLEJET", "MULTIJET"];
         const FLOW_NAMES    = ["SMOKE"];
 
         // ******************************************************************************************************
@@ -702,19 +702,59 @@
             modSwingRate:  {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
             modSwingLevel: {min: 0, max: 2.0, default: 0.0, step: 0.1},
 
-            // EMITTER: threeJet
-            threeJetDensity:     {min: 0, max: 200, default: 50, step: 1},
-            threeJetForce:       {min: 0, max: 5, default: 0.7, step: 0.05},
-            threeJetRadius:      {min: 1, max: 15, default: 4, step: 0.5},
-            threeJetHueSpeed:    {min: 0, max: 1.5, default: 0.25, step: 0.05},
-            threeJetRingRadius:  {min: 2, max: 32, default: 12, step: 0.5},
-            threeJetColorMode:   {min: 0, max: 2, default: 0, step: 1},
-            modJetAngleRate:    {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
-            modJetAngleLevel:   {min: 0, max: 2.0, default: 1.0, step: 0.1},
-            modRingRadiusRate:   {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
-            modRingRadiusLevel:  {min: 0, max: 2.0, default: 1.0, step: 0.1},
-            modJetForceRate:    {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
-            modJetForceLevel:   {min: 0, max: 2.0, default: 1.0, step: 0.1},
+            // EMITTER: multiJet
+            multiJetNumJets:           {min: 1, max: 5, default: 3, step: 1, label: 'Jets'},
+            multiJetLayoutMode: {
+                min: 0, max: 2, default: 0, step: 1,
+                type: 'dropdown',
+                label: 'Layout',
+                options: ['Ring even', 'Ring custom', 'Free']
+            },
+            multiJetDirectionMode: {
+                min: 0, max: 5, default: 0, step: 1,
+                type: 'dropdown',
+                label: 'Direction',
+                options: ['Radial out', 'Radial in', 'Tangent CW', 'Tangent CCW', 'Absolute', 'Aim center']
+            },
+            multiJetColorMode: {
+                min: 0, max: 3, default: 0, step: 1,
+                type: 'dropdown',
+                label: 'Color',
+                options: ['Hue spread', 'Near opposite', 'Warm fixed', 'Per jet']
+            },
+            multiJetRadialAngle:        {min: 0, max: 6.283, default: 1.571, step: 0.01},
+            multiJetDensity:            {min: 0, max: 200, default: 50, step: 1},
+            multiJetForce:              {min: 0, max: 5, default: 0.7, step: 0.05},
+            multiJetJetRadius:          {min: 1, max: 15, default: 4, step: 0.5},
+            multiJetRingRadius:         {min: 2, max: 32, default: 12, step: 0.5},
+            multiJetWobble:             {min: 0, max: 24, default: 0, step: 0.5},
+            multiJetDirectionAngle:     {min: -3.142, max: 3.142, default: 0, step: 0.01},
+            multiJetHueSpeed:           {min: 0, max: 1.5, default: 0.25, step: 0.05},
+            multiJetHueSpread:          {min: 0, max: 2.0, default: 1.0, step: 0.05},
+            multiJetVarianceRadialAngle:{min: 0, max: 3.142, default: 0, step: 0.01},
+            multiJetVarianceRingRadius: {min: 0, max: 1.0, default: 0.5, step: 0.05},
+            multiJetVarianceWobble:     {min: 0, max: 1.0, default: 0, step: 0.05},
+            multiJetVarianceDirection:  {min: 0, max: 6.283, default: 3.142, step: 0.01},
+            multiJetVarianceJetRadius:  {min: 0, max: 1.0, default: 0, step: 0.05},
+            multiJetVarianceDensity:    {min: 0, max: 1.0, default: 0, step: 0.05},
+            multiJetVarianceForce:      {min: 0, max: 1.5, default: 0.85, step: 0.05},
+            multiJetVarianceHue:        {min: 0, max: 1.0, default: 0, step: 0.05},
+            modMultiJetRadialAngleRate: {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
+            modMultiJetRadialAngleLevel:{min: 0, max: 2.0, default: 0, step: 0.1},
+            modMultiJetRingRadiusRate:  {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
+            modMultiJetRingRadiusLevel: {min: 0, max: 2.0, default: 1.0, step: 0.1},
+            modMultiJetWobbleRate:      {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
+            modMultiJetWobbleLevel:     {min: 0, max: 2.0, default: 0, step: 0.1},
+            modMultiJetDirectionRate:   {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
+            modMultiJetDirectionLevel:  {min: 0, max: 2.0, default: 1.0, step: 0.1},
+            modMultiJetJetRadiusRate:   {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
+            modMultiJetJetRadiusLevel:  {min: 0, max: 2.0, default: 0, step: 0.1},
+            modMultiJetDensityRate:     {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
+            modMultiJetDensityLevel:    {min: 0, max: 2.0, default: 0, step: 0.1},
+            modMultiJetForceRate:       {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
+            modMultiJetForceLevel:      {min: 0, max: 2.0, default: 1.0, step: 0.1},
+            modMultiJetHueRate:         {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
+            modMultiJetHueLevel:        {min: 0, max: 2.0, default: 0, step: 0.1},
 
             // FLOW: smoke
             viscosity:           {min: 0, max: 0.01, default: 0.0, step: 0.0005},
@@ -758,11 +798,21 @@
                             "modForceRate", "modForceLevel",
                             "modAngleRate", "modAngleLevel",
                             "modSwingRate", "modSwingLevel"],
-            "threejet":    ["threeJetDensity", "threeJetForce", "threeJetRadius",
-                            "threeJetHueSpeed", "threeJetRingRadius", "threeJetColorMode",
-                            "modJetAngleRate", "modJetAngleLevel",
-                            "modRingRadiusRate", "modRingRadiusLevel",
-                            "modJetForceRate", "modJetForceLevel"]
+            "multijet":    ["multiJetNumJets", "multiJetLayoutMode", "multiJetDirectionMode", "multiJetColorMode",
+                            "multiJetRadialAngle", "multiJetDensity", "multiJetForce", "multiJetJetRadius",
+                            "multiJetRingRadius", "multiJetWobble", "multiJetDirectionAngle",
+                            "multiJetHueSpeed", "multiJetHueSpread",
+                            "multiJetVarianceRadialAngle", "multiJetVarianceRingRadius", "multiJetVarianceWobble",
+                            "multiJetVarianceDirection", "multiJetVarianceJetRadius", "multiJetVarianceDensity",
+                            "multiJetVarianceForce", "multiJetVarianceHue",
+                            "modMultiJetRadialAngleRate", "modMultiJetRadialAngleLevel",
+                            "modMultiJetRingRadiusRate", "modMultiJetRingRadiusLevel",
+                            "modMultiJetWobbleRate", "modMultiJetWobbleLevel",
+                            "modMultiJetDirectionRate", "modMultiJetDirectionLevel",
+                            "modMultiJetJetRadiusRate", "modMultiJetJetRadiusLevel",
+                            "modMultiJetDensityRate", "modMultiJetDensityLevel",
+                            "modMultiJetForceRate", "modMultiJetForceLevel",
+                            "modMultiJetHueRate", "modMultiJetHueLevel"]
         };
 
         const FLOW_PARAMS = {

@@ -7,8 +7,7 @@
 #include "emitters.h"
 #include "obstacles.h"
 #include "emitters/emitter_singleJet.h"
-#include "emitters/emitter_threeJet.h"
-//#include "emitters/emitter_multiJet.h"
+#include "emitters/emitter_multiJet.h"
 #include "flows/flow_smoke.h"
 #include "obstacles/obstacle_paddles.h"
 
@@ -275,12 +274,12 @@ namespace fastFluid {
 
     const EmitterFn EMITTER_PREPARE_MOD[] = {
         singleJetPrepareModulators,    // EMITTER_SINGLEJET = 0
-        threeJetPrepareModulators,    // EMITTER_THREEJET = 1
+        multiJetPrepareModulators,     // EMITTER_MULTIJET = 1
     };
 
     const EmitterFn EMITTER_RUN[] = {
         emitSingleJet,                 // EMITTER_SINGLEJET = 0
-        emitThreeJet,                 // EMITTER_THREEJET = 1
+        emitMultiJet,                  // EMITTER_MULTIJET = 1
     };
 
     static_assert(sizeof(EMITTER_RUN) / sizeof(EMITTER_RUN[0]) == EMITTER_COUNT,
@@ -300,9 +299,9 @@ namespace fastFluid {
                 nextSlot = assignModSlots(singleJet, SINGLE_JET_MODS, nextSlot);
                 activeEmitterTimers = modCount(SINGLE_JET_MODS);
                 break;
-            case EMITTER_THREEJET:
-                nextSlot = assignModSlots(threeJet, THREE_JET_MODS, nextSlot);
-                activeEmitterTimers = modCount(THREE_JET_MODS);
+            case EMITTER_MULTIJET:
+                nextSlot = assignModSlots(multiJet, MULTI_JET_MODS, nextSlot);
+                activeEmitterTimers = modCount(MULTI_JET_MODS);
                 break;
             default:
                 break;
@@ -446,20 +445,45 @@ namespace fastFluid {
                 cModSwingLevel = singleJet.modSwing.modLevel;
                 break;
             }
-            case EMITTER_THREEJET: {
-                threeJet = ThreeJetParams{};
-                cThreeJetDensity     = threeJet.density;
-                cThreeJetForce       = threeJet.force;
-                cThreeJetRadius      = threeJet.radius;
-                cThreeJetHueSpeed    = threeJet.hueSpeed;
-                cThreeJetRingRadius  = threeJet.ringRadius;
-                cThreeJetColorMode   = threeJet.colorMode;
-                cModJetAngleRate    = threeJet.modJetAngle.modRate;
-                cModJetAngleLevel   = threeJet.modJetAngle.modLevel;
-                cModRingRadiusRate   = threeJet.modRingRadius.modRate;
-                cModRingRadiusLevel   = threeJet.modRingRadius.modLevel;
-                cModJetForceRate    = threeJet.modJetForce.modRate;
-                cModJetForceLevel    = threeJet.modJetForce.modLevel;
+            case EMITTER_MULTIJET: {
+                resetMultiJetDefaults();
+                cMultiJetNumJets             = multiJet.numJets;
+                cMultiJetLayoutMode          = multiJet.layoutMode;
+                cMultiJetDirectionMode       = multiJet.directionMode;
+                cMultiJetColorMode           = multiJet.colorMode;
+                cMultiJetRadialAngle         = multiJet.radialAngle;
+                cMultiJetDensity             = multiJet.density;
+                cMultiJetForce               = multiJet.force;
+                cMultiJetJetRadius           = multiJet.jetRadius;
+                cMultiJetRingRadius          = multiJet.ringRadius;
+                cMultiJetWobble              = multiJet.wobble;
+                cMultiJetDirectionAngle      = multiJet.directionAngle;
+                cMultiJetHueSpeed            = multiJet.hueSpeed;
+                cMultiJetHueSpread           = multiJet.hueSpread;
+                cMultiJetVarianceRadialAngle = multiJet.varianceRadialAngle;
+                cMultiJetVarianceRingRadius  = multiJet.varianceRingRadius;
+                cMultiJetVarianceWobble      = multiJet.varianceWobble;
+                cMultiJetVarianceDirection   = multiJet.varianceDirection;
+                cMultiJetVarianceJetRadius   = multiJet.varianceJetRadius;
+                cMultiJetVarianceForce       = multiJet.varianceForce;
+                cMultiJetVarianceDensity     = multiJet.varianceDensity;
+                cMultiJetVarianceHue         = multiJet.varianceHue;
+                cModMultiJetRadialAngleRate  = multiJet.modRadialAngle.modRate;
+                cModMultiJetRadialAngleLevel = multiJet.modRadialAngle.modLevel;
+                cModMultiJetRingRadiusRate   = multiJet.modRingRadius.modRate;
+                cModMultiJetRingRadiusLevel  = multiJet.modRingRadius.modLevel;
+                cModMultiJetWobbleRate       = multiJet.modWobble.modRate;
+                cModMultiJetWobbleLevel      = multiJet.modWobble.modLevel;
+                cModMultiJetDirectionRate    = multiJet.modDirection.modRate;
+                cModMultiJetDirectionLevel   = multiJet.modDirection.modLevel;
+                cModMultiJetJetRadiusRate    = multiJet.modJetRadius.modRate;
+                cModMultiJetJetRadiusLevel   = multiJet.modJetRadius.modLevel;
+                cModMultiJetForceRate        = multiJet.modForce.modRate;
+                cModMultiJetForceLevel       = multiJet.modForce.modLevel;
+                cModMultiJetDensityRate      = multiJet.modDensity.modRate;
+                cModMultiJetDensityLevel     = multiJet.modDensity.modLevel;
+                cModMultiJetHueRate          = multiJet.modHue.modRate;
+                cModMultiJetHueLevel         = multiJet.modHue.modLevel;
                 break;
             }
             default: break;
@@ -490,19 +514,44 @@ namespace fastFluid {
         singleJet.modSwing.modRate = cModSwingRate;
         singleJet.modSwing.modLevel = cModSwingLevel;
 
-        // threeJet
-        threeJet.density    = cThreeJetDensity;
-        threeJet.force      = cThreeJetForce;
-        threeJet.radius     = cThreeJetRadius;
-        threeJet.hueSpeed   = cThreeJetHueSpeed;
-        threeJet.ringRadius = cThreeJetRingRadius;
-        threeJet.colorMode  = cThreeJetColorMode;
-        threeJet.modRingRadius.modRate = cModRingRadiusRate;
-        threeJet.modRingRadius.modLevel = cModRingRadiusLevel;
-        threeJet.modJetAngle.modRate  = cModJetAngleRate;
-        threeJet.modJetAngle.modLevel  = cModJetAngleLevel;
-        threeJet.modJetForce.modRate  = cModJetForceRate;
-        threeJet.modJetForce.modLevel  = cModJetForceLevel;
+        // multiJet
+        multiJet.numJets = cMultiJetNumJets;
+        multiJet.layoutMode = cMultiJetLayoutMode;
+        multiJet.directionMode = cMultiJetDirectionMode;
+        multiJet.colorMode = cMultiJetColorMode;
+        multiJet.radialAngle = cMultiJetRadialAngle;
+        multiJet.density = cMultiJetDensity;
+        multiJet.force = cMultiJetForce;
+        multiJet.jetRadius = cMultiJetJetRadius;
+        multiJet.ringRadius = cMultiJetRingRadius;
+        multiJet.wobble = cMultiJetWobble;
+        multiJet.directionAngle = cMultiJetDirectionAngle;
+        multiJet.hueSpeed = cMultiJetHueSpeed;
+        multiJet.hueSpread = cMultiJetHueSpread;
+        multiJet.varianceRadialAngle = cMultiJetVarianceRadialAngle;
+        multiJet.varianceRingRadius = cMultiJetVarianceRingRadius;
+        multiJet.varianceWobble = cMultiJetVarianceWobble;
+        multiJet.varianceDirection = cMultiJetVarianceDirection;
+        multiJet.varianceJetRadius = cMultiJetVarianceJetRadius;
+        multiJet.varianceForce = cMultiJetVarianceForce;
+        multiJet.varianceDensity = cMultiJetVarianceDensity;
+        multiJet.varianceHue = cMultiJetVarianceHue;
+        multiJet.modRadialAngle.modRate = cModMultiJetRadialAngleRate;
+        multiJet.modRadialAngle.modLevel = cModMultiJetRadialAngleLevel;
+        multiJet.modRingRadius.modRate = cModMultiJetRingRadiusRate;
+        multiJet.modRingRadius.modLevel = cModMultiJetRingRadiusLevel;
+        multiJet.modWobble.modRate = cModMultiJetWobbleRate;
+        multiJet.modWobble.modLevel = cModMultiJetWobbleLevel;
+        multiJet.modDirection.modRate = cModMultiJetDirectionRate;
+        multiJet.modDirection.modLevel = cModMultiJetDirectionLevel;
+        multiJet.modJetRadius.modRate = cModMultiJetJetRadiusRate;
+        multiJet.modJetRadius.modLevel = cModMultiJetJetRadiusLevel;
+        multiJet.modForce.modRate = cModMultiJetForceRate;
+        multiJet.modForce.modLevel = cModMultiJetForceLevel;
+        multiJet.modDensity.modRate = cModMultiJetDensityRate;
+        multiJet.modDensity.modLevel = cModMultiJetDensityLevel;
+        multiJet.modHue.modRate = cModMultiJetHueRate;
+        multiJet.modHue.modLevel = cModMultiJetHueLevel;
         
         syncFlowFromCVars();
     }
@@ -560,7 +609,7 @@ namespace fastFluid {
         // Avoids the previous shared-slot fragility (flow + emitter
         // both writing slots 0+1, working only by capture-before-overwrite).
         EMITTER_PREPARE_MOD[activeEmitter]();
-        fluidPrepareModulators();
+        smokePrepareModulators();
         if (activeObstacleTimers > 0) {
             paddlesPrepareModulators();
         }
@@ -568,13 +617,13 @@ namespace fastFluid {
 
         // Pipeline: obstacle → prepare → emit → advect → render → overlay
         updateObstacle(t);
-        fluidPrepare();
+        smokePrepare();
         PROFILE_START("emitter");
         EMITTER_RUN[activeEmitter]();
         PROFILE_END();
 
         PROFILE_START("fluidAdvect");
-        fluidAdvect();
+        smokeAdvect();
         PROFILE_END();
 
         PROFILE_START("render");

@@ -359,7 +359,7 @@ namespace fastFluid {
     //  GLOBAL CONFIG
     // ═══════════════════════════════════════════════════════════════════
 
-    Emitter activeEmitter = EMITTER_THREEJET;
+    Emitter activeEmitter = EMITTER_MULTIJET;
     Flow    activeFlow    = FLOW_SMOKE;
     Obstacle activeObstacle = OBSTACLE_PADDLE;
 

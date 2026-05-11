@@ -3,7 +3,7 @@
 
 enum Emitter : uint8_t {
     EMITTER_SINGLEJET = 0,
-    EMITTER_THREEJET,
+    EMITTER_MULTIJET,
     EMITTER_COUNT
 };
 

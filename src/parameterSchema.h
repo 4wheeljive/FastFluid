@@ -27,11 +27,11 @@ const uint8_t GLOBAL_PARAM_COUNT = 4;
 // ═══════════════════════════════════════════════════════════════════
 
 const char singlejet_str[] PROGMEM = "singlejet";
-const char threejet_str[] PROGMEM = "threejet";
+const char multijet_str[] PROGMEM = "multijet";
 
 const char* const EMITTERS[] PROGMEM = {
       singlejet_str,
-      threejet_str
+      multijet_str
    };
 
 const uint8_t EMITTER_COUNTS[] = {2};
@@ -44,12 +44,22 @@ const char* const SINGLEJET_PARAMS[] PROGMEM = {
    "modJetSwingRate", "modJetSwingLevel"
 };
 
-const char* const THREEJET_PARAMS[] PROGMEM = {
-   "threeJetDensity", "threeJetForce", "threeJetRadius",
-   "threeJetHueSpeed", "threeJetRingRadius", "threeJetColorMode",
-   "modJetAngleRate", "modJetAngleLevel",
-   "modRingRadiusRate", "modRingRadiusLevel",
-   "modJetForceRate", "modJetForceLevel"
+const char* const MULTIJET_PARAMS[] PROGMEM = {
+   "multiJetNumJets", "multiJetLayoutMode", "multiJetDirectionMode", "multiJetColorMode",
+   "multiJetRadialAngle", "multiJetDensity", "multiJetForce", "multiJetJetRadius",
+   "multiJetRingRadius", "multiJetWobble", "multiJetDirectionAngle",
+   "multiJetHueSpeed", "multiJetHueSpread",
+   "multiJetVarianceRadialAngle", "multiJetVarianceRingRadius", "multiJetVarianceWobble",
+   "multiJetVarianceDirection", "multiJetVarianceJetRadius", "multiJetVarianceDensity",
+   "multiJetVarianceForce", "multiJetVarianceHue",
+   "modMultiJetRadialAngleRate", "modMultiJetRadialAngleLevel",
+   "modMultiJetRingRadiusRate", "modMultiJetRingRadiusLevel",
+   "modMultiJetWobbleRate", "modMultiJetWobbleLevel",
+   "modMultiJetDirectionRate", "modMultiJetDirectionLevel",
+   "modMultiJetJetRadiusRate", "modMultiJetJetRadiusLevel",
+   "modMultiJetDensityRate", "modMultiJetDensityLevel",
+   "modMultiJetForceRate", "modMultiJetForceLevel",
+   "modMultiJetHueRate", "modMultiJetHueLevel"
 };
 
 struct EmitterParamEntry {
@@ -59,8 +69,8 @@ struct EmitterParamEntry {
 };
 
 const EmitterParamEntry EMITTER_PARAM_LOOKUP[] PROGMEM = {
-   {"fluidjet", SINGLEJET_PARAMS, 12},
-   {"threejet", THREEJET_PARAMS, 12},
+   {"singlejet", SINGLEJET_PARAMS, 12},
+   {"multijet", MULTIJET_PARAMS, 37},
 };
 
 static const EmitterParamEntry* getEmitterParams(uint8_t emitterIdx) {
@@ -146,19 +156,44 @@ float cModAngleLevel = 0.0f;
 float cModSwingRate = 0.3f;
 float cModSwingLevel = 0.0f;
 
-// EMITTER: threeJet --------------
-float cThreeJetDensity     = 50.0f;
-float cThreeJetForce       = 0.7f;
-float cThreeJetRadius      = 4.0f;
-float cThreeJetHueSpeed    = 0.25f;
-float cThreeJetRingRadius  = 12.0f;
-uint8_t cThreeJetColorMode   = 0;     // 0=triple, 1=double, 2=orange
-float cModJetAngleRate    = 0.3f;
-float cModJetAngleLevel   = 1.0f;
-float cModRingRadiusRate    = 0.3f;
-float cModRingRadiusLevel   = 1.0f;
-float cModJetForceRate    = 0.3f;
-float cModJetForceLevel   = 1.0f;
+// EMITTER: multiJet --------------
+uint8_t cMultiJetNumJets = 3;
+uint8_t cMultiJetLayoutMode = 0;
+uint8_t cMultiJetDirectionMode = 0;
+uint8_t cMultiJetColorMode = 0;
+float cMultiJetRadialAngle = 1.5707963f;
+float cMultiJetDensity = 50.0f;
+float cMultiJetForce = 0.7f;
+float cMultiJetJetRadius = 4.0f;
+float cMultiJetRingRadius = 12.0f;
+float cMultiJetWobble = 0.0f;
+float cMultiJetDirectionAngle = 0.0f;
+float cMultiJetHueSpeed = 0.25f;
+float cMultiJetHueSpread = 1.0f;
+float cMultiJetVarianceRadialAngle = 0.0f;
+float cMultiJetVarianceRingRadius = 0.50f;
+float cMultiJetVarianceWobble = 0.0f;
+float cMultiJetVarianceDirection = 3.1415927f;
+float cMultiJetVarianceJetRadius = 0.0f;
+float cMultiJetVarianceDensity = 0.0f;
+float cMultiJetVarianceForce = 0.85f;
+float cMultiJetVarianceHue = 0.0f;
+float cModMultiJetRadialAngleRate = 0.3f;
+float cModMultiJetRadialAngleLevel = 0.0f;
+float cModMultiJetRingRadiusRate = 0.3f;
+float cModMultiJetRingRadiusLevel = 1.0f;
+float cModMultiJetWobbleRate = 0.3f;
+float cModMultiJetWobbleLevel = 0.0f;
+float cModMultiJetDirectionRate = 0.3f;
+float cModMultiJetDirectionLevel = 1.0f;
+float cModMultiJetJetRadiusRate = 0.3f;
+float cModMultiJetJetRadiusLevel = 0.0f;
+float cModMultiJetDensityRate = 0.3f;
+float cModMultiJetDensityLevel = 0.0f;
+float cModMultiJetForceRate = 0.3f;
+float cModMultiJetForceLevel = 1.0f;
+float cModMultiJetHueRate = 0.3f;
+float cModMultiJetHueLevel = 0.0f;
 
 // FLOW: smoke --------------------
 float cViscosity = 0.0f;
@@ -217,18 +252,43 @@ bool  cPaddleOverlay = false;
    X(float, ModAngleLevel, 2.0f) \
    X(float, ModSwingRate, 0.3f) \
    X(float, ModSwingLevel, 0.0f) \
-   X(float, ThreeJetDensity, 50.0f) \
-   X(float, ThreeJetForce, 0.7f) \
-   X(float, ThreeJetRadius, 4.0f) \
-   X(float, ThreeJetHueSpeed, 0.25f) \
-   X(float, ThreeJetRingRadius, 12.0f) \
-   X(uint8_t, ThreeJetColorMode, 0) \
-   X(float, ModJetAngleRate, 0.3f) \
-   X(float, ModJetAngleLevel, 1.0f) \
-   X(float, ModRingRadiusRate, 0.3f) \
-   X(float, ModRingRadiusLevel, 1.0f) \
-   X(float, ModJetForceRate, 0.3f) \
-   X(float, ModJetForceLevel, 1.0f) \
+   X(uint8_t, MultiJetNumJets, 3) \
+   X(uint8_t, MultiJetLayoutMode, 0) \
+   X(uint8_t, MultiJetDirectionMode, 0) \
+   X(uint8_t, MultiJetColorMode, 0) \
+   X(float, MultiJetRadialAngle, 1.5707963f) \
+   X(float, MultiJetDensity, 50.0f) \
+   X(float, MultiJetForce, 0.7f) \
+   X(float, MultiJetJetRadius, 4.0f) \
+   X(float, MultiJetRingRadius, 12.0f) \
+   X(float, MultiJetWobble, 0.0f) \
+   X(float, MultiJetDirectionAngle, 0.0f) \
+   X(float, MultiJetHueSpeed, 0.25f) \
+   X(float, MultiJetHueSpread, 1.0f) \
+   X(float, MultiJetVarianceRadialAngle, 0.0f) \
+   X(float, MultiJetVarianceRingRadius, 0.50f) \
+   X(float, MultiJetVarianceWobble, 0.0f) \
+   X(float, MultiJetVarianceDirection, 3.1415927f) \
+   X(float, MultiJetVarianceJetRadius, 0.0f) \
+   X(float, MultiJetVarianceDensity, 0.0f) \
+   X(float, MultiJetVarianceForce, 0.85f) \
+   X(float, MultiJetVarianceHue, 0.0f) \
+   X(float, ModMultiJetRadialAngleRate, 0.3f) \
+   X(float, ModMultiJetRadialAngleLevel, 0.0f) \
+   X(float, ModMultiJetRingRadiusRate, 0.3f) \
+   X(float, ModMultiJetRingRadiusLevel, 1.0f) \
+   X(float, ModMultiJetWobbleRate, 0.3f) \
+   X(float, ModMultiJetWobbleLevel, 0.0f) \
+   X(float, ModMultiJetDirectionRate, 0.3f) \
+   X(float, ModMultiJetDirectionLevel, 1.0f) \
+   X(float, ModMultiJetJetRadiusRate, 0.3f) \
+   X(float, ModMultiJetJetRadiusLevel, 0.0f) \
+   X(float, ModMultiJetDensityRate, 0.3f) \
+   X(float, ModMultiJetDensityLevel, 0.0f) \
+   X(float, ModMultiJetForceRate, 0.3f) \
+   X(float, ModMultiJetForceLevel, 1.0f) \
+   X(float, ModMultiJetHueRate, 0.3f) \
+   X(float, ModMultiJetHueLevel, 0.0f) \
    X(float, Viscosity, 0.0f) \
    X(float, Diffusion, 0.0f) \
    X(float, VelocityDissipation, 0.75f) \

@@ -320,7 +320,7 @@ namespace fastFluid {
     // ───────────────────────────────────────────────────────────────
     //  Public emitter-side hooks
     // ───────────────────────────────────────────────────────────────
-    static inline void fluidAddVelocity(int xc, int yc, float du, float dv) {
+    static inline void smokeAddVelocity(int xc, int yc, float du, float dv) {
         if (xc < 0 || xc >= WIDTH || yc < 0 || yc >= HEIGHT) return;
         u[yc][xc] += du;
         v[yc][xc] += dv;
@@ -332,14 +332,14 @@ namespace fastFluid {
     // Phase 1 of frame: write this component's timer slot ratios.
     // Engine collects all components' ratios, then runs ONE central
     // calculate_modulators call before any component reads `move[*]`.
-    static void fluidPrepareModulators() {
+    static void smokePrepareModulators() {
         timings.ratio[smoke.modVelDissip.modTimer] = 0.0004f  * smoke.modVelDissip.modRate;
         timings.ratio[smoke.modDyeDissip.modTimer] = 0.00045f * smoke.modDyeDissip.modRate;
     }
 
     // Phase 3 of frame: read modulator output and compute work values.
     // Called AFTER calculate_modulators has run.
-    static void fluidPrepare() {
+    static void smokePrepare() {
         const ModConfig& velMod = smoke.modVelDissip;
         const ModConfig& dyeMod = smoke.modDyeDissip;
 
@@ -358,7 +358,7 @@ namespace fastFluid {
         workDyeDissip = fmaxf(0.01f, fminf(1.0f, workDyeDissip));
     }
 
-    static void fluidAdvect() {
+    static void smokeAdvect() {
         // Decompose 2D gravity from intensity + angle.
         // Angle convention matches jetAngle: 0°=up, 90°=right, 180°=down, 270°=left.
         //   u (horizontal, +x = right):  sin(angle) * force
