@@ -31,49 +31,62 @@ namespace fastFluid {
     };
 
     struct JetParams {
-        bool enabled = true;
 
-        // Physical placement.
-        float radialAngleOffset = 0.0f;   // radians, added to pack radialAngle
-        float anchorRadiusScale = 1.0f;   // multiplies pack ringRadius
+        bool enabled = true;
         float anchorCol = (float)WIDTH * 0.5f;
         float anchorRow = (float)HEIGHT * 0.5f;
 
-        // Direction/color offsets.
-        float directionAngle = 0.0f;      // absolute mode: 0 = up
-        float directionOffset = 0.0f;     // radians, added after base direction
-        float hueOffset = 0.0f;           // hue cycles
+        // parameters used by stand-alone jet
+        float radius = (float)MIN_DIMENSION * 0.25f;
+        float radialAngle = CT_PI * 0.5f;
+        float wobble = 0.0f;
+        float size = (float)MIN_DIMENSION / 12.0f;
+        float direction = 0.0f;
+        float density = 50.0f;
+        float force = 0.7f;
+        float hueSpeed = 0.25f;
 
-        // Static per-jet scaling.
-        float jetRadiusScale = 1.0f;
+        // parameters used in multiple jet configurations
+
+        // Phase offsets sample the same noise stream at different points.
+        // This is the cheap synchrony/asynchrony control.
+        float offsetRadius = 0.0f;
+        float offsetRadialAngle = 0.0f;
+        float offsetWobble = 0.0f;
+        float offsetSize = 0.0f;
+        float offsetDirection = 0.0f;
+        float offsetDensity = 0.0f;
+        float offsetForce = 0.0f;
+        float offsetHueSpeed = 0.0f;
+
+        // Static per-jet scaling factors
+        float radiusScale = 1.0f;   
+        float sizeScale = 1.0f;
         float densityScale = 1.0f;
         float forceScale = 1.0f;
         float hueSpeedScale = 1.0f;
 
         // Per-jet modulation strength. Values near 1 keep jets synchronized;
         // small differences create related but non-identical motion.
+        float radiusModScale = 1.0f;
         float radialAngleModScale = 1.0f;
-        float anchorRadiusModScale = 1.0f;
         float wobbleModScale = 1.0f;
+        float sizeModScale = 1.0f;
         float directionModScale = 1.0f;
-        float jetRadiusModScale = 1.0f;
         float densityModScale = 1.0f;
         float forceModScale = 1.0f;
-        float hueModScale = 1.0f;
+        float hueSpeedModScale = 1.0f;
 
-        // Phase offsets sample the same noise stream at different points.
-        // This is the cheap synchrony/asynchrony control.
-        float radialAnglePhase = 0.0f;
-        float anchorRadiusPhase = 0.0f;
-        float wobblePhase = 0.0f;
-        float directionPhase = 0.0f;
-        float jetRadiusPhase = 0.0f;
-        float densityPhase = 0.0f;
-        float forcePhase = 0.0f;
-        float huePhase = 0.0f;
+        /*
+        float radialAngleOffset = 0.0f;   // radians, added to pack radialAngle
+        float directionAngle = 0.0f;      // absolute mode: 0 = up
+        float directionOffset = 0.0f;     // radians, added after base direction
+        float hueOffset = 0.0f;           // hue cycles
+        */
+
     };
 
-    struct JetPack {
+    struct JetPackParams {
         uint8_t numJets = 3;
         uint8_t layoutMode = MULTIJET_LAYOUT_RING_EVEN;
         uint8_t directionMode = MULTIJET_DIR_RADIAL_OUT;
@@ -83,10 +96,10 @@ namespace fastFluid {
         float centerRow = (float)HEIGHT * 0.5f;
 
         float radialAngle = CT_PI * 0.5f;        // 90 deg starts at bottom
-        float ringRadius = (float)MIN_DIMENSION * 0.25f;
-        float jetRadius = (float)MIN_DIMENSION / 12.0f;
+        float radius = (float)MIN_DIMENSION * 0.25f;
         float wobble = 0.0f;
-        float directionAngle = 0.0f;
+        float size = (float)MIN_DIMENSION / 12.0f;
+        float direction = 0.0f;
         float density = 50.0f;
         float force = 0.7f;
         float hueSpeed = 0.25f;
@@ -94,23 +107,23 @@ namespace fastFluid {
 
         // Modulation amplitudes. Angle fields are radians; scalar fields are
         // fractional depth around the configured base value.
-        float varianceRadialAngle = 0.0f;
-        float varianceRingRadius = 0.50f;
-        float varianceWobble = 0.0f;
-        float varianceDirection = CT_PI;
-        float varianceJetRadius = 0.0f;
-        float varianceDensity = 0.0f;
-        float varianceForce = 0.85f;
-        float varianceHue = 0.0f;
+        float varRadialAngle = 0.0f;
+        float varRadius = 0.50f;
+        float varWobble = 0.0f;
+        float varSize = 0.0f;
+        float varDirection = CT_PI;
+        float varDensity = 0.0f;
+        float varForce = 0.85f;
+        float varHueSpeed = 0.0f;
 
         ModConfig modRadialAngle = {0, 0.3f, 0.0f};
-        ModConfig modRingRadius = {0, 0.3f, 1.0f};
+        ModConfig modRadius = {0, 0.3f, 1.0f};
         ModConfig modWobble = {0, 0.3f, 0.0f};
         ModConfig modDirection = {0, 0.3f, 1.0f};
-        ModConfig modJetRadius = {0, 0.3f, 0.0f};
+        ModConfig modSize = {0, 0.3f, 0.0f};
         ModConfig modDensity = {0, 0.3f, 0.0f};
         ModConfig modForce = {0, 0.3f, 1.0f};
-        ModConfig modHue = {0, 0.3f, 0.0f};
+        ModConfig modHueSpeed = {0, 0.3f, 0.0f};
     };
 
 } // namespace fastFluid

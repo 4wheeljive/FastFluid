@@ -45,21 +45,21 @@ const char* const SINGLEJET_PARAMS[] PROGMEM = {
 };
 
 const char* const MULTIJET_PARAMS[] PROGMEM = {
-   "multiJetNumJets", "multiJetLayoutMode", "multiJetDirectionMode", "multiJetColorMode",
-   "multiJetRadialAngle", "multiJetDensity", "multiJetForce", "multiJetJetRadius",
-   "multiJetRingRadius", "multiJetWobble", "multiJetDirectionAngle",
-   "multiJetHueSpeed", "multiJetHueSpread",
-   "multiJetVarianceRadialAngle", "multiJetVarianceRingRadius", "multiJetVarianceWobble",
-   "multiJetVarianceDirection", "multiJetVarianceJetRadius", "multiJetVarianceDensity",
-   "multiJetVarianceForce", "multiJetVarianceHue",
-   "modMultiJetRadialAngleRate", "modMultiJetRadialAngleLevel",
-   "modMultiJetRingRadiusRate", "modMultiJetRingRadiusLevel",
-   "modMultiJetWobbleRate", "modMultiJetWobbleLevel",
-   "modMultiJetDirectionRate", "modMultiJetDirectionLevel",
-   "modMultiJetJetRadiusRate", "modMultiJetJetRadiusLevel",
-   "modMultiJetDensityRate", "modMultiJetDensityLevel",
-   "modMultiJetForceRate", "modMultiJetForceLevel",
-   "modMultiJetHueRate", "modMultiJetHueLevel"
+   "numJets", "layoutMode", "directionMode", "colorMode",
+   "radius", "radialAngle", "wobble", 
+   "size",  "direction", "density", "force", 
+   "hueSpeed", "hueSpread",
+   "varRadius", "varRadialAngle", "varWobble",
+   "varSize", "varDirection", "varDensity",
+   "varForce", "varHueSpeed",
+   "modRadiusRate", "modRadiusLevel",
+   "modRadialAngleRate", "modRadialAngleLevel",
+   "modWobbleRate", "modWobbleLevel",
+   "modDirectionRate", "modDirectionLevel",
+   "modSizeRate", "modSizeLevel",
+   "modDensityRate", "modDensityLevel",
+   "modForceRate", "modForceLevel",
+   "modHueSpeedRate", "modHueSpeedLevel"
 };
 
 struct EmitterParamEntry {
@@ -133,11 +133,10 @@ uint8_t cEaseLum = 0;
 // ═══════════════════════════════════════════════════════════════════
 
 // GLOBAL -------------------------
-float cGlobalSpeed = 1.0f;
-//bool cUseRainbow = false;
-bool cPaletteMode = false;
-bool cRotatePalette = false;
-uint8_t cPaletteBlendRate = 16;
+float cGlobalSpeed = 0.5f;
+bool cPaletteMode = true;
+bool cRotatePalette = true;
+uint8_t cPaletteBlendRate = 32;
 float cPaletteFloor = 0.0f;
 uint8_t cDebugView = 0;
 
@@ -149,72 +148,72 @@ float cJetSpread = 1.0f;
 float cJetAngle = 0.0f;
 float cJetHueSpeed = 0.69f;
 float cJetSwingRange = 4.0f;
-float cModForceRate = 0.5f;
-float cModForceLevel = 0.0f;
+float cModJetForceRate = 0.5f;
+float cModJetForceLevel = 0.0f;
 float cModAngleRate = 0.5f;
 float cModAngleLevel = 0.0f;
 float cModSwingRate = 0.3f;
 float cModSwingLevel = 0.0f;
 
 // EMITTER: multiJet --------------
-uint8_t cMultiJetNumJets = 3;
-uint8_t cMultiJetLayoutMode = 0;
-uint8_t cMultiJetDirectionMode = 0;
-uint8_t cMultiJetColorMode = 0;
-float cMultiJetRadialAngle = 1.5707963f;
-float cMultiJetDensity = 50.0f;
-float cMultiJetForce = 0.7f;
-float cMultiJetJetRadius = 4.0f;
-float cMultiJetRingRadius = 12.0f;
-float cMultiJetWobble = 0.0f;
-float cMultiJetDirectionAngle = 0.0f;
-float cMultiJetHueSpeed = 0.25f;
-float cMultiJetHueSpread = 1.0f;
-float cMultiJetVarianceRadialAngle = 0.0f;
-float cMultiJetVarianceRingRadius = 0.50f;
-float cMultiJetVarianceWobble = 0.0f;
-float cMultiJetVarianceDirection = 3.1415927f;
-float cMultiJetVarianceJetRadius = 0.0f;
-float cMultiJetVarianceDensity = 0.0f;
-float cMultiJetVarianceForce = 0.85f;
-float cMultiJetVarianceHue = 0.0f;
-float cModMultiJetRadialAngleRate = 0.3f;
-float cModMultiJetRadialAngleLevel = 0.0f;
-float cModMultiJetRingRadiusRate = 0.3f;
-float cModMultiJetRingRadiusLevel = 1.0f;
-float cModMultiJetWobbleRate = 0.3f;
-float cModMultiJetWobbleLevel = 0.0f;
-float cModMultiJetDirectionRate = 0.3f;
-float cModMultiJetDirectionLevel = 1.0f;
-float cModMultiJetJetRadiusRate = 0.3f;
-float cModMultiJetJetRadiusLevel = 0.0f;
-float cModMultiJetDensityRate = 0.3f;
-float cModMultiJetDensityLevel = 0.0f;
-float cModMultiJetForceRate = 0.3f;
-float cModMultiJetForceLevel = 1.0f;
-float cModMultiJetHueRate = 0.3f;
-float cModMultiJetHueLevel = 0.0f;
+uint8_t cNumJets = 3;
+uint8_t cLayoutMode = 0;
+uint8_t cDirectionMode = 0;
+uint8_t cColorMode = 0;
+float cRadius = 12.0f;
+float cWobble = 0.0f;
+float cRadialAngle = 1.5707963f;
+float cSize = 4.0f;
+float cDensity = 30.0f;
+float cForce = 0.5f;
+float cDirection = 0.0f;
+float cHueSpeed = 0.25f;
+float cHueSpread = 1.0f;
+float cVarRadialAngle = 0.0f;
+float cVarRadius = 0.50f;
+float cVarWobble = 0.0f;
+float cVarSize = 0.0f;
+float cVarDirection = 3.1415927f;
+float cVarDensity = 0.0f;
+float cVarForce = 0.85f;
+float cVarHueSpeed = 0.0f;
+float cModRadialAngleRate = 0.3f;
+float cModRadialAngleLevel = 0.0f;
+float cModRadiusRate = 0.3f;
+float cModRadiusLevel = 1.0f;
+float cModWobbleRate = 0.3f;
+float cModWobbleLevel = 0.0f;
+float cModDirectionRate = 0.3f;
+float cModDirectionLevel = 1.0f;
+float cModSizeRate = 0.3f;
+float cModSizeLevel = 0.0f;
+float cModDensityRate = 0.3f;
+float cModDensityLevel = 0.0f;
+float cModForceRate = 0.3f;
+float cModForceLevel = 1.0f;
+float cModHueSpeedRate = 0.3f;
+float cModHueSpeedLevel = 0.0f;
 
 // FLOW: smoke --------------------
 float cViscosity = 0.0f;
 float cDiffusion = 0.0f;
-float cVelocityDissipation = 0.75f;
+float cVelocityDissipation = 0.5f;
 float cDyeDissipation = 0.25f;
 float cVorticity = 10.0f;
 float cGravityForce = 1.0f;
 float cGravityAngle = 180.0f;
 uint8_t cDiffuseIterations = 6;
-uint8_t cProjectIterations = 20;
+uint8_t cProjectIterations = 10;
 float cModVelDissipRate = 0.5f;
 float cModVelDissipLevel = 0.0f;
 float cModDyeDissipRate = 0.5f;
 float cModDyeDissipLevel = 0.0f;
 float cColorContrast = 0.8f;
-float cBlackPoint = 0.0897f;
-float cFlowSat = 0.5583f;
-float cFlowBright = 0.18f;
+float cBlackPoint = 0.105f;
+float cFlowSat = 0.8f;
+float cFlowBright = 0.3f;
 float cGlowStrength = 0.0f;
-float cHighlightSat = 0.22f;
+float cHighlightSat = 0.8f;
 
 // OBSTACLE: Paddles
 float cPaddleWidth      = 10.0f;
@@ -223,7 +222,7 @@ float cPaddleSlideLevel = 0.85f;    // amplitude of slide as fraction of travel 
 float cPaddleSoftEdge   = 0.22f;
 float cPaddleR          = 220.0f;
 float cPaddleG          = 220.0f;
-float cPaddleB          = 240.0f;
+float cPaddleB          = 220.0f;
 
 // Paddles checkboxes (handled in processCheckbox via cx40/cx41)
 bool  cPaddleEnable  = false;
@@ -236,7 +235,7 @@ bool  cPaddleOverlay = false;
 #define PARAMETER_TABLE \
    X(uint8_t, OverrideMapping, 0) \
    X(float, GlobalSpeed, 0.5f) \
-   X(float, PaletteBlendRate, 16.0f) \
+   X(float, PaletteBlendRate, 32.0f) \
    X(float, PaletteFloor, 0.0f) \
    X(uint8_t, DebugView, 0) \
    X(float, JetDensity, 50.0f) \
@@ -246,52 +245,52 @@ bool  cPaddleOverlay = false;
    X(float, JetAngle, 0.0f) \
    X(float, JetHueSpeed, 0.7f) \
    X(float, JetSwingRange, 4.0f) \
-   X(float, ModForceRate, 0.3f) \
-   X(float, ModForceLevel, 0.1f) \
+   X(float, ModJetForceRate, 0.3f) \
+   X(float, ModJetForceLevel, 0.1f) \
    X(float, ModAngleRate, 0.3f) \
    X(float, ModAngleLevel, 2.0f) \
    X(float, ModSwingRate, 0.3f) \
    X(float, ModSwingLevel, 0.0f) \
-   X(uint8_t, MultiJetNumJets, 3) \
-   X(uint8_t, MultiJetLayoutMode, 0) \
-   X(uint8_t, MultiJetDirectionMode, 0) \
-   X(uint8_t, MultiJetColorMode, 0) \
-   X(float, MultiJetRadialAngle, 1.5707963f) \
-   X(float, MultiJetDensity, 50.0f) \
-   X(float, MultiJetForce, 0.7f) \
-   X(float, MultiJetJetRadius, 4.0f) \
-   X(float, MultiJetRingRadius, 12.0f) \
-   X(float, MultiJetWobble, 0.0f) \
-   X(float, MultiJetDirectionAngle, 0.0f) \
-   X(float, MultiJetHueSpeed, 0.25f) \
-   X(float, MultiJetHueSpread, 1.0f) \
-   X(float, MultiJetVarianceRadialAngle, 0.0f) \
-   X(float, MultiJetVarianceRingRadius, 0.50f) \
-   X(float, MultiJetVarianceWobble, 0.0f) \
-   X(float, MultiJetVarianceDirection, 3.1415927f) \
-   X(float, MultiJetVarianceJetRadius, 0.0f) \
-   X(float, MultiJetVarianceDensity, 0.0f) \
-   X(float, MultiJetVarianceForce, 0.85f) \
-   X(float, MultiJetVarianceHue, 0.0f) \
-   X(float, ModMultiJetRadialAngleRate, 0.3f) \
-   X(float, ModMultiJetRadialAngleLevel, 0.0f) \
-   X(float, ModMultiJetRingRadiusRate, 0.3f) \
-   X(float, ModMultiJetRingRadiusLevel, 1.0f) \
-   X(float, ModMultiJetWobbleRate, 0.3f) \
-   X(float, ModMultiJetWobbleLevel, 0.0f) \
-   X(float, ModMultiJetDirectionRate, 0.3f) \
-   X(float, ModMultiJetDirectionLevel, 1.0f) \
-   X(float, ModMultiJetJetRadiusRate, 0.3f) \
-   X(float, ModMultiJetJetRadiusLevel, 0.0f) \
-   X(float, ModMultiJetDensityRate, 0.3f) \
-   X(float, ModMultiJetDensityLevel, 0.0f) \
-   X(float, ModMultiJetForceRate, 0.3f) \
-   X(float, ModMultiJetForceLevel, 1.0f) \
-   X(float, ModMultiJetHueRate, 0.3f) \
-   X(float, ModMultiJetHueLevel, 0.0f) \
+   X(uint8_t, NumJets, 3) \
+   X(uint8_t, LayoutMode, 0) \
+   X(uint8_t, DirectionMode, 0) \
+   X(uint8_t, ColorMode, 0) \
+   X(float, Radius, 12.0f) \
+   X(float, RadialAngle, 1.5707963f) \
+   X(float, Wobble, 0.0f) \
+   X(float, Size, 4.0f) \
+   X(float, Density, 30.0f) \
+   X(float, Force, 0.5f) \
+   X(float, Direction, 0.0f) \
+   X(float, HueSpeed, 0.25f) \
+   X(float, HueSpread, 1.0f) \
+   X(float, VarRadialAngle, 0.0f) \
+   X(float, VarRadius, 0.50f) \
+   X(float, VarWobble, 0.0f) \
+   X(float, VarDirection, 3.1415927f) \
+   X(float, VarSize, 0.0f) \
+   X(float, VarDensity, 0.0f) \
+   X(float, VarForce, 0.85f) \
+   X(float, VarHueSpeed, 0.0f) \
+   X(float, ModRadiusRate, 0.3f) \
+   X(float, ModRadiusLevel, 1.0f) \
+   X(float, ModRadialAngleRate, 0.3f) \
+   X(float, ModRadialAngleLevel, 0.0f) \
+   X(float, ModWobbleRate, 0.3f) \
+   X(float, ModWobbleLevel, 0.0f) \
+   X(float, ModSizeRate, 0.3f) \
+   X(float, ModSizeLevel, 0.0f) \
+   X(float, ModDirectionRate, 0.3f) \
+   X(float, ModDirectionLevel, 1.0f) \
+   X(float, ModDensityRate, 0.3f) \
+   X(float, ModDensityLevel, 0.0f) \
+   X(float, ModForceRate, 0.3f) \
+   X(float, ModForceLevel, 1.0f) \
+   X(float, ModHueSpeedRate, 0.3f) \
+   X(float, ModHueSpeedLevel, 0.0f) \
    X(float, Viscosity, 0.0f) \
    X(float, Diffusion, 0.0f) \
-   X(float, VelocityDissipation, 0.75f) \
+   X(float, VelocityDissipation, 0.5f) \
    X(float, DyeDissipation, 0.25f) \
    X(float, Vorticity, 10.0f) \
    X(float, GravityForce, 1.0f) \
@@ -303,11 +302,11 @@ bool  cPaddleOverlay = false;
    X(float, ModDyeDissipRate, 0.5f) \
    X(float, ModDyeDissipLevel, 0.0f) \
    X(float, ColorContrast, 0.8f) \
-   X(float, BlackPoint, 0.0897f) \
-   X(float, FlowSat, 0.5583f) \
-   X(float, FlowBright, 0.18f) \
+   X(float, BlackPoint, 0.105f) \
+   X(float, FlowSat, 0.8f) \
+   X(float, FlowBright, 0.3f) \
    X(float, GlowStrength, 0.0f) \
-   X(float, HighlightSat, 0.22f) \
+   X(float, HighlightSat, 0.8f) \
    X(float, PaddleWidth, 10.0f) \
    X(float, PaddleSlideRate, 0.3f) \
    X(float, PaddleSlideLevel, 0.85f) \

@@ -58,7 +58,7 @@ namespace fastFluid {
         bool  overlay = true;
         float colorR  = 220.0f;
         float colorG  = 220.0f;
-        float colorB  = 240.0f;
+        float colorB  = 220.0f;
     };
     ObstacleCommonParams obstacleCommon;
 

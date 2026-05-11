@@ -30,8 +30,7 @@ namespace fastFluid {
     static unsigned long lastFrameMs;
     uint8_t lastEmitter = 255;  // force initial setup on first frame
     uint8_t lastFlow = 255;  // force initial setup on first frame
-    //bool useRainbow = false;  // false = spectrum (even HSV), true = FastLED rainbow character
-
+    
     // Shared frame timing — set once per frame in runfastFluid(), read by all emitters and flows.
     // Scaled by globalSpeed so all time-based behavior respects the master clock.
     static float t  = 0.0f;   // virtual elapsed time (seconds), accumulated each frame
