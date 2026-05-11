@@ -8,12 +8,6 @@
 
 namespace fastFluid {
 
-    enum MultiJetLayoutMode : uint8_t {
-        MULTIJET_LAYOUT_RING_EVEN = 0,
-        MULTIJET_LAYOUT_RING_CUSTOM = 1,
-        MULTIJET_LAYOUT_FREE = 2
-    };
-
     enum MultiJetDirectionMode : uint8_t {
         MULTIJET_DIR_RADIAL_OUT = 0,
         MULTIJET_DIR_RADIAL_IN = 1,
@@ -38,8 +32,7 @@ namespace fastFluid {
 
         // parameters used by stand-alone jet
         float radius = (float)MIN_DIMENSION * 0.25f;
-        float radialAngle = CT_PI * 0.5f;
-        float wobble = 0.0f;
+        float radialAngle = 0.0f;
         float size = (float)MIN_DIMENSION / 12.0f;
         float direction = 0.0f;
         float density = 50.0f;
@@ -48,11 +41,10 @@ namespace fastFluid {
 
         // parameters used in multiple jet configurations
 
-        // Phase offsets sample the same noise stream at different points.
-        // This is the cheap synchrony/asynchrony control.
+        // Phase offsets sample shared modulators at different points. They do
+        // not create static position, direction, size, force, or hue offsets.
         float offsetRadius = 0.0f;
         float offsetRadialAngle = 0.0f;
-        float offsetWobble = 0.0f;
         float offsetSize = 0.0f;
         float offsetDirection = 0.0f;
         float offsetDensity = 0.0f;
@@ -70,35 +62,26 @@ namespace fastFluid {
         // small differences create related but non-identical motion.
         float radiusModScale = 1.0f;
         float radialAngleModScale = 1.0f;
-        float wobbleModScale = 1.0f;
         float sizeModScale = 1.0f;
         float directionModScale = 1.0f;
         float densityModScale = 1.0f;
         float forceModScale = 1.0f;
         float hueSpeedModScale = 1.0f;
 
-        /*
-        float radialAngleOffset = 0.0f;   // radians, added to pack radialAngle
-        float directionAngle = 0.0f;      // absolute mode: 0 = up
-        float directionOffset = 0.0f;     // radians, added after base direction
-        float hueOffset = 0.0f;           // hue cycles
-        */
-
     };
 
     struct JetPackParams {
         uint8_t numJets = 3;
-        uint8_t layoutMode = MULTIJET_LAYOUT_RING_EVEN;
         uint8_t directionMode = MULTIJET_DIR_RADIAL_OUT;
         uint8_t colorMode = MULTIJET_COLOR_HUE_SPREAD;
 
         float centerCol = (float)WIDTH * 0.5f;
         float centerRow = (float)HEIGHT * 0.5f;
 
-        float radialAngle = CT_PI * 0.5f;        // 90 deg starts at bottom
+        float radialAngleBase = 0.0f;  // Rotates the evenly-spaced ring.
         float radius = (float)MIN_DIMENSION * 0.25f;
-        float wobble = 0.0f;
         float size = (float)MIN_DIMENSION / 12.0f;
+        // Absolute angle in absolute mode; shared rotation offset otherwise.
         float direction = 0.0f;
         float density = 50.0f;
         float force = 0.7f;
@@ -109,7 +92,6 @@ namespace fastFluid {
         // fractional depth around the configured base value.
         float varRadialAngle = 0.0f;
         float varRadius = 0.50f;
-        float varWobble = 0.0f;
         float varSize = 0.0f;
         float varDirection = CT_PI;
         float varDensity = 0.0f;
@@ -118,7 +100,6 @@ namespace fastFluid {
 
         ModConfig modRadialAngle = {0, 0.3f, 0.0f};
         ModConfig modRadius = {0, 0.3f, 1.0f};
-        ModConfig modWobble = {0, 0.3f, 0.0f};
         ModConfig modDirection = {0, 0.3f, 1.0f};
         ModConfig modSize = {0, 0.3f, 0.0f};
         ModConfig modDensity = {0, 0.3f, 0.0f};

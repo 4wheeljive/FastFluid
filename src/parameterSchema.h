@@ -40,21 +40,20 @@ const char* const SINGLEJET_PARAMS[] PROGMEM = {
    "jetDensity", "jetForce", "jetRadius", "jetSpread", "jetHueSpeed",
    "jetSwingRange",
    "modJetForceRate", "modJetForceLevel",
-   "modAngleRate", "modAngleLevel",
+   "modJetAngleRate", "modJetAngleLevel",
    "modJetSwingRate", "modJetSwingLevel"
 };
 
 const char* const MULTIJET_PARAMS[] PROGMEM = {
-   "numJets", "layoutMode", "directionMode", "colorMode",
-   "radius", "radialAngle", "wobble", 
+   "numJets", "directionMode", "colorMode",
+   "radius", "radialAngleBase", 
    "size",  "direction", "density", "force", 
    "hueSpeed", "hueSpread",
-   "varRadius", "varRadialAngle", "varWobble",
+   "varRadius", "varRadialAngle",
    "varSize", "varDirection", "varDensity",
    "varForce", "varHueSpeed",
    "modRadiusRate", "modRadiusLevel",
    "modRadialAngleRate", "modRadialAngleLevel",
-   "modWobbleRate", "modWobbleLevel",
    "modDirectionRate", "modDirectionLevel",
    "modSizeRate", "modSizeLevel",
    "modDensityRate", "modDensityLevel",
@@ -70,7 +69,7 @@ struct EmitterParamEntry {
 
 const EmitterParamEntry EMITTER_PARAM_LOOKUP[] PROGMEM = {
    {"singlejet", SINGLEJET_PARAMS, 12},
-   {"multijet", MULTIJET_PARAMS, 37},
+   {"multijet", MULTIJET_PARAMS, 32},
 };
 
 static const EmitterParamEntry* getEmitterParams(uint8_t emitterIdx) {
@@ -150,19 +149,17 @@ float cJetHueSpeed = 0.69f;
 float cJetSwingRange = 4.0f;
 float cModJetForceRate = 0.5f;
 float cModJetForceLevel = 0.0f;
-float cModAngleRate = 0.5f;
-float cModAngleLevel = 0.0f;
-float cModSwingRate = 0.3f;
-float cModSwingLevel = 0.0f;
+float cModJetAngleRate = 0.5f;
+float cModJetAngleLevel = 0.0f;
+float cModJetSwingRate = 0.3f;
+float cModJetSwingLevel = 0.0f;
 
 // EMITTER: multiJet --------------
 uint8_t cNumJets = 3;
-uint8_t cLayoutMode = 0;
 uint8_t cDirectionMode = 0;
 uint8_t cColorMode = 0;
 float cRadius = 12.0f;
-float cWobble = 0.0f;
-float cRadialAngle = 1.5707963f;
+float cRadialAngleBase = 0.0f;
 float cSize = 4.0f;
 float cDensity = 30.0f;
 float cForce = 0.5f;
@@ -171,7 +168,6 @@ float cHueSpeed = 0.25f;
 float cHueSpread = 1.0f;
 float cVarRadialAngle = 0.0f;
 float cVarRadius = 0.50f;
-float cVarWobble = 0.0f;
 float cVarSize = 0.0f;
 float cVarDirection = 3.1415927f;
 float cVarDensity = 0.0f;
@@ -181,8 +177,6 @@ float cModRadialAngleRate = 0.3f;
 float cModRadialAngleLevel = 0.0f;
 float cModRadiusRate = 0.3f;
 float cModRadiusLevel = 1.0f;
-float cModWobbleRate = 0.3f;
-float cModWobbleLevel = 0.0f;
 float cModDirectionRate = 0.3f;
 float cModDirectionLevel = 1.0f;
 float cModSizeRate = 0.3f;
@@ -247,17 +241,15 @@ bool  cPaddleOverlay = false;
    X(float, JetSwingRange, 4.0f) \
    X(float, ModJetForceRate, 0.3f) \
    X(float, ModJetForceLevel, 0.1f) \
-   X(float, ModAngleRate, 0.3f) \
-   X(float, ModAngleLevel, 2.0f) \
-   X(float, ModSwingRate, 0.3f) \
-   X(float, ModSwingLevel, 0.0f) \
+   X(float, ModJetAngleRate, 0.3f) \
+   X(float, ModJetAngleLevel, 2.0f) \
+   X(float, ModJetSwingRate, 0.3f) \
+   X(float, ModJetSwingLevel, 0.0f) \
    X(uint8_t, NumJets, 3) \
-   X(uint8_t, LayoutMode, 0) \
    X(uint8_t, DirectionMode, 0) \
    X(uint8_t, ColorMode, 0) \
    X(float, Radius, 12.0f) \
-   X(float, RadialAngle, 1.5707963f) \
-   X(float, Wobble, 0.0f) \
+   X(float, RadialAngleBase, 0.0f) \
    X(float, Size, 4.0f) \
    X(float, Density, 30.0f) \
    X(float, Force, 0.5f) \
@@ -266,7 +258,6 @@ bool  cPaddleOverlay = false;
    X(float, HueSpread, 1.0f) \
    X(float, VarRadialAngle, 0.0f) \
    X(float, VarRadius, 0.50f) \
-   X(float, VarWobble, 0.0f) \
    X(float, VarDirection, 3.1415927f) \
    X(float, VarSize, 0.0f) \
    X(float, VarDensity, 0.0f) \
@@ -276,8 +267,6 @@ bool  cPaddleOverlay = false;
    X(float, ModRadiusLevel, 1.0f) \
    X(float, ModRadialAngleRate, 0.3f) \
    X(float, ModRadialAngleLevel, 0.0f) \
-   X(float, ModWobbleRate, 0.3f) \
-   X(float, ModWobbleLevel, 0.0f) \
    X(float, ModSizeRate, 0.3f) \
    X(float, ModSizeLevel, 0.0f) \
    X(float, ModDirectionRate, 0.3f) \

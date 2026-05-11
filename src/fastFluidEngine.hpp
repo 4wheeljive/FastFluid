@@ -437,23 +437,21 @@ namespace fastFluid {
                 cJetAngle = singleJet.jetAngle;
                 cJetHueSpeed = singleJet.jetHueSpeed;
                 cJetSwingRange = singleJet.jetSwingRange;
-                cModForceRate = singleJet.modJetForce.modRate;
-                cModForceLevel = singleJet.modJetForce.modLevel;
-                cModAngleRate = singleJet.modAngle.modRate;
-                cModAngleLevel = singleJet.modAngle.modLevel;
-                cModSwingRate = singleJet.modSwing.modRate;
-                cModSwingLevel = singleJet.modSwing.modLevel;
+                cModJetForceRate = singleJet.modJetForce.modRate;
+                cModJetForceLevel = singleJet.modJetForce.modLevel;
+                cModJetAngleRate = singleJet.modJetAngle.modRate;
+                cModJetAngleLevel = singleJet.modJetAngle.modLevel;
+                cModJetSwingRate = singleJet.modJetSwing.modRate;
+                cModJetSwingLevel = singleJet.modJetSwing.modLevel;
                 break;
             }
             case EMITTER_MULTIJET: {
                 resetMultiJetDefaults();
                 cNumJets             = jetPack.numJets;
-                cLayoutMode          = jetPack.layoutMode;
                 cDirectionMode       = jetPack.directionMode;
                 cColorMode           = jetPack.colorMode;
                 cRadius          = jetPack.radius;
-                cRadialAngle         = jetPack.radialAngle;
-                cWobble              = jetPack.wobble;
+                cRadialAngleBase         = jetPack.radialAngleBase;
                 cSize           = jetPack.size;
                 cDensity             = jetPack.density;
                 cForce               = jetPack.force;
@@ -462,7 +460,6 @@ namespace fastFluid {
                 cHueSpread           = jetPack.hueSpread;
                 cVarRadius  = jetPack.varRadius;
                 cVarRadialAngle = jetPack.varRadialAngle;
-                cVarWobble      = jetPack.varWobble;
                 cVarSize   	= jetPack.varSize;
 				cVarDirection   = jetPack.varDirection;
                 cVarDensity     = jetPack.varDensity;
@@ -472,8 +469,6 @@ namespace fastFluid {
                 cModRadiusLevel  = jetPack.modRadius.modLevel;
                 cModRadialAngleRate  = jetPack.modRadialAngle.modRate;
                 cModRadialAngleLevel = jetPack.modRadialAngle.modLevel;
-                cModWobbleRate       = jetPack.modWobble.modRate;
-                cModWobbleLevel      = jetPack.modWobble.modLevel;
                 cModSizeRate    = jetPack.modSize.modRate;
                 cModSizeLevel   = jetPack.modSize.modLevel;
                 cModDensityRate      = jetPack.modDensity.modRate;
@@ -506,30 +501,27 @@ namespace fastFluid {
         singleJet.jetAngle = cJetAngle;
         singleJet.jetHueSpeed = cJetHueSpeed;
         singleJet.jetSwingRange = cJetSwingRange;
-        singleJet.modJetForce.modRate = cModForceRate;
-        singleJet.modJetForce.modLevel = cModForceLevel;
-        singleJet.modAngle.modRate = cModAngleRate;
-        singleJet.modAngle.modLevel = cModAngleLevel;
-        singleJet.modSwing.modRate = cModSwingRate;
-        singleJet.modSwing.modLevel = cModSwingLevel;
+        singleJet.modJetForce.modRate = cModJetForceRate;
+        singleJet.modJetForce.modLevel = cModJetForceLevel;
+        singleJet.modJetAngle.modRate = cModJetAngleRate;
+        singleJet.modJetAngle.modLevel = cModJetAngleLevel;
+        singleJet.modJetSwing.modRate = cModJetSwingRate;
+        singleJet.modJetSwing.modLevel = cModJetSwingLevel;
 
         // multiJet
         jetPack.numJets = cNumJets;
-        jetPack.layoutMode = cLayoutMode;
         jetPack.directionMode = cDirectionMode;
         jetPack.colorMode = cColorMode;
-        jetPack.radialAngle = cRadialAngle;
+        jetPack.radialAngleBase = cRadialAngleBase;
         jetPack.density = cDensity;
         jetPack.force = cForce;
         jetPack.size = cSize;
         jetPack.radius = cRadius;
-        jetPack.wobble = cWobble;
         jetPack.direction = cDirection;
         jetPack.hueSpeed = cHueSpeed;
         jetPack.hueSpread = cHueSpread;
         jetPack.varRadialAngle = cVarRadialAngle;
         jetPack.varRadius = cVarRadius;
-        jetPack.varWobble = cVarWobble;
         jetPack.varDirection = cVarDirection;
         jetPack.varSize = cVarSize;
         jetPack.varForce = cVarForce;
@@ -539,8 +531,6 @@ namespace fastFluid {
         jetPack.modRadialAngle.modLevel = cModRadialAngleLevel;
         jetPack.modRadius.modRate = cModRadiusRate;
         jetPack.modRadius.modLevel = cModRadiusLevel;
-        jetPack.modWobble.modRate = cModWobbleRate;
-        jetPack.modWobble.modLevel = cModWobbleLevel;
         jetPack.modDirection.modRate = cModDirectionRate;
         jetPack.modDirection.modLevel = cModDirectionLevel;
         jetPack.modSize.modRate = cModSizeRate;

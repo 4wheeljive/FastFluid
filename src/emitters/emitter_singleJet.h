@@ -35,14 +35,14 @@ namespace fastFluid {
         float jetSwingRange = (float)MIN_DIMENSION / 8.0f;
 
         ModConfig modJetForce = {0, 0.3f, 0.1f};   // modTimer, modRate, modLevel
-        ModConfig modAngle    = {1, 0.3f, 2.0f};   // modLevel: 0 = no movement, 2 = full ±90°
-        ModConfig modSwing = {2, 0.3f, 0.0f};   // modLevel: 0 = no swing, 1 = full range
+        ModConfig modJetAngle    = {1, 0.3f, 2.0f};   // modLevel: 0 = no movement, 2 = full ±90°
+        ModConfig modJetSwing = {2, 0.3f, 0.0f};   // modLevel: 0 = no swing, 1 = full range
     };
 
     static constexpr ModConfig SingleJetParams::* SINGLE_JET_MODS[] = {
         &SingleJetParams::modJetForce,
-        &SingleJetParams::modAngle,
-        &SingleJetParams::modSwing
+        &SingleJetParams::modJetAngle,
+        &SingleJetParams::modJetSwing
     };
 
     SingleJetParams singleJet;
@@ -50,14 +50,14 @@ namespace fastFluid {
     // Phase 1 of frame: write this component's timer slot ratios.
     static void singleJetPrepareModulators() {
         timings.ratio[singleJet.modJetForce.modTimer] = 0.0004f  * singleJet.modJetForce.modRate;
-        timings.ratio[singleJet.modAngle.modTimer]    = 0.00045f * singleJet.modAngle.modRate;
-        timings.ratio[singleJet.modSwing.modTimer] = 0.0004f  * singleJet.modSwing.modRate;
+        timings.ratio[singleJet.modJetAngle.modTimer]    = 0.00045f * singleJet.modJetAngle.modRate;
+        timings.ratio[singleJet.modJetSwing.modTimer] = 0.0004f  * singleJet.modJetSwing.modRate;
     }
 
     static void emitSingleJet() {
         const ModConfig& forceMod = singleJet.modJetForce;
-        const ModConfig& angleMod = singleJet.modAngle;
-        const ModConfig& swingMod = singleJet.modSwing;
+        const ModConfig& angleMod = singleJet.modJetAngle;
+        const ModConfig& swingMod = singleJet.modJetSwing;
 
         // ─── Signal acquisition ────────────────────────────────────
         const float forceSignal = move.normalized_noise[forceMod.modTimer];

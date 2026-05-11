@@ -22,7 +22,6 @@ namespace fastFluid {
     static constexpr ModConfig JetPackParams::* MULTIJET_MODS[] = {
         &JetPackParams::modRadialAngle,
         &JetPackParams::modRadius,
-        &JetPackParams::modWobble,
         &JetPackParams::modSize,
         &JetPackParams::modDirection,
         &JetPackParams::modDensity,
@@ -67,28 +66,18 @@ namespace fastFluid {
             const float phase = (float)i * 17.0f;
             jet[i].offsetRadialAngle = phase + 3.0f;
             jet[i].offsetRadius = phase + 7.0f;
-            jet[i].offsetWobble = phase + 11.0f;
             jet[i].offsetSize = phase + 17.0f;
             jet[i].offsetDirection = phase + 13.0f;
             jet[i].offsetDensity = phase + 19.0f;
             jet[i].offsetForce = phase + 23.0f;
             jet[i].offsetHueSpeed = phase + 29.0f;
         }
-
-        /*
-        jet[1].RadiusScale = 0.92f;
-        jet[2].RadiusScale = 1.08f;
-        jet[1].forceScale = 0.92f;
-        jet[2].forceScale = 1.08f;
-        */
-    
     } // resetMultiJetDefaults()
 
     // Phase 1 of frame: write this component's timer slot ratios.
     static void multiJetPrepareModulators() {
         timings.ratio[jetPack.modRadialAngle.modTimer] = 0.00045f * jetPack.modRadialAngle.modRate;
         timings.ratio[jetPack.modRadius.modTimer] = 0.00045f * jetPack.modRadius.modRate;
-        timings.ratio[jetPack.modWobble.modTimer] = 0.00045f * jetPack.modWobble.modRate;
         timings.ratio[jetPack.modSize.modTimer] = 0.00045f * jetPack.modSize.modRate;
         timings.ratio[jetPack.modDirection.modTimer] = 0.00040f * jetPack.modDirection.modRate;
         timings.ratio[jetPack.modDensity.modTimer] = 0.00050f * jetPack.modDensity.modRate;
@@ -103,55 +92,30 @@ namespace fastFluid {
     static inline void resolveMultiJetAnchor(uint8_t jetIndex, uint8_t count,
                                              const JetParams& thisJet,
                                              float& anchorCol, float& anchorRow) {
-        if (jetPack.layoutMode == MULTIJET_LAYOUT_FREE) {
-            anchorCol = thisJet.anchorCol;
-            anchorRow = thisJet.anchorRow;
-        } else {
-            float radialAngle = jetPack.radialAngle + thisJet.offsetRadialAngle;
-            if (jetPack.layoutMode == MULTIJET_LAYOUT_RING_EVEN && count > 0) {
-                radialAngle += CT_2PI * ((float)jetIndex / (float)count);
-            }
+        const float rawAngle = jetPack.radialAngleBase +
+                               CT_2PI * ((float)jetIndex / (float)count);
 
-            const float angleSignal = multiJetSignal(jetPack.modRadialAngle, thisJet.offsetRadialAngle);
-            radialAngle += jetPack.modRadialAngle.modLevel *
-                           jetPack.varRadialAngle *
-                           angleSignal *
-                           thisJet.radialAngleModScale;
+        const float angleSignal = multiJetSignal(jetPack.modRadialAngle, thisJet.offsetRadialAngle);
+        const float angle = rawAngle +
+                            angleSignal *
+                            jetPack.modRadialAngle.modLevel *
+                            jetPack.varRadialAngle *
+                            thisJet.radialAngleModScale;
 
-            const float radiusSignal = multiJetSignal(jetPack.modRadius, thisJet.offsetRadius);
-            float anchorRadius = multiJetScalar(
-                jetPack.radius * thisJet.radiusScale,
-                jetPack.modRadius,
-                jetPack.varRadius,
-                radiusSignal,
-                thisJet.radiusModScale,
-                1.0f
-            );
-            anchorRadius = clampf(anchorRadius, 1.0f, (float)MIN_DIMENSION * 0.48f);
+        const float radiusSignal = multiJetSignal(jetPack.modRadius, thisJet.offsetRadius);
+        float anchorRadius = multiJetScalar(
+            jetPack.radius * thisJet.radiusScale,
+            jetPack.modRadius,
+            jetPack.varRadius,
+            radiusSignal,
+            thisJet.radiusModScale,
+            1.0f
+        );
+        anchorRadius = clampf(anchorRadius, 1.0f, (float)MIN_DIMENSION * 0.48f);
 
-            SinCosResult sc = sincos_fast(wrapRad(radialAngle));
-            anchorCol = jetPack.centerCol + sc.cos_val * anchorRadius;
-            anchorRow = jetPack.centerRow + sc.sin_val * anchorRadius;
-        }
-
-        const float wobbleSignal = multiJetSignal(jetPack.modWobble, thisJet.offsetWobble);
-        const float wobble = jetPack.wobble *
-                             jetPack.modWobble.modLevel *
-                             wobbleSignal *
-                             thisJet.wobbleModScale;
-        if (wobble != 0.0f) {
-            float radialCol = anchorCol - jetPack.centerCol;
-            float radialRow = anchorRow - jetPack.centerRow;
-            const float length = fl::sqrtf(radialCol * radialCol + radialRow * radialRow);
-            if (length > 1e-6f) {
-                radialCol /= length;
-                radialRow /= length;
-                const float tangentCol = -radialRow;
-                const float tangentRow = radialCol;
-                anchorCol += (radialCol + tangentCol) * wobble * 0.5f;
-                anchorRow += (radialRow + tangentRow) * wobble * 0.5f;
-            }
-        }
+        SinCosResult sc = sincos_fast(wrapRad(angle));
+        anchorCol = jetPack.centerCol + sc.cos_val * anchorRadius;
+        anchorRow = jetPack.centerRow + sc.sin_val * anchorRadius;
     }
 
     static inline void resolveMultiJetDirection(const JetParams& thisJet,
@@ -197,12 +161,13 @@ namespace fastFluid {
         }
 
         const float directionSignal = multiJetSignal(jetPack.modDirection, thisJet.offsetDirection);
-        const float rotation = jetPack.direction +
-                               thisJet.offsetDirection +
-                               jetPack.modDirection.modLevel *
-                               jetPack.varDirection *
-                               directionSignal *
-                               thisJet.directionModScale;
+        const float directionModulation = jetPack.modDirection.modLevel *
+                                          jetPack.varDirection *
+                                          directionSignal *
+                                          thisJet.directionModScale;
+        const float rotation = (jetPack.directionMode == MULTIJET_DIR_ABSOLUTE)
+            ? directionModulation
+            : jetPack.direction + directionModulation;
         if (rotation != 0.0f) {
             float rotatedCol;
             float rotatedRow;
@@ -226,29 +191,30 @@ namespace fastFluid {
                 32.0f / 360.0f,
                 54.0f / 360.0f
             };
-            return fmodPos(warmHues[jetIndex % 3] + thisJet.offsetHueSpeed + hueShift, 1.0f);
+            return fmodPos(warmHues[jetIndex % 3] + hueShift, 1.0f);
         }
 
         const float baseHue = fmodPos(t * jetPack.hueSpeed * thisJet.hueSpeedScale, 1.0f);
-        float offset = thisJet.offsetHueSpeed;
+        float hueOffset = 0.0f;
 
         switch (jetPack.colorMode) {
             case MULTIJET_COLOR_NEAR_OPPOSITE:
-                if (jetIndex == 1) offset += 170.0f / 360.0f;
-                else if (jetIndex == 2) offset += 190.0f / 360.0f;
-                else if (count > 3) offset += (float)jetIndex / (float)count;
+                if (jetIndex == 1) hueOffset = 170.0f / 360.0f;
+                else if (jetIndex == 2) hueOffset = 190.0f / 360.0f;
+                else if (count > 3) hueOffset = (float)jetIndex / (float)count;
                 break;
             case MULTIJET_COLOR_PER_JET:
+                if (count > 0) hueOffset = (float)jetIndex / (float)count;
                 break;
             case MULTIJET_COLOR_HUE_SPREAD:
             default:
                 if (count > 1) {
-                    offset += jetPack.hueSpread * ((float)jetIndex / (float)count);
+                    hueOffset = jetPack.hueSpread * ((float)jetIndex / (float)count);
                 }
                 break;
         }
 
-        return fmodPos(baseHue + offset + hueShift, 1.0f);
+        return fmodPos(baseHue + hueOffset + hueShift, 1.0f);
     }
 
     static inline void emitLayeredJet(float anchorCol, float anchorRow,
