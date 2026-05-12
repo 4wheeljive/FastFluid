@@ -36,8 +36,8 @@ namespace fastFluid {
     static float t  = 0.0f;   // virtual elapsed time (seconds), accumulated each frame
     static float dt = 0.0f;   // virtual frame delta (seconds), already scaled by globalSpeed
     float globalSpeed = 0.5f;  // master clock multiplier
-    uint8_t paletteBlendRate = 16;
-    float paletteFloor = 0.0f;
+    uint8_t paletteBlendRate = 32;
+    float paletteFloor = 0.05f;
 
 
     // ═══════════════════════════════════════════════════════════════════

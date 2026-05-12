@@ -136,7 +136,7 @@ float cGlobalSpeed = 0.5f;
 bool cPaletteMode = true;
 bool cRotatePalette = true;
 uint8_t cPaletteBlendRate = 32;
-float cPaletteFloor = 0.0f;
+float cPaletteFloor = 0.05f;
 uint8_t cDebugView = 0;
 
 // EMITTER: singleJet --------------
@@ -158,33 +158,33 @@ float cModJetSwingLevel = 0.0f;
 uint8_t cNumJets = 3;
 uint8_t cDirectionMode = 0;
 uint8_t cColorMode = 0;
-float cRadius = 12.0f;
+float cRadius = 16.0f;
 float cRadialAngleBase = 0.0f;
-float cSize = 4.0f;
+float cSize = 5.0f;
 float cDensity = 30.0f;
 float cForce = 0.25f;
 float cDirection = 0.0f;
 float cHueSpeed = 0.25f;
 float cHueSpread = 1.0f;
-float cVarRadialAngle = 0.4f;
-float cVarRadius = 0.40f;
-float cVarSize = 0.4f;
+float cVarRadialAngle = 0.74f;
+float cVarRadius = 0.25f;
+float cVarSize = 0.25f;
 float cVarDirection = 3.1415927f;
-float cVarDensity = 0.2f;
-float cVarForce = 0.85f;
-float cVarHueSpeed = 0.0f;
-float cModRadialAngleRate = 0.3f;
-float cModRadialAngleLevel = 0.0f;
-float cModRadiusRate = 0.3f;
-float cModRadiusLevel = 1.0f;
-float cModDirectionRate = 0.3f;
-float cModDirectionLevel = 1.0f;
-float cModSizeRate = 0.3f;
+float cVarDensity = 0.25f;
+float cVarForce = 0.15f;
+float cVarHueSpeed = 0.1f;
+float cModRadialAngleRate = 0.2f;
+float cModRadialAngleLevel = 0.4f;
+float cModRadiusRate = 0.4f;
+float cModRadiusLevel = 1.5f;
+float cModDirectionRate = 0.5f;
+float cModDirectionLevel = 1.5f;
+float cModSizeRate = 0.1f;
 float cModSizeLevel = 0.0f;
-float cModDensityRate = 0.3f;
+float cModDensityRate = 0.1f;
 float cModDensityLevel = 0.0f;
-float cModForceRate = 0.3f;
-float cModForceLevel = 1.0f;
+float cModForceRate = 0.2f;
+float cModForceLevel = 0.2f;
 float cModHueSpeedRate = 0.3f;
 float cModHueSpeedLevel = 0.0f;
 
@@ -192,22 +192,22 @@ float cModHueSpeedLevel = 0.0f;
 float cViscosity = 0.0f;
 float cDiffusion = 0.0f;
 float cVelocityDissipation = 0.5f;
-float cDyeDissipation = 0.25f;
+float cDyeDissipation = 0.4f;
 float cVorticity = 0.0f;
-float cGravityForce = 1.0f;
+float cGravityForce = 0.0f;
 float cGravityAngle = 180.0f;
 uint8_t cDiffuseIterations = 6;
 uint8_t cProjectIterations = 10;
-float cModVelDissipRate = 0.2f;
-float cModVelDissipLevel = 0.2f;
-float cModDyeDissipRate = 0.2f;
-float cModDyeDissipLevel = 0.2f;
-float cColorContrast = 0.8f;
+float cModVelDissipRate = 0.5f;
+float cModVelDissipLevel = 0.0f;
+float cModDyeDissipRate = 0.5f;
+float cModDyeDissipLevel = 0.0f;
+float cColorContrast = 1.0f;
 float cBlackPoint = 0.105f;
-float cFlowSat = 0.8f;
-float cFlowBright = 0.3f;
+float cFlowSat = 2.0f;
+float cFlowBright = 0.75f;
 float cGlowStrength = 0.0f;
-float cHighlightSat = 0.8f;
+float cHighlightSat = 2.0f;
 
 // OBSTACLE: Paddles
 float cPaddleWidth      = 10.0f;
@@ -230,7 +230,7 @@ bool  cPaddleOverlay = false;
    X(uint8_t, OverrideMapping, 0) \
    X(float, GlobalSpeed, 0.5f) \
    X(float, PaletteBlendRate, 32.0f) \
-   X(float, PaletteFloor, 0.0f) \
+   X(float, PaletteFloor, 0.05f) \
    X(uint8_t, DebugView, 0) \
    X(float, JetDensity, 50.0f) \
    X(float, JetForce, 0.25f) \
@@ -248,41 +248,41 @@ bool  cPaddleOverlay = false;
    X(uint8_t, NumJets, 3) \
    X(uint8_t, DirectionMode, 0) \
    X(uint8_t, ColorMode, 0) \
-   X(float, Radius, 12.0f) \
+   X(float, Radius, 16.0f) \
    X(float, RadialAngleBase, 0.0f) \
-   X(float, Size, 4.0f) \
+   X(float, Size, 5.0f) \
    X(float, Density, 30.0f) \
-   X(float, Force, 0.5f) \
+   X(float, Force, 0.25f) \
    X(float, Direction, 0.0f) \
    X(float, HueSpeed, 0.25f) \
    X(float, HueSpread, 1.0f) \
-   X(float, VarRadialAngle, 0.0f) \
-   X(float, VarRadius, 0.50f) \
+   X(float, VarRadialAngle, 0.74f) \
+   X(float, VarRadius, 0.25f) \
    X(float, VarDirection, 3.1415927f) \
-   X(float, VarSize, 0.0f) \
-   X(float, VarDensity, 0.0f) \
-   X(float, VarForce, 0.85f) \
-   X(float, VarHueSpeed, 0.0f) \
-   X(float, ModRadiusRate, 0.3f) \
-   X(float, ModRadiusLevel, 1.0f) \
-   X(float, ModRadialAngleRate, 0.3f) \
-   X(float, ModRadialAngleLevel, 0.0f) \
-   X(float, ModSizeRate, 0.3f) \
+   X(float, VarSize, 0.25f) \
+   X(float, VarDensity, 0.25f) \
+   X(float, VarForce, 0.15f) \
+   X(float, VarHueSpeed, 0.1f) \
+   X(float, ModRadiusRate, 0.4f) \
+   X(float, ModRadiusLevel, 1.5f) \
+   X(float, ModRadialAngleRate, 0.2f) \
+   X(float, ModRadialAngleLevel, 0.4f) \
+   X(float, ModSizeRate, 0.1f) \
    X(float, ModSizeLevel, 0.0f) \
-   X(float, ModDirectionRate, 0.3f) \
-   X(float, ModDirectionLevel, 1.0f) \
-   X(float, ModDensityRate, 0.3f) \
+   X(float, ModDirectionRate, 0.5f) \
+   X(float, ModDirectionLevel, 1.5f) \
+   X(float, ModDensityRate, 0.1f) \
    X(float, ModDensityLevel, 0.0f) \
-   X(float, ModForceRate, 0.3f) \
-   X(float, ModForceLevel, 1.0f) \
+   X(float, ModForceRate, 0.2f) \
+   X(float, ModForceLevel, 0.2f) \
    X(float, ModHueSpeedRate, 0.3f) \
    X(float, ModHueSpeedLevel, 0.0f) \
    X(float, Viscosity, 0.0f) \
    X(float, Diffusion, 0.0f) \
    X(float, VelocityDissipation, 0.5f) \
-   X(float, DyeDissipation, 0.25f) \
+   X(float, DyeDissipation, 0.4f) \
    X(float, Vorticity, 0.0f) \
-   X(float, GravityForce, 1.0f) \
+   X(float, GravityForce, 0.0f) \
    X(float, GravityAngle, 180.0f) \
    X(uint8_t, DiffuseIterations, 6) \
    X(uint8_t, ProjectIterations, 10) \
@@ -290,12 +290,12 @@ bool  cPaddleOverlay = false;
    X(float, ModVelDissipLevel, 0.0f) \
    X(float, ModDyeDissipRate, 0.5f) \
    X(float, ModDyeDissipLevel, 0.0f) \
-   X(float, ColorContrast, 0.8f) \
+   X(float, ColorContrast, 1.0f) \
    X(float, BlackPoint, 0.105f) \
-   X(float, FlowSat, 0.8f) \
-   X(float, FlowBright, 0.3f) \
+   X(float, FlowSat, 2.0f) \
+   X(float, FlowBright, 0.75f) \
    X(float, GlowStrength, 0.0f) \
-   X(float, HighlightSat, 0.8f) \
+   X(float, HighlightSat, 2.0f) \
    X(float, PaddleWidth, 10.0f) \
    X(float, PaddleSlideRate, 0.3f) \
    X(float, PaddleSlideLevel, 0.85f) \

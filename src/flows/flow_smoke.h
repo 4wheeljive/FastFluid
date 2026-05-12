@@ -23,12 +23,12 @@ namespace fastFluid {
     struct SmokeParams {
         float viscosity           = 0.0f;     // velocity diffusion coefficient
         float diffusion           = 0.0f;     // dye diffusion coefficient
-        float velocityDissipation = 0.75f;     // per-second velocity decay (0..1, 1=no decay)
-        float dyeDissipation      = 0.25f;     // per-second dye decay (overrides project persistence)
+        float velocityDissipation = 0.5f;     // per-second velocity decay (0..1, 1=no decay)
+        float dyeDissipation      = 0.4f;     // per-second dye decay (overrides project persistence)
         float vorticity           = 0.0f;     // confinement strength (0 = disabled)
         // Directional gravity: applied as a uniform force inside the velocity step.
         // Angle convention matches jetAngle: 0°=up, 90°=right, 180°=down, 270°=left.
-        float gravityForce        = 1.0f;     // intensity (0 = disabled)
+        float gravityForce        = 0.0f;     // intensity (0 = disabled)
         float gravityAngle        = 180.0f;   // direction in degrees (default = down)
         // Split iteration counts. Diffuse is well-conditioned and converges
         // in a handful of passes; pressure projection (incompressibility)

@@ -31,12 +31,12 @@ namespace fastFluid {
     //    pressure/divergence: glow scratch (init / blurred), reused per channel
 
     struct RenderParams {
-        float colorContrast = 0.8f;
-        float blackPoint    = 0.0897f;
-        float flowSat       = 0.5583f;
-        float flowBright    = 0.18f;
+        float colorContrast = 1.0f;
+        float blackPoint    = 0.105f;
+        float flowSat       = 2.0f;
+        float flowBright    = 0.75f;
         float glowStrength  = 0.0f; // was 0.24
-        float highlightSat  = 0.22f;
+        float highlightSat  = 2.0f;
     };
 
     RenderParams render;
