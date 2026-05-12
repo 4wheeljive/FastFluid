@@ -193,7 +193,7 @@ float cViscosity = 0.0f;
 float cDiffusion = 0.0f;
 float cVelocityDissipation = 0.5f;
 float cDyeDissipation = 0.25f;
-float cVorticity = 10.0f;
+float cVorticity = 0.0f;
 float cGravityForce = 1.0f;
 float cGravityAngle = 180.0f;
 uint8_t cDiffuseIterations = 6;
@@ -281,7 +281,7 @@ bool  cPaddleOverlay = false;
    X(float, Diffusion, 0.0f) \
    X(float, VelocityDissipation, 0.5f) \
    X(float, DyeDissipation, 0.25f) \
-   X(float, Vorticity, 10.0f) \
+   X(float, Vorticity, 0.0f) \
    X(float, GravityForce, 1.0f) \
    X(float, GravityAngle, 180.0f) \
    X(uint8_t, DiffuseIterations, 6) \

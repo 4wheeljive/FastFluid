@@ -12,6 +12,8 @@
 //#define FASTLED_OVERCLOCK 1.2
 #include <FastLED.h>
 
+#define SERIAL_PROFILE_REPORTS
+
 //#include <FS.h>
 //#include "LittleFS.h"
 //#define FORMAT_LITTLEFS_IF_FAILED true

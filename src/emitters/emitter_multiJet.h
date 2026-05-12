@@ -35,7 +35,17 @@ namespace fastFluid {
     }
 
     static inline float multiJetSignal(const ModConfig& mod, float phaseOffset) {
-        return clampf(2.0f * noiseX.noise(move.linear[mod.modTimer] + phaseOffset), -1.0f, 1.0f);
+        const float base = move.directional_noise[mod.modTimer];
+        const uint8_t bucket = ((uint8_t)phaseOffset) & 7;
+
+        float signal = (bucket & 1) ? -base : base;
+        if (bucket & 2) {
+            signal *= 0.92f;
+        } else if (bucket & 4) {
+            signal *= 1.08f;
+        }
+
+        return clampf(signal, -1.0f, 1.0f);
     }
 
     static inline float multiJetScalar(float base, const ModConfig& mod,
@@ -59,7 +69,7 @@ namespace fastFluid {
         
         jetPack = JetPackParams{};
 
-        for (uint8_t i = 0; i < MAX_NUM_JETS; i++) {
+        for (uint8_t i = 0; i < jetPack.numJets; i++) {   // MAX_NUM_JETS
             jet[i] = JetParams{};
             jet[i].enabled = true;
 
