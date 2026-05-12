@@ -2,60 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>FastFluid README</title>
-<style>
-body {
-    font-family: Arial, sans-serif;
-    line-height: 1.7;
-    max-width: 1050px;
-    margin: 40px auto;
-    padding: 20px;
-    background: #ffffff;
-    color: #222;
-}
-h1, h2, h3 {
-    color: #111;
-    margin-top: 40px;
-}
-h1 {
-    font-size: 42px;
-}
-h2 {
-    border-bottom: 2px solid #eee;
-    padding-bottom: 8px;
-}
-code, pre {
-    background: #f4f4f4;
-    border-radius: 6px;
-    font-family: Consolas, monospace;
-}
-code {
-    padding: 2px 6px;
-}
-pre {
-    padding: 16px;
-    overflow-x: auto;
-}
-table {
-    border-collapse: collapse;
-    width: 100%;
-    margin: 24px 0;
-}
-th, td {
-    border: 1px solid #ccc;
-    padding: 12px;
-    text-align: left;
-}
-th {
-    background: #f0f0f0;
-}
-blockquote {
-    border-left: 4px solid #999;
-    padding-left: 16px;
-    color: #555;
-    margin-left: 0;
-}
-</style>
+
 </head>
 <body>
 
