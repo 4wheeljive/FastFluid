@@ -35,8 +35,8 @@ namespace fastFluid {
         float radialAngle = 0.0f;
         float size = (float)MIN_DIMENSION / 12.0f;
         float direction = 0.0f;
-        float density = 50.0f;
-        float force = 0.7f;
+        float density = 30.0f;
+        float force = 0.25f;
         float hueSpeed = 0.25f;
 
         // parameters used in multiple jet configurations
@@ -83,8 +83,8 @@ namespace fastFluid {
         float size = (float)MIN_DIMENSION / 12.0f;
         // Absolute angle in absolute mode; shared rotation offset otherwise.
         float direction = 0.0f;
-        float density = 50.0f;
-        float force = 0.7f;
+        float density = 30.0f;
+        float force = 0.25f;
         float hueSpeed = 0.25f;
         float hueSpread = 1.0f;
 
@@ -92,11 +92,11 @@ namespace fastFluid {
         // fractional depth around the configured base value.
         float varRadialAngle = 0.0f;
         float varRadius = 0.50f;
-        float varSize = 0.0f;
+        float varSize = 0.3f;
         float varDirection = CT_PI;
-        float varDensity = 0.0f;
-        float varForce = 0.85f;
-        float varHueSpeed = 0.0f;
+        float varDensity = 0.2f;
+        float varForce = 0.2f;
+        float varHueSpeed = 0.2f;
 
         ModConfig modRadialAngle = {0, 0.3f, 0.0f};
         ModConfig modRadius = {0, 0.3f, 1.0f};

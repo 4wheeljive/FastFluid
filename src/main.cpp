@@ -160,12 +160,12 @@ void loop() {
 
 	PROFILE_FRAME_BEGIN();
 
-	/*
+	
 	EVERY_N_SECONDS(3) {
 		uint8_t fps = FastLED.getFPS();
 		FASTLED_DBG(fps << " fps");
 	}
-	*/
+	
 	// To enable reports, define SERIAL_PROFILE_REPORTS in build flags or above
 	#ifdef SERIAL_PROFILE_REPORTS
 		EVERY_N_SECONDS(10) {

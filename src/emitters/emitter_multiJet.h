@@ -111,7 +111,7 @@ namespace fastFluid {
             thisJet.radiusModScale,
             1.0f
         );
-        anchorRadius = clampf(anchorRadius, 1.0f, (float)MIN_DIMENSION * 0.48f);
+        anchorRadius = clampf(anchorRadius, (float)MIN_DIMENSION * 0.2f, (float)MIN_DIMENSION * 0.45f);
 
         SinCosResult sc = sincos_fast(wrapRad(angle));
         anchorCol = jetPack.centerCol + sc.cos_val * anchorRadius;
