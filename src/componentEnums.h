@@ -13,6 +13,6 @@ enum Flow : uint8_t {
 };
 
 enum Obstacle : uint8_t {
-    OBSTACLE_PADDLE = 0,
+    OBSTACLE_PADDLES = 0,
     OBSTACLE_COUNT
 };

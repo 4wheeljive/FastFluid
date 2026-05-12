@@ -12,8 +12,8 @@
 
 namespace fastFluid {
 
-    constexpr float CT_PI = 3.14159265358979f;
-    constexpr float CT_2PI = 6.28318530717958f;
+    constexpr float FF_PI = 3.14159265358979f;
+    constexpr float FF_2PI = 6.28318530717958f;
 
     // ═══════════════════════════════════════════════════════════════════
     //  GRID STATE & TIMING
@@ -30,6 +30,7 @@ namespace fastFluid {
     static unsigned long lastFrameMs;
     uint8_t lastEmitter = 255;  // force initial setup on first frame
     uint8_t lastFlow = 255;  // force initial setup on first frame
+    uint8_t lastObstacle = 255;  // force initial setup on first frame
     
     // Shared frame timing — set once per frame in runfastFluid(), read by all emitters and flows.
     // Scaled by globalSpeed so all time-based behavior respects the master clock.
@@ -176,7 +177,6 @@ namespace fastFluid {
             c.b.raw() * (1.0f / 256.0f)
         };
     }
-
     
     static ColorF rainbow(float t, float speed, float phase) {
         float hue = fmodPos(t * speed + phase, 1.0f);
@@ -185,7 +185,6 @@ namespace fastFluid {
         }
         return hsvSpectrum(hue); // useRainbow ? hsvRainbow(hue) :
     }
-    
 
     inline void startingPalette() {
         if (gGradientPaletteCount == 0) {return;}
@@ -325,6 +324,7 @@ namespace fastFluid {
 
     // Function pointer types for dispatch (read shared t/dt from namespace)
     using EmitterFn     = void(*)();
+    using ObstacleFn     = void(*)();
     using FlowPrepFn    = void(*)();
     using FlowAdvectFn  = void(*)();
 
@@ -360,7 +360,7 @@ namespace fastFluid {
 
     Emitter activeEmitter = EMITTER_MULTIJET;
     Flow    activeFlow    = FLOW_SMOKE;
-    Obstacle activeObstacle = OBSTACLE_PADDLE;
+    Obstacle activeObstacle = OBSTACLE_PADDLES;
 
     uint8_t activeEmitterTimers = 0;
     uint8_t activeFlowTimers = 0;

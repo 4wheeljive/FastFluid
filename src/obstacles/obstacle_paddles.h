@@ -25,9 +25,9 @@ namespace fastFluid {
     FL_FAST_MATH_BEGIN
     FL_OPTIMIZATION_LEVEL_O3_BEGIN
 
-    static constexpr int PADDLE_THICKNESS = 2;   // matches ns_3 OBSTACLE_THICKNESS
+    static constexpr int PADDLES_THICKNESS = 2;   // matches ns_3 OBSTACLE_THICKNESS
 
-    struct PaddleParams {
+    struct PaddlesParams {
         // Common bits (mirrored into obstacleCommon each frame).
         bool  enable     = false;
         bool  overlay    = false;
@@ -47,11 +47,11 @@ namespace fastFluid {
         ModConfig modSlide = {0, 0.3f, 0.85f};   // {modTimer, modRate, modLevel}
     };
 
-    static constexpr ModConfig PaddleParams::* PADDLE_MODS[] = {
-        &PaddleParams::modSlide
+    static constexpr ModConfig PaddlesParams::* PADDLES_MODS[] = {
+        &PaddlesParams::modSlide
     };
 
-    PaddleParams paddles;
+    PaddlesParams paddles;
 
     static inline int clampi(int v, int lo, int hi) {
         return (v < lo) ? lo : (v > hi) ? hi : v;
@@ -103,7 +103,7 @@ namespace fastFluid {
         if (width > WIDTH) width = WIDTH;
 
         const int rowCenter = HEIGHT / 2;
-        const int thickness = PADDLE_THICKNESS;
+        const int thickness = PADDLES_THICKNESS;
 
         // Travel keeps the paddle clear of the side walls by ≥2 cells.
         const float travel = (float)((WIDTH - width - 4) / 2);

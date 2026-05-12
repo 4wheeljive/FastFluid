@@ -59,9 +59,9 @@ namespace fastFluid {
             // -----------------------------------------------------------------
             // Sine-family signals
             // -----------------------------------------------------------------
-            move.radial_phase[i] = fl::fmodf(move.linear[i], CT_2PI);
+            move.radial_phase[i] = fl::fmodf(move.linear[i], FF_2PI);
             move.normalized_phase[i] =
-                fl::map_range_clamped(move.radial_phase[i], 0.f, CT_2PI, 0.0f, 1.0f);
+                fl::map_range_clamped(move.radial_phase[i], 0.f, FF_2PI, 0.0f, 1.0f);
             move.directional_sine[i] = fl::sinf(move.radial_phase[i]);
             move.normalized_sine[i] = 0.5f + 0.5f * move.directional_sine[i];
 
@@ -74,7 +74,7 @@ namespace fastFluid {
 
             move.directional_noise[i] = 2.0f * rawNoise;
             move.normalized_noise[i] = 0.5f + 0.5f * move.directional_noise[i];
-            move.radial_noise[i] = CT_PI * (1.0f + move.directional_noise[i]);
+            move.radial_noise[i] = FF_PI * (1.0f + move.directional_noise[i]);
         }
     }
     

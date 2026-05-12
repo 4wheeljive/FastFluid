@@ -6,11 +6,11 @@
 //  live here — keeping main.cpp focused on application logic.
 // ═══════════════════════════════════════════════════════════════════
 
-//#define S3_22x22
-#undef S3_22x22
+#define S3_22x22
+//#undef S3_22x22
 
-#define P4_64x48_12PIN
-//#undef P4_64x48_12PIN
+//#define P4_64x48_12PIN
+#undef P4_64x48_12PIN
 
 //-----
 

@@ -24,7 +24,7 @@ namespace fastFluid {
         float viscosity           = 0.0f;     // velocity diffusion coefficient
         float diffusion           = 0.0f;     // dye diffusion coefficient
         float velocityDissipation = 0.5f;     // per-second velocity decay (0..1, 1=no decay)
-        float dyeDissipation      = 0.4f;     // per-second dye decay (overrides project persistence)
+        float dyeDissipation      = 0.4f;     // per-second dye decay (0..1, 1=no decay)
         float vorticity           = 0.0f;     // confinement strength (0 = disabled)
         // Directional gravity: applied as a uniform force inside the velocity step.
         // Angle convention matches jetAngle: 0°=up, 90°=right, 180°=down, 270°=left.
@@ -366,7 +366,7 @@ namespace fastFluid {
         float gravityU = 0.0f;
         float gravityV = 0.0f;
         if (smoke.gravityForce != 0.0f) {
-            const float angleRad = smoke.gravityAngle * (CT_PI / 180.0f);
+            const float angleRad = smoke.gravityAngle * (FF_PI / 180.0f);
             SinCosResult sc = sincos_fast(angleRad);
             gravityU =  sc.sin_val * smoke.gravityForce;
             gravityV = -sc.cos_val * smoke.gravityForce;

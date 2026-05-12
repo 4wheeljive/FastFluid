@@ -17,10 +17,12 @@ extern uint8_t OBSTACLE;
 // ═══════════════════════════════════════════════════════════════════
 
 const char* const GLOBAL_PARAMS[] PROGMEM = {
-   "globalSpeed", "paletteBlendRate", "paletteFloor", "debugView" 
+   "debugView", "globalSpeed", "paletteBlendRate", "paletteFloor",
+   "colorContrast", "blackPoint", "flowSat", "flowBright",
+   "glowStrength", "highlightSat" 
 };
 
-const uint8_t GLOBAL_PARAM_COUNT = 4;
+const uint8_t GLOBAL_PARAM_COUNT = 10;
 
 // ═══════════════════════════════════════════════════════════════════
 //  EMITTERS
@@ -95,10 +97,6 @@ const char* const SMOKE_PARAMS[] PROGMEM = {
    "diffuseIterations", "projectIterations",
    "modVelDissipRate", "modVelDissipLevel",
    "modDyeDissipRate", "modDyeDissipLevel",
-   "colorContrast", "blackPoint", "flowSat", "flowBright",
-   "glowStrength", "highlightSat",
-   "paddleWidth", "paddleSlideRate", "paddleSlideLevel", "paddleSoftEdge",
-   "paddleR", "paddleG", "paddleB"
 };
 
 struct FlowParamEntry {
@@ -108,13 +106,46 @@ struct FlowParamEntry {
 };
 
 const FlowParamEntry FLOW_PARAM_LOOKUP[] PROGMEM = {
-   {"smoke", SMOKE_PARAMS, 26}
+   {"smoke", SMOKE_PARAMS, 13}
 };
 
 static const FlowParamEntry* getFlowParams(uint8_t flowIdx) {
       if (flowIdx >= FLOW_COUNT) return nullptr;
       return &FLOW_PARAM_LOOKUP[flowIdx];
 }
+
+// ═══════════════════════════════════════════════════════════════════
+//  OBSTACLES
+// ═══════════════════════════════════════════════════════════════════
+
+const char paddles_str[] PROGMEM = "paddles";
+
+const uint8_t OBSTACLE_COUNTS[] = {1};
+
+const char* const OBSTACLES[] PROGMEM = {
+      paddles_str
+   };
+
+const char* const PADDLES_PARAMS[] PROGMEM = {
+   "paddleWidth", "paddleSlideRate", "paddleSlideLevel", "paddleSoftEdge",
+   "paddleR", "paddleG", "paddleB"
+};
+
+struct ObstacleParamEntry {
+   const char* ObstacleName;
+   const char* const* params;
+   uint8_t count;
+};
+
+const ObstacleParamEntry OBSTACLE_PARAM_LOOKUP[] PROGMEM = {
+   {"paddles", PADDLES_PARAMS, 7}
+};
+
+static const ObstacleParamEntry* getObstacleParams(uint8_t obstacleIdx) {
+      if (obstacleIdx >= OBSTACLE_COUNT) return nullptr;
+      return &OBSTACLE_PARAM_LOOKUP[obstacleIdx];
+}
+
 
 // ═══════════════════════════════════════════════════════════════════
 //  MISCELLANEOUS CONTROLS
@@ -132,12 +163,21 @@ uint8_t cEaseLum = 0;
 // ═══════════════════════════════════════════════════════════════════
 
 // GLOBAL -------------------------
+
+uint8_t cDebugView = 0;
 float cGlobalSpeed = 0.5f;
+
+// Color settings
 bool cPaletteMode = true;
 bool cRotatePalette = true;
 uint8_t cPaletteBlendRate = 32;
 float cPaletteFloor = 0.05f;
-uint8_t cDebugView = 0;
+float cColorContrast = 1.0f;
+float cBlackPoint = 0.105f;
+float cFlowSat = 2.0f;
+float cFlowBright = 0.75f;
+float cGlowStrength = 0.0f;
+float cHighlightSat = 2.0f;
 
 // EMITTER: singleJet --------------
 float cJetDensity = 30.0f;
@@ -189,25 +229,19 @@ float cModHueSpeedRate = 0.3f;
 float cModHueSpeedLevel = 0.0f;
 
 // FLOW: smoke --------------------
+uint8_t cDiffuseIterations = 6;
+uint8_t cProjectIterations = 10;
+float cVorticity = 0.0f;
 float cViscosity = 0.0f;
 float cDiffusion = 0.0f;
 float cVelocityDissipation = 0.5f;
 float cDyeDissipation = 0.4f;
-float cVorticity = 0.0f;
-float cGravityForce = 0.0f;
-float cGravityAngle = 180.0f;
-uint8_t cDiffuseIterations = 6;
-uint8_t cProjectIterations = 10;
 float cModVelDissipRate = 0.5f;
 float cModVelDissipLevel = 0.0f;
 float cModDyeDissipRate = 0.5f;
 float cModDyeDissipLevel = 0.0f;
-float cColorContrast = 1.0f;
-float cBlackPoint = 0.105f;
-float cFlowSat = 2.0f;
-float cFlowBright = 0.75f;
-float cGlowStrength = 0.0f;
-float cHighlightSat = 2.0f;
+float cGravityForce = 0.0f;
+float cGravityAngle = 180.0f;
 
 // OBSTACLE: Paddles
 float cPaddleWidth      = 10.0f;

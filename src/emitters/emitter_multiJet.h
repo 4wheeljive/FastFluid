@@ -14,7 +14,7 @@ namespace fastFluid {
     FL_OPTIMIZATION_LEVEL_O3_BEGIN
 
     static constexpr uint8_t MAX_NUM_JETS = 5;
-    static constexpr float MULTIJET_INV_2PI = 1.0f / CT_2PI;
+    static constexpr float MULTIJET_INV_2PI = 1.0f / FF_2PI;
     static constexpr uint8_t MULTIJET_HISTORY_LEN = 32;
     static constexpr uint8_t MULTIJET_HISTORY_MASK = MULTIJET_HISTORY_LEN - 1;
     static_assert((MULTIJET_HISTORY_LEN & MULTIJET_HISTORY_MASK) == 0,
@@ -48,7 +48,7 @@ namespace fastFluid {
     };
 
     static inline float wrapRad(float angle) {
-        angle -= fl::floorf(angle * MULTIJET_INV_2PI) * CT_2PI;
+        angle -= fl::floorf(angle * MULTIJET_INV_2PI) * FF_2PI;
         return angle;
     }
 
@@ -149,7 +149,7 @@ namespace fastFluid {
                                              const JetParams& thisJet,
                                              float& anchorCol, float& anchorRow) {
         const float rawAngle = jetPack.radialAngleBase +
-                               CT_2PI * ((float)jetIndex / (float)count);
+                               FF_2PI * ((float)jetIndex / (float)count);
 
         const float angleSignal = multiJetSignal(MULTIJET_SIGNAL_RADIAL_ANGLE, thisJet.offsetRadialAngle);
         const float angle = rawAngle +

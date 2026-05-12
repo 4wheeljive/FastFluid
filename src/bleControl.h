@@ -205,7 +205,53 @@ bool loadPreset(int presetNumber) {
 
 //***********************************************************************
 
-//void sendDeviceState() {
+void sendGlobalState() {
+   if (debug) { Serial.println("Sending global state..."); }
+
+   ArduinoJson::JsonDocument stateDoc;
+   ArduinoJson::JsonObject params = stateDoc["parameters"].to<ArduinoJson::JsonObject>();
+
+   for (uint8_t i = 0; i < GLOBAL_PARAM_COUNT; i++) {
+       char paramName[32];
+       ::strcpy(paramName, (char*)pgm_read_ptr(&GLOBAL_PARAMS[i]));
+
+       bool paramFound = false;
+       #define X(type, parameter, def) \
+           if (strcasecmp(paramName, #parameter) == 0) { \
+               params[paramName] = c##parameter; \
+               paramFound = true; \
+           }
+       PARAMETER_TABLE
+       #undef X
+
+       if (!paramFound) {
+           Serial.print("Warning: Global param not found: ");
+           Serial.println(paramName);
+       }
+   }
+
+   ArduinoJson::JsonDocument envelope;
+   envelope["id"] = "globalState";
+   ArduinoJson::JsonObject val = envelope["val"].to<ArduinoJson::JsonObject>();
+   ArduinoJson::JsonObject valParams = val["parameters"].to<ArduinoJson::JsonObject>();
+   for (auto kv : params) {
+       valParams[kv.key()] = kv.value();
+   }
+
+   String json;
+   serializeJson(envelope, json);
+
+   if (debug) {
+       Serial.print("globalState payload size: ");
+       Serial.println(json.length());
+   }
+
+   pStringCharacteristic->setValue(json);
+   pStringCharacteristic->notify();
+
+} // sendGlobalState()
+
+// ---------------------------------
 
 void sendEmitterState() {
    if (debug) {
@@ -293,7 +339,8 @@ void sendEmitterState() {
 
    pStringCharacteristic->setValue(json);
    pStringCharacteristic->notify();
-}
+
+}  // sendEmitterState()
 
   // -----------------------------------
 
@@ -311,7 +358,7 @@ void sendFlowState() {
    ArduinoJson::JsonObject params = stateDoc["parameters"].to<ArduinoJson::JsonObject>();
 
    if (debug) {
-       Serial.print("Current emitter: ");
+       Serial.print("Current flow: ");
        Serial.println(FLOW);
        Serial.print("Found params: ");
        Serial.println(flowParams != nullptr ? "YES" : "NO");
@@ -383,37 +430,82 @@ void sendFlowState() {
 
    pStringCharacteristic->setValue(json);
    pStringCharacteristic->notify();
-}
 
+} // sendFlowState()
 
-void sendGlobalState() {
-   if (debug) { Serial.println("Sending global state..."); }
+// ---------------------------------
+
+void sendObstacleState() {
+   if (debug) {
+      Serial.println("Sending obstacle state...");
+   }
 
    ArduinoJson::JsonDocument stateDoc;
+   stateDoc["obstacle"] = OBSTACLE;
+
+   // Get parameter list for current obstacle
+   const ObstacleParamEntry* obstacleParams = getObstacleParams(OBSTACLE);
+
    ArduinoJson::JsonObject params = stateDoc["parameters"].to<ArduinoJson::JsonObject>();
 
-   for (uint8_t i = 0; i < GLOBAL_PARAM_COUNT; i++) {
+   if (debug) {
+       Serial.print("Current obstacle: ");
+       Serial.println(OBSTACLE);
+       Serial.print("Found params: ");
+       Serial.println(obstacleParams != nullptr ? "YES" : "NO");
+       if (obstacleParams != nullptr) {
+           Serial.print("Param count: ");
+           Serial.println(obstacleParams->count);
+       }
+   }
+
+   if (obstacleParams != nullptr) {
+       // Loop through parameters for current obstacle
+       for (uint8_t i = 0; i < obstacleParams->count; i++) {
+           char paramName[32];
+           ::strcpy(paramName, (char*)pgm_read_ptr(&obstacleParams->params[i]));
+
+           if (debug) {
+               Serial.print("Processing parameter: ");
+               Serial.println(paramName);
+           }
+       }
+   }
+
+   // Add parameter values to JSON based on visualizer params
+   for (uint8_t i = 0; i < obstacleParams->count; i++) {
        char paramName[32];
-       ::strcpy(paramName, (char*)pgm_read_ptr(&GLOBAL_PARAMS[i]));
+       ::strcpy(paramName, (char*)pgm_read_ptr(&obstacleParams->params[i]));
 
        bool paramFound = false;
+       // Use X-macro to match parameter names and add values
+       // Handle case-insensitive comparison for parameter names
        #define X(type, parameter, def) \
            if (strcasecmp(paramName, #parameter) == 0) { \
                params[paramName] = c##parameter; \
+               if (debug) { \
+                   Serial.print("Added parameter "); \
+                   Serial.print(paramName); \
+                   Serial.print(": "); \
+                   Serial.println(c##parameter); \
+               } \
                paramFound = true; \
            }
        PARAMETER_TABLE
        #undef X
 
        if (!paramFound) {
-           Serial.print("Warning: Global param not found: ");
+           Serial.print("Warning: Parameter not found in X-macro table: ");
            Serial.println(paramName);
        }
    }
 
+   // Send as a single JSON doc with nested val object (avoids double-encoding
+   // that would exceed BLE MTU when string-escaping the inner JSON).
    ArduinoJson::JsonDocument envelope;
-   envelope["id"] = "globalState";
+   envelope["id"] = "obstacleState";
    ArduinoJson::JsonObject val = envelope["val"].to<ArduinoJson::JsonObject>();
+   val["obstacle"] = OBSTACLE;
    ArduinoJson::JsonObject valParams = val["parameters"].to<ArduinoJson::JsonObject>();
    for (auto kv : params) {
        valParams[kv.key()] = kv.value();
@@ -423,15 +515,17 @@ void sendGlobalState() {
    serializeJson(envelope, json);
 
    if (debug) {
-       Serial.print("globalState payload size: ");
+       Serial.print("obstacleState payload size: ");
        Serial.println(json.length());
    }
 
    pStringCharacteristic->setValue(json);
    pStringCharacteristic->notify();
-}
 
-  // -----------------------------------
+} // sendObstacleState()
+
+
+// -----------------------------------
 
 // Handle UI request functions ***********************************************
 
@@ -453,11 +547,15 @@ void processButton(uint8_t receivedValue) {
       displayOn = true;
    }
 
+   if (receivedValue >= 40 && receivedValue < 60) { // Obstacle selection
+      OBSTACLE = receivedValue - 60;
+   }
+
    if (receivedValue == 91) { sendGlobalState(); }
    if (receivedValue == 92) { sendEmitterState(); }
    if (receivedValue == 93) { sendFlowState(); }
+   if (receivedValue == 94) { sendObstacleState(); }
    //if (receivedValue == 95) { resetAll(); }
-
 
    if (receivedValue == 98) { displayOn = true; }
    if (receivedValue == 99) { displayOn = false; }
@@ -512,7 +610,6 @@ void processNumber(String receivedID, float receivedValue) {
 void processCheckbox(String receivedID, bool receivedValue ) {
    sendReceiptCheckbox(receivedID, receivedValue);
    if (receivedID == "cx11") {mappingOverride = receivedValue;};
-   //if (receivedID == "cx32") {cUseRainbow = receivedValue;};
    if (receivedID == "cx33") {cPaletteMode = receivedValue;};
    if (receivedID == "cx34") {cRotatePalette = receivedValue;};
    if (receivedID == "cx40") {cPaddleEnable = receivedValue;};

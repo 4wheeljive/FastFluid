@@ -70,13 +70,13 @@ namespace fastFluid {
 
         // Angle: noise-based offset around base direction.
         // Coefficient π/4 per modLevel unit → modLevel=2 reaches full ±π/2 (±90°).
-        constexpr float ANGLE_SCALE = CT_2PI * 0.125f;   // π/4
+        constexpr float ANGLE_SCALE = FF_2PI * 0.125f;   // π/4
         const float angleOffset = angleMod.modLevel * ANGLE_SCALE * angleSignal;
 
         // Wrap final angle to [0, 2π) for sincos_fast (UB for negative inputs).
-        constexpr float INV_2PI = 1.0f / CT_2PI;
+        constexpr float INV_2PI = 1.0f / FF_2PI;
         float angle = singleJet.jetAngle + angleOffset;
-        angle -= fl::floorf(angle * INV_2PI) * CT_2PI;
+        angle -= fl::floorf(angle * INV_2PI) * FF_2PI;
 
         // Direction decomposition: angle 0 = straight up (negative y)
         SinCosResult sc = sincos_fast(angle);

@@ -9,7 +9,7 @@
 
 #include <Arduino.h>
 
-//#define FASTLED_OVERCLOCK 1.2
+#define FASTLED_OVERCLOCK 1.2
 #include <FastLED.h>
 
 //#define SERIAL_PROFILE_REPORTS

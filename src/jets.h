@@ -79,8 +79,8 @@ namespace fastFluid {
         float centerRow = (float)HEIGHT * 0.5f;
 
         float radialAngleBase = 0.0f;  // Rotates the evenly-spaced ring.
-        float radius = 16.0f;
-        float size = 5.0f;
+        float radius = (float)MIN_DIMENSION * 0.25f;
+        float size = 4.0f;
         // Absolute angle in absolute mode; shared rotation offset otherwise.
         float direction = 0.0f;
         float density = 30.0f;
@@ -90,10 +90,10 @@ namespace fastFluid {
 
         // Modulation amplitudes. Angle fields are radians; scalar fields are
         // fractional depth around the configured base value.
-        float varRadialAngle = 0.74f;
+        float varRadialAngle = 0.75f;
         float varRadius = 0.25f;
         float varSize = 0.25f;
-        float varDirection = CT_PI;
+        float varDirection = FF_PI;
         float varDensity = 0.25f;
         float varForce = 0.15f;
         float varHueSpeed = 0.1f;

@@ -197,6 +197,7 @@
                 <control-button label="Sync Global" data-my-number="91"></control-button>
                 <control-button label="Sync Emitter" data-my-number="92"></control-button>
                 <control-button label="Sync Flow" data-my-number="93"></control-button>
+                <control-button label="Sync Obstacle" data-my-number="94"></control-button>
             </div>
             <div class = "control-group">
                 <control-slider 
@@ -244,11 +245,7 @@
             </div>
    
             <div class = "control-group">
-                <!--<control-checkbox
-                    label="Rainbow Mode"
-                    data-my-number="32"
-                    unchecked>
-                </control-checkbox>-->
+
                 <control-checkbox
                     label="Palette Mode"
                     data-my-number="33"
@@ -260,6 +257,8 @@
                     data-my-number="34"
                     checked>
                 </control-checkbox>
+
+
                 <control-dropdown
                     label="Color Palette"
                     parameter-id="inPalNum"
@@ -292,6 +291,20 @@
             <div class = "control-group">
                 <flow-selector current="0"></flow-selector>
             </div>
+            <div class = "control-group">
+                <control-checkbox
+                    label="Obstacle Enable"
+                    data-my-number="40"
+                    unchecked>
+                </control-checkbox>
+                <control-checkbox
+                    label="Obstacle Overlay"
+                    data-my-number="41"
+                    unchecked>
+                </control-checkbox>
+                <obstacle-selector current="0"></obstacle-selector>
+            </div>
+
                 <div class = "control-group">
                 <control-checkbox 
                     text-align = left
@@ -327,20 +340,6 @@
 
         <!-- Pattern Control Parameters -->
         <div class="section patternControl">
-            
-                 <div class = "control-group">
-                    <control-checkbox
-                        label="Paddle Enable"
-                        data-my-number="40"
-                        unchecked>
-                    </control-checkbox>
-                    <control-checkbox
-                        label="Paddle Overlay"
-                        data-my-number="41"
-                        unchecked>
-                    </control-checkbox>
-                </div>
-
             <parameter-settings></parameter-settings> 
 
             <!--<span style="display: flex; justify-content: flex-end;">
@@ -487,8 +486,12 @@
             await sendButtonCharacteristic(92);
             await new Promise(resolve => setTimeout(resolve, 200));
             // Request flow state
-            await sendButtonCharacteristic(96);
+            await sendButtonCharacteristic(93);
             await new Promise(resolve => setTimeout(resolve, 200));
+            // Request obstacle state
+            await sendButtonCharacteristic(94);
+            await new Promise(resolve => setTimeout(resolve, 200));
+
         }
 
         function onDisconnected(event) {
@@ -531,7 +534,7 @@
             notifyComponents() {
                 console.log('BLEState: Notifying components of state change');
                 // Only update connection-dependent UI (show/hide based on connection)
-                const components = document.querySelectorAll('emitter-selector, flow-selector, parameter-settings');
+                const components = document.querySelectorAll('emitter-selector, flow-selector, obstacle-selector, parameter-settings');
                 components.forEach(component => {
                     if (typeof component.updateConnectionState === 'function') {
                         component.updateConnectionState();
@@ -672,22 +675,31 @@
 
         const EMITTER_NAMES = ["SINGLEJET", "MULTIJET"];
         const FLOW_NAMES    = ["SMOKE"];
+        const OBSTACLE_NAMES    = ["PADDLES"];
 
         // ******************************************************************************************************
         // PARAMETER REGISTRY *******************************************************************************
 
         const PARAMETER_REGISTRY = {
             // GLOBAL
-            globalSpeed: {min: 0.1, max: 5.0, default: 0.5, step: 0.1},
-            paletteBlendRate: {min: 1, max: 64, default: 32, step: 1},
-            paletteFloor: {min: 0.0, max: 0.45, default: 0.05, step: 0.01},
             debugView: {
                 min: 0, max: 7, default: 0, step: 1,
                 type: 'dropdown',
                 label: 'View',
                 options: ['Normal', 'Velocity', 'Vorticity', 'Pressure', 'Divergence', 'Divergence Signed', 'Dye Density', 'Emitter Overlay']
             },
+            globalSpeed: {min: 0.1, max: 5.0, default: 0.5, step: 0.1},
+            paletteBlendRate: {min: 1, max: 64, default: 32, step: 1},
+            paletteFloor: {min: 0.0, max: 0.45, default: 0.05, step: 0.01},
  
+            // Render parameters
+            colorContrast:       {min: 0.8, max: 1.8, default: 1.0, step: 0.01},
+            blackPoint:          {min: 0.0, max: 0.12, default: 0.105, step: 0.005},
+            flowSat:             {min: 0.0, max: 2.0, default: 2.0, step: 0.01},
+            flowBright:          {min: 0.0, max: 1.0, default: 0.75, step: 0.01},
+            highlightSat:        {min: 0.0, max: 2.0, default: 2.0, step: 0.01},
+            glowStrength:        {min: 0.0, max: 2.0, default: 0.0, step: 0.01},
+
             // EMITTER: singleJet
             jetDensity:    {min: 0, max: 200, default: 50, step: 1},
             jetForce:      {min: 0.05, max: 5, default: 0.25, step: 0.05},
@@ -761,14 +773,6 @@
             modDyeDissipRate:    {min: 0.1, max: 3.0, default: 0.5, step: 0.1},
             modDyeDissipLevel:   {min: 0, max: 1.0, default: 0.0, step: 0.05},
 
-            // Render parameters
-            colorContrast:       {min: 0.8, max: 1.8, default: 1.0, step: 0.01},
-            blackPoint:          {min: 0.0, max: 0.12, default: 0.105, step: 0.005},
-            flowSat:             {min: 0.0, max: 2.0, default: 2.0, step: 0.01},
-            flowBright:          {min: 0.0, max: 1.0, default: 0.75, step: 0.01},
-            glowStrength:        {min: 0.0, max: 2.0, default: 0.0, step: 0.01},
-            highlightSat:        {min: 0.0, max: 2.0, default: 2.0, step: 0.01},
-
             // OBSTACLE: paddles
             paddleWidth:         {min: 1, max: 64, default: 16, step: 1},
             paddleSlideRate:     {min: 0, max: 3.0, default: 0.3, step: 0.05},
@@ -776,11 +780,13 @@
             paddleSoftEdge:      {min: 0, max: 0.5, default: 0.22, step: 0.01},
             paddleR:             {min: 0, max: 255, default: 220, step: 1},
             paddleG:             {min: 0, max: 255, default: 220, step: 1},
-            paddleB:             {min: 0, max: 255, default: 240, step: 1},
+            paddleB:             {min: 0, max: 255, default: 220, step: 1},
         };
 
         // Parameter lists per component
-        const GLOBAL_PARAMS  = ["globalSpeed", "paletteBlendRate", "paletteFloor", "debugView"];
+        const GLOBAL_PARAMS  = ["debugView", "globalSpeed", "paletteBlendRate", "paletteFloor", 
+                                "colorContrast", "blackPoint",                                 
+                                "flowSat", "flowBright", "highlightSat", "glowStrength"];
 
         const EMITTER_PARAMS = {
             "singlejet":     ["jetDensity", "jetForce", "jetRadius", "jetSpread", "jetHueSpeed",
@@ -805,14 +811,16 @@
         };
 
         const FLOW_PARAMS = {
-            "smoke":       ["viscosity", "diffusion", "velocityDissipation", "dyeDissipation",
-                            "vorticity", "gravityForce", "gravityAngle",
-                            "diffuseIterations", "projectIterations",
+            "smoke":       ["diffuseIterations", "projectIterations",
+                            "vorticity", "viscosity", "diffusion",
+                            "velocityDissipation", "dyeDissipation",
+                            "gravityForce", "gravityAngle",
                             "modVelDissipRate", "modVelDissipLevel",
-                            "modDyeDissipRate", "modDyeDissipLevel",
-                            "colorContrast", "blackPoint", "flowSat", "flowBright",
-                            "glowStrength", "highlightSat",
-                            "paddleWidth", "paddleSlideRate", "paddleSlideLevel",
+                            "modDyeDissipRate", "modDyeDissipLevel",]
+        };
+
+        const OBSTACLE_PARAMS = {
+            "paddles":     ["paddleWidth", "paddleSlideRate", "paddleSlideLevel",
                             "paddleSoftEdge", "paddleR", "paddleG", "paddleB"]
         };
  
@@ -834,9 +842,10 @@
             const ps = document.querySelector('parameter-settings');
             const emitter = ps ? (EMITTER_NAMES[ps.currentEmitter] || "").toLowerCase() : "";
             const flow    = ps ? (FLOW_NAMES[ps.currentFlow] || "").toLowerCase() : "";
+            const obstacle    = ps ? (OBSTACLE_NAMES[ps.currentObstacle] || "").toLowerCase() : "";
 
             // Show/hide elements with data-emitters and/or data-flows attributes
-            const allControls = document.querySelectorAll('[data-emitters], [data-flows]');
+            const allControls = document.querySelectorAll('[data-emitters], [data-flows], [data-obstacles]');
 
             allControls.forEach(control => {
                 let visible = false;
@@ -848,13 +857,17 @@
                     const list = control.dataset.flows.split(',').map(v => v.trim().toLowerCase());
                     if (list.includes(flow)) visible = true;
                 }
+                if (control.dataset.obstacles) {
+                    const list = control.dataset.obstacles.split(',').map(v => v.trim().toLowerCase());
+                    if (list.includes(obstacle)) visible = true;
+                }
                 control.style.display = visible ? '' : 'none';
             });
 
             // Handle the dynamicControl section visibility separately
             const dynamicContainer = document.querySelector('.dynamicControl');
             if (dynamicContainer) {
-                const visibleChildren = dynamicContainer.querySelectorAll('[data-emitters], [data-flows]');
+                const visibleChildren = dynamicContainer.querySelectorAll('[data-emitters], [data-flows], [data-obstacles]');
                 const visibleCount = Array.from(visibleChildren).filter(c => c.style.display !== 'none').length;
                 dynamicContainer.style.display = visibleCount > 0 ? '' : 'none';
             }
@@ -887,6 +900,16 @@
                 if (ps) ps.updateForFlow(flowIdx);
                 updateDynamicControls();
             }
+            // Obstacle selection receipt (40-59)
+            if ( buttonValue >= 40 && buttonValue < 60 ) {
+                const obstacleIdx = buttonValue - 40;
+                const sel = document.querySelector('obstacle-selector');
+                if (sel) sel.highlightButton(obstacleIdx);
+
+                const ps = document.querySelector('parameter-settings');
+                if (ps) ps.updateForObstacle(obstacleIdx);
+                updateDynamicControls();
+            }
 
         }
     
@@ -898,7 +921,6 @@
             if (checkbox) {
                 checkbox.checked = !!receivedValue;
             }
-
         }
         
         // Debounce timer for ParameterSettings re-render
@@ -1018,8 +1040,34 @@
                     logEvent("Error parsing flow state: " + error.message);
                 }
             }
-        }
+            
+            // --- Obstacle state ---
+            if (receivedID === "obstacleState") {
+                console.log("Received obstacle state:", receivedValue);
+                logEvent("Obstacle state received");
+                try {
+                    const state = typeof receivedValue === 'string' ? JSON.parse(receivedValue) : receivedValue;
+                    const obstacleIdx = parseInt(state.obstacle);
 
+                    const sel = document.querySelector('obstacle-selector');
+                    if (sel) sel.highlightButton(obstacleIdx);
+
+                    const ps = document.querySelector('parameter-settings');
+                    if (ps) ps.updateForObstacle(obstacleIdx);
+
+                    if (state.parameters) {
+                        Object.entries(state.parameters).forEach(([paramName, paramValue]) => {
+                            const paramId = getParameterId(paramName);
+                            if (ps) ps.updateParameterValues(paramId, paramValue);
+                        });
+                    }
+                    logEvent("Obstacle state sync complete");
+                } catch (error) {
+                    console.error("Error parsing obstacle state:", error);
+                    logEvent("Error parsing obstacle state: " + error.message);
+                }
+            }
+        }
 
         //*****************************************************************************************************
         // WEB COMPONENTS *************************************************************************************
@@ -1029,7 +1077,7 @@
         class BLEConnectionPanel extends HTMLElement {
             constructor() {
                 super();
-                this.deviceName = this.getAttribute('device-name') || 'Aurora Portal';
+                this.deviceName = this.getAttribute('device-name') || 'FastFluid';
             }
 
             connectedCallback() {
@@ -1145,11 +1193,7 @@
             }
 
             processButton(buttonVal){
-
                 if (buttonVal > 20) { sendButtonCharacteristic(buttonVal); }
-
-                //if (buttonVal == 91) { }  // update parametersUsed when refreshing UI 
-
             }
         } // ControlButton
 
@@ -1646,7 +1690,74 @@
                 if (window.BLEState && window.BLEState.connected) this.attachEventListeners();
             }
         } // FlowSelector
-      
+
+
+        // Obstacle Selector ***************************
+
+        class ObstacleSelector extends HTMLElement {
+            constructor() {
+                super();
+                this.current = parseInt(this.getAttribute('current')) || 0;
+                if (isNaN(this.current)) this.current = 0;
+            }
+
+            connectedCallback() {
+                this.render();
+                this.attachEventListeners();
+                logEvent('Obstacle Selector initialized');
+            }
+
+            render() {
+                if (!window.BLEState || !window.BLEState.connected) {
+                    this.innerHTML = `<div style="background-color:#000;padding:10px;border-radius:4px;text-align:center;color:#a0a0a0;font-style:italic;">Connect device for obstacle options</div>`;
+                    return;
+                }
+
+                const buttonGrid = OBSTACLE_NAMES.map((name, i) => `
+                    <button class="sel-btn" data-index="${i}" style="
+                        background-color: ${i === this.current ? '#7f7f7f' : '#2e2e2e'};
+                        color: white; border: none; border-radius: 4px;
+                        padding: 8px 12px; margin: 4px; cursor: pointer;
+                        font-size: 0.8em; min-width: 100px;
+                    ">${name}</button>
+                `).join('');
+
+                this.innerHTML = `
+                    <div style="background-color:#000;padding:10px;border-radius:4px;">
+                        <div class="control-group-label">Obstacle</div>
+                        <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:5px;">
+                            ${buttonGrid}
+                        </div>
+                    </div>`;
+            }
+
+            attachEventListeners() {
+                this.querySelectorAll('.sel-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const idx = parseInt(e.target.getAttribute('data-index'));
+                        this.current = idx;
+                        // Send BLE button 40+ for obstacle selection
+                        window.sendButtonCharacteristic(idx+40);
+                        logEvent(`Obstacle selected: ${OBSTACLE_NAMES[idx]} (button ${idx+40})`);
+                    });
+                });
+            }
+
+            highlightButton(idx) {
+                idx = parseInt(idx, 10);
+                if (isNaN(idx)) return;
+                this.current = idx;
+                this.querySelectorAll('.sel-btn').forEach((btn, i) => {
+                    btn.style.backgroundColor = i === idx ? '#7f7f7f' : '#2e2e2e';
+                });
+            }
+
+            updateConnectionState() {
+                this.render();
+                if (window.BLEState && window.BLEState.connected) this.attachEventListeners();
+            }
+        } // ObstacleSelector
+
         // Parameter Settings  ********************************
 
         class ParameterSettings extends HTMLElement {
@@ -1654,6 +1765,7 @@
                 super();
                 this.currentEmitter = 0;
                 this.currentFlow = 0;
+                this.currentObstacle = 0;
             }
 
             connectedCallback() {
@@ -1671,6 +1783,11 @@
                 this._renderGroup('flow');
             }
 
+            updateForObstacle(idx) {
+                this.currentObstacle = idx;
+                this._renderGroup('obstacle');
+            }
+
             render() {
                 if (!window.BLEState || !window.BLEState.connected) {
                     this.innerHTML = `<div style="background-color:rgb(36,36,36);padding:10px;border-radius:4px;border:1px solid #696969;text-align:center;color:#a0a0a0;font-style:italic;">Connect device to see parameters</div>`;
@@ -1679,16 +1796,19 @@
 
                 const emitterName = (EMITTER_NAMES[this.currentEmitter] || "").toLowerCase();
                 const flowName    = (FLOW_NAMES[this.currentFlow] || "").toLowerCase();
+                const obstacleName    = (OBSTACLE_NAMES[this.currentObstacle] || "").toLowerCase();
 
                 const globalHTML  = this.buildGroup("Global", GLOBAL_PARAMS);
                 const emitterHTML = this.buildGroup("Emitter: " + emitterName, EMITTER_PARAMS[emitterName] || []);
                 const flowHTML    = this.buildGroup("Flow: " + flowName, FLOW_PARAMS[flowName] || []);
+                const obstacleHTML    = this.buildGroup("Obstacle: " + obstacleName, OBSTACLE_PARAMS[obstacleName] || []);
 
                 this.innerHTML = `
                     <div style="background-color:#000;padding:0px;border-radius:4px;">
                         <div data-group="global">${globalHTML}</div>
                         <div data-group="emitter">${emitterHTML}</div>
                         <div data-group="flow">${flowHTML}</div>
+                        <div data-group="obstacle">${obstacleHTML}</div>
                     </div>
                 `;
                 this.attachEventListeners();
@@ -1704,6 +1824,9 @@
                 } else if (group === 'flow') {
                     const name = (FLOW_NAMES[this.currentFlow] || "").toLowerCase();
                     container.innerHTML = this.buildGroup("Flow: " + name, FLOW_PARAMS[name] || []);
+                } else if (group === 'obstacle') {
+                    const name = (OBSTACLE_NAMES[this.currentObstacle] || "").toLowerCase();
+                    container.innerHTML = this.buildGroup("Obstacle: " + name, obstacleName[name] || []);
                 }
                 this.attachEventListeners();
             }
@@ -1999,8 +2122,8 @@
         customElements.define('control-dropdown', ControlDropdown);
         customElements.define('emitter-selector', EmitterSelector);
         customElements.define('flow-selector', FlowSelector);
+        customElements.define('obstacle-selector', ObstacleSelector);
         customElements.define('parameter-settings', ParameterSettings);
-
         customElements.define('preset-controls', Presets);
 
         // Wait for all components to be ready
@@ -2013,6 +2136,7 @@
                 'control-dropdown',
                 'emitter-selector',
                 'flow-selector',
+                'obstacle-selector',
                 'parameter-settings',
                 'preset-controls'
             ];

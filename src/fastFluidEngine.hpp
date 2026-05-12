@@ -401,9 +401,14 @@ namespace fastFluid {
                 break;
         }
 
-        if (paddles.enable) {
-            nextSlot = assignModSlots(paddles, PADDLE_MODS, nextSlot);
-            activeObstacleTimers = modCount(PADDLE_MODS);
+        switch (activeObstacle) {
+            case OBSTACLE_PADDLES:
+                if (paddles.enable) {
+                    nextSlot = assignModSlots(paddles, PADDLES_MODS, nextSlot);
+                    activeObstacleTimers = modCount(PADDLES_MODS);
+                }
+            default:
+                break;
         }
 
         return nextSlot;
@@ -424,6 +429,7 @@ namespace fastFluid {
         lastFrameMs = fl::millis();
         lastEmitter = 255;
         lastFlow = 255;
+        lastObstacle = 255;
 
         // Modulator system needs the noise generator
         noiseX.init(42);
@@ -438,80 +444,22 @@ namespace fastFluid {
     //  cVAR BRIDGE
     // ═══════════════════════════════════════════════════════════════════
 
-    static void pushFlowDefaultsToCVars() {
-        smoke = SmokeParams{};
+    static void pushGlobalDefaultsToCVars() {
+        cGlobalSpeed = globalSpeed;
+        cPaletteBlendRate = paletteBlendRate;
+        cPaletteFloor = paletteFloor;
         render = RenderParams{};
-        paddles = PaddleParams{};
-        cViscosity = smoke.viscosity;
-        cDiffusion = smoke.diffusion;
-        cVelocityDissipation = smoke.velocityDissipation;
-        cDyeDissipation = smoke.dyeDissipation;
-        cVorticity = smoke.vorticity;
-        cGravityForce = smoke.gravityForce;
-        cGravityAngle = smoke.gravityAngle;
-        cDiffuseIterations = smoke.diffuseIterations;
-        cProjectIterations = smoke.projectIterations;
-        cModVelDissipRate = smoke.modVelDissip.modRate;
-        cModVelDissipLevel = smoke.modVelDissip.modLevel;
-        cModDyeDissipRate = smoke.modDyeDissip.modRate;
-        cModDyeDissipLevel = smoke.modDyeDissip.modLevel;
         cColorContrast = render.colorContrast;
         cBlackPoint    = render.blackPoint;
         cFlowSat       = render.flowSat;
         cFlowBright    = render.flowBright;
         cGlowStrength  = render.glowStrength;
         cHighlightSat  = render.highlightSat;
-        cPaddleEnable     = paddles.enable;
-        cPaddleOverlay    = paddles.overlay;
-        cPaddleWidth      = paddles.width;
-        cPaddleSlideRate  = paddles.modSlide.modRate;
-        cPaddleSlideLevel = paddles.modSlide.modLevel;
-        cPaddleSoftEdge   = paddles.softEdge;
-        cPaddleR          = paddles.colorR;
-        cPaddleG          = paddles.colorG;
-        cPaddleB          = paddles.colorB;
-    }
-
-    static void syncFlowFromCVars() {
-        smoke.viscosity = cViscosity;
-        smoke.diffusion = cDiffusion;
-        smoke.velocityDissipation = cVelocityDissipation;
-        smoke.dyeDissipation = cDyeDissipation;
-        smoke.vorticity = cVorticity;
-        smoke.gravityForce = cGravityForce;
-        smoke.gravityAngle = cGravityAngle;
-        smoke.diffuseIterations = cDiffuseIterations;
-        smoke.projectIterations = cProjectIterations;
-        smoke.modVelDissip.modRate = cModVelDissipRate;
-        smoke.modVelDissip.modLevel = cModVelDissipLevel;
-        smoke.modDyeDissip.modRate = cModDyeDissipRate;
-        smoke.modDyeDissip.modLevel = cModDyeDissipLevel;
-        render.colorContrast = cColorContrast;
-        render.blackPoint    = cBlackPoint;
-        render.flowSat       = cFlowSat;
-        render.flowBright    = cFlowBright;
-        render.glowStrength  = cGlowStrength;
-        render.highlightSat  = cHighlightSat;
-        paddles.enable            = cPaddleEnable;
-        paddles.overlay           = cPaddleOverlay;
-        paddles.width             = cPaddleWidth;
-        paddles.modSlide.modRate  = cPaddleSlideRate;
-        paddles.modSlide.modLevel = cPaddleSlideLevel;
-        paddles.softEdge          = cPaddleSoftEdge;
-        paddles.colorR            = cPaddleR;
-        paddles.colorG            = cPaddleG;
-        paddles.colorB            = cPaddleB;
     }
 
     // Push the active emitter's struct defaults into its cVars. Called on
     // emitter change. Mirrors pushFlowDefaultsToCVars in structure.
-    static void pushDefaultsToCVars() {
-        // Universal (always)
-        cGlobalSpeed = globalSpeed;
-        cPaletteBlendRate = paletteBlendRate;
-        cPaletteFloor = paletteFloor;
-
-        // Emitter-specific
+    static void pushEmitterDefaultsToCVars() {
         switch (activeEmitter) {
             case EMITTER_SINGLEJET: {
                 singleJet = SingleJetParams{};
@@ -569,15 +517,54 @@ namespace fastFluid {
             default: break;
         }
     }
+    
+    static void pushFlowDefaultsToCVars() {
+        smoke = SmokeParams{};
+        cViscosity = smoke.viscosity;
+        cDiffusion = smoke.diffusion;
+        cVelocityDissipation = smoke.velocityDissipation;
+        cDyeDissipation = smoke.dyeDissipation;
+        cVorticity = smoke.vorticity;
+        cGravityForce = smoke.gravityForce;
+        cGravityAngle = smoke.gravityAngle;
+        cDiffuseIterations = smoke.diffuseIterations;
+        cProjectIterations = smoke.projectIterations;
+        cModVelDissipRate = smoke.modVelDissip.modRate;
+        cModVelDissipLevel = smoke.modVelDissip.modLevel;
+        cModDyeDissipRate = smoke.modDyeDissip.modRate;
+        cModDyeDissipLevel = smoke.modDyeDissip.modLevel;
+    }
+
+    static void pushObstacleDefaultsToCVars() {
+        paddles = PaddlesParams{};
+        cPaddleEnable     = paddles.enable;
+        cPaddleOverlay    = paddles.overlay;
+        cPaddleWidth      = paddles.width;
+        cPaddleSlideRate  = paddles.modSlide.modRate;
+        cPaddleSlideLevel = paddles.modSlide.modLevel;
+        cPaddleSoftEdge   = paddles.softEdge;
+        cPaddleR          = paddles.colorR;
+        cPaddleG          = paddles.colorG;
+        cPaddleB          = paddles.colorB;
+    }
 
     // Sync ALL emitters' cVars into their structs every frame. Inactive
     // emitters' state is updated harmlessly — only EMITTER_RUN[activeEmitter]
     // actually consumes them this frame.
-    static void syncFromCVars() {
+    
+    static void syncGlobalFromCVars() {
         globalSpeed = cGlobalSpeed;
         paletteBlendRate = cPaletteBlendRate;
         paletteFloor = cPaletteFloor;
+        render.colorContrast = cColorContrast;
+        render.blackPoint    = cBlackPoint;
+        render.flowSat       = cFlowSat;
+        render.flowBright    = cFlowBright;
+        render.glowStrength  = cGlowStrength;
+        render.highlightSat  = cHighlightSat;
+    }
 
+    static void syncEmittersFromCVars() {
         // singleJet
         singleJet.jetDensity = cJetDensity;
         singleJet.jetForce = cJetForce;
@@ -625,9 +612,35 @@ namespace fastFluid {
         jetPack.modDensity.modRate = cModDensityRate;
         jetPack.modDensity.modLevel = cModDensityLevel;
         jetPack.modHueSpeed.modRate = cModHueSpeedRate;
-        jetPack.modHueSpeed.modLevel = cModHueSpeedLevel;   
-        
-        syncFlowFromCVars();
+        jetPack.modHueSpeed.modLevel = cModHueSpeedLevel;
+    }
+
+    static void syncFlowFromCVars() {
+        smoke.viscosity = cViscosity;
+        smoke.diffusion = cDiffusion;
+        smoke.velocityDissipation = cVelocityDissipation;
+        smoke.dyeDissipation = cDyeDissipation;
+        smoke.vorticity = cVorticity;
+        smoke.gravityForce = cGravityForce;
+        smoke.gravityAngle = cGravityAngle;
+        smoke.diffuseIterations = cDiffuseIterations;
+        smoke.projectIterations = cProjectIterations;
+        smoke.modVelDissip.modRate = cModVelDissipRate;
+        smoke.modVelDissip.modLevel = cModVelDissipLevel;
+        smoke.modDyeDissip.modRate = cModDyeDissipRate;
+        smoke.modDyeDissip.modLevel = cModDyeDissipLevel;
+    }
+
+    static void syncObstaclesFromCVars() {
+        paddles.enable            = cPaddleEnable;
+        paddles.overlay           = cPaddleOverlay;
+        paddles.width             = cPaddleWidth;
+        paddles.modSlide.modRate  = cPaddleSlideRate;
+        paddles.modSlide.modLevel = cPaddleSlideLevel;
+        paddles.softEdge          = cPaddleSoftEdge;
+        paddles.colorR            = cPaddleR;
+        paddles.colorG            = cPaddleG;
+        paddles.colorB            = cPaddleB;
     }
 
     static void updatePaletteState() {
@@ -657,12 +670,14 @@ namespace fastFluid {
         dt = rawDt * globalSpeed;
         t += dt;
 
+        pushGlobalDefaultsToCVars();
+
         // First-time setup of emitter/flow state. Only one of each in fastFluid,
         // but keep the trigger pattern to fire defaults push exactly once at start.
         if (EMITTER < EMITTER_COUNT && EMITTER != lastEmitter) {
             activeEmitter = (Emitter)EMITTER;
             lastEmitter = EMITTER;
-            pushDefaultsToCVars();
+            pushEmitterDefaultsToCVars();
             sendEmitterState();
         }
 
@@ -673,7 +688,18 @@ namespace fastFluid {
             sendFlowState();
         }
 
-        syncFromCVars();
+        if (OBSTACLE < OBSTACLE_COUNT && OBSTACLE != lastObstacle) {
+            activeObstacle = (Obstacle)OBSTACLE;
+            lastObstacle = OBSTACLE;
+            pushObstacleDefaultsToCVars();
+            sendObstacleState();
+        }
+
+        syncGlobalFromCVars();
+        syncEmittersFromCVars();
+        syncFlowFromCVars();
+        syncObstaclesFromCVars();
+
         updatePaletteState();
         uint8_t totalActiveTimers = configureActiveModulatorSlots();
 
