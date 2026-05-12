@@ -41,7 +41,7 @@ namespace fastFluid {
 
         // parameters used in multiple jet configurations
 
-        // Cheap per-jet variation selectors for shared modulation signals.
+        // Cheap per-jet delay selectors for shared modulation histories.
         // They do not create static position, direction, size, force, or hue offsets.
         float offsetRadius = 0.0f;
         float offsetRadialAngle = 0.0f;

@@ -15,9 +15,27 @@ namespace fastFluid {
 
     static constexpr uint8_t MAX_NUM_JETS = 5;
     static constexpr float MULTIJET_INV_2PI = 1.0f / CT_2PI;
+    static constexpr uint8_t MULTIJET_HISTORY_LEN = 32;
+    static constexpr uint8_t MULTIJET_HISTORY_MASK = MULTIJET_HISTORY_LEN - 1;
+    static_assert((MULTIJET_HISTORY_LEN & MULTIJET_HISTORY_MASK) == 0,
+                  "MULTIJET_HISTORY_LEN must be a power of two");
+
+    enum MultiJetSignalId : uint8_t {
+        MULTIJET_SIGNAL_RADIAL_ANGLE = 0,
+        MULTIJET_SIGNAL_RADIUS,
+        MULTIJET_SIGNAL_SIZE,
+        MULTIJET_SIGNAL_DIRECTION,
+        MULTIJET_SIGNAL_DENSITY,
+        MULTIJET_SIGNAL_FORCE,
+        MULTIJET_SIGNAL_HUE_SPEED,
+        MULTIJET_SIGNAL_COUNT
+    };
 
     JetParams jet[MAX_NUM_JETS];
     JetPackParams jetPack;
+    float multiJetSignalHistory[MULTIJET_SIGNAL_COUNT][MULTIJET_HISTORY_LEN];
+    uint8_t multiJetSignalHead = 0;
+    bool multiJetSignalPrimed = false;
  
     static constexpr ModConfig JetPackParams::* MULTIJET_MODS[] = {
         &JetPackParams::modRadialAngle,
@@ -34,18 +52,44 @@ namespace fastFluid {
         return angle;
     }
 
-    static inline float multiJetSignal(const ModConfig& mod, float phaseOffset) {
-        const float base = move.directional_noise[mod.modTimer];
-        const uint8_t bucket = ((uint8_t)phaseOffset) & 7;
+    static inline void writeMultiJetSignalSamples(uint8_t historyIndex) {
+        multiJetSignalHistory[MULTIJET_SIGNAL_RADIAL_ANGLE][historyIndex] =
+            move.directional_noise[jetPack.modRadialAngle.modTimer];
+        multiJetSignalHistory[MULTIJET_SIGNAL_RADIUS][historyIndex] =
+            move.directional_noise[jetPack.modRadius.modTimer];
+        multiJetSignalHistory[MULTIJET_SIGNAL_SIZE][historyIndex] =
+            move.directional_noise[jetPack.modSize.modTimer];
+        multiJetSignalHistory[MULTIJET_SIGNAL_DIRECTION][historyIndex] =
+            move.directional_noise[jetPack.modDirection.modTimer];
+        multiJetSignalHistory[MULTIJET_SIGNAL_DENSITY][historyIndex] =
+            move.directional_noise[jetPack.modDensity.modTimer];
+        multiJetSignalHistory[MULTIJET_SIGNAL_FORCE][historyIndex] =
+            move.directional_noise[jetPack.modForce.modTimer];
+        multiJetSignalHistory[MULTIJET_SIGNAL_HUE_SPEED][historyIndex] =
+            move.directional_noise[jetPack.modHueSpeed.modTimer];
+    }
 
-        float signal = (bucket & 1) ? -base : base;
-        if (bucket & 2) {
-            signal *= 0.92f;
-        } else if (bucket & 4) {
-            signal *= 1.08f;
+    static inline void captureMultiJetSignals() {
+        if (!multiJetSignalPrimed) {
+            for (uint8_t i = 0; i < MULTIJET_HISTORY_LEN; i++) {
+                writeMultiJetSignalSamples(i);
+            }
+            multiJetSignalHead = 0;
+            multiJetSignalPrimed = true;
+            return;
         }
 
-        return clampf(signal, -1.0f, 1.0f);
+        multiJetSignalHead = (multiJetSignalHead + 1) & MULTIJET_HISTORY_MASK;
+        writeMultiJetSignalSamples(multiJetSignalHead);
+    }
+
+    static inline float multiJetSignal(MultiJetSignalId signalId, float delayOffset) {
+        if (!multiJetSignalPrimed) return 0.0f;
+
+        const float absDelay = delayOffset < 0.0f ? -delayOffset : delayOffset;
+        const uint8_t delay = ((uint8_t)absDelay) & MULTIJET_HISTORY_MASK;
+        const uint8_t historyIndex = (multiJetSignalHead - delay) & MULTIJET_HISTORY_MASK;
+        return clampf(multiJetSignalHistory[signalId][historyIndex], -1.0f, 1.0f);
     }
 
     static inline float multiJetScalar(float base, const ModConfig& mod,
@@ -64,34 +108,36 @@ namespace fastFluid {
 
     // Reset the pack and the jet array together. The default is a generalized
     // version of the old three-jet arrangement: three ring anchors, radial-out
-    // direction, hue spread, and shared modulators with per-jet phase offsets.
+    // direction, hue spread, and shared modulators with per-jet delay offsets.
     static void resetMultiJetDefaults() {
         
         jetPack = JetPackParams{};
+        multiJetSignalPrimed = false;
+        multiJetSignalHead = 0;
 
-        for (uint8_t i = 0; i < jetPack.numJets; i++) {   // MAX_NUM_JETS
+        for (uint8_t i = 0; i < MAX_NUM_JETS; i++) {
             jet[i] = JetParams{};
             jet[i].enabled = true;
 
-            const float phase = (float)i * 17.0f;
-            jet[i].offsetRadialAngle = phase + 3.0f;
-            jet[i].offsetRadius = phase + 7.0f;
-            jet[i].offsetSize = phase + 17.0f;
-            jet[i].offsetDirection = phase + 13.0f;
-            jet[i].offsetDensity = phase + 19.0f;
-            jet[i].offsetForce = phase + 23.0f;
-            jet[i].offsetHueSpeed = phase + 29.0f;
+            const float delayBase = (float)i * 17.0f;
+            jet[i].offsetRadialAngle = delayBase + 3.0f;
+            jet[i].offsetRadius = delayBase + 7.0f;
+            jet[i].offsetSize = delayBase + 17.0f;
+            jet[i].offsetDirection = delayBase + 13.0f;
+            jet[i].offsetDensity = delayBase + 19.0f;
+            jet[i].offsetForce = delayBase + 23.0f;
+            jet[i].offsetHueSpeed = delayBase + 29.0f;
         }
     } // resetMultiJetDefaults()
 
     // Phase 1 of frame: write this component's timer slot ratios.
     static void multiJetPrepareModulators() {
-        timings.ratio[jetPack.modRadialAngle.modTimer] = 0.00045f * jetPack.modRadialAngle.modRate;
-        timings.ratio[jetPack.modRadius.modTimer] = 0.00045f * jetPack.modRadius.modRate;
-        timings.ratio[jetPack.modSize.modTimer] = 0.00045f * jetPack.modSize.modRate;
-        timings.ratio[jetPack.modDirection.modTimer] = 0.00040f * jetPack.modDirection.modRate;
-        timings.ratio[jetPack.modDensity.modTimer] = 0.00050f * jetPack.modDensity.modRate;
-        timings.ratio[jetPack.modForce.modTimer] = 0.00050f * jetPack.modForce.modRate;
+        timings.ratio[jetPack.modRadialAngle.modTimer] = 0.00043f * jetPack.modRadialAngle.modRate;
+        timings.ratio[jetPack.modRadius.modTimer] = 0.00049f * jetPack.modRadius.modRate;
+        timings.ratio[jetPack.modSize.modTimer] = 0.00036f * jetPack.modSize.modRate;
+        timings.ratio[jetPack.modDirection.modTimer] = 0.0006f * jetPack.modDirection.modRate;
+        timings.ratio[jetPack.modDensity.modTimer] = 0.00033f * jetPack.modDensity.modRate;
+        timings.ratio[jetPack.modForce.modTimer] = 0.00037f * jetPack.modForce.modRate;
         timings.ratio[jetPack.modHueSpeed.modTimer] = 0.00035f * jetPack.modHueSpeed.modRate;
     }
 
@@ -105,14 +151,14 @@ namespace fastFluid {
         const float rawAngle = jetPack.radialAngleBase +
                                CT_2PI * ((float)jetIndex / (float)count);
 
-        const float angleSignal = multiJetSignal(jetPack.modRadialAngle, thisJet.offsetRadialAngle);
+        const float angleSignal = multiJetSignal(MULTIJET_SIGNAL_RADIAL_ANGLE, thisJet.offsetRadialAngle);
         const float angle = rawAngle +
                             angleSignal *
                             jetPack.modRadialAngle.modLevel *
                             jetPack.varRadialAngle *
                             thisJet.radialAngleModScale;
 
-        const float radiusSignal = multiJetSignal(jetPack.modRadius, thisJet.offsetRadius);
+        const float radiusSignal = multiJetSignal(MULTIJET_SIGNAL_RADIUS, thisJet.offsetRadius);
         float anchorRadius = multiJetScalar(
             jetPack.radius * thisJet.radiusScale,
             jetPack.modRadius,
@@ -170,7 +216,7 @@ namespace fastFluid {
                 break;
         }
 
-        const float directionSignal = multiJetSignal(jetPack.modDirection, thisJet.offsetDirection);
+        const float directionSignal = multiJetSignal(MULTIJET_SIGNAL_DIRECTION, thisJet.offsetDirection);
         const float directionModulation = jetPack.modDirection.modLevel *
                                           jetPack.varDirection *
                                           directionSignal *
@@ -189,7 +235,7 @@ namespace fastFluid {
 
     static inline float multiJetHueForJet(uint8_t jetIndex, uint8_t count,
                                           const JetParams& thisJet) {
-        const float hueSignal = multiJetSignal(jetPack.modHueSpeed, thisJet.offsetHueSpeed);
+        const float hueSignal = multiJetSignal(MULTIJET_SIGNAL_HUE_SPEED, thisJet.offsetHueSpeed);
         const float hueShift = jetPack.modHueSpeed.modLevel *
                                jetPack.varHueSpeed *
                                hueSignal *
@@ -255,6 +301,8 @@ namespace fastFluid {
         const uint8_t count = multiJetCount();
         if (count == 0) return;
 
+        captureMultiJetSignals();
+
         for (uint8_t i = 0; i < count; i++) {
             const JetParams& thisJet = jet[i];
             if (!thisJet.enabled) continue;
@@ -267,7 +315,7 @@ namespace fastFluid {
             float dirRow;
             resolveMultiJetDirection(thisJet, anchorCol, anchorRow, dirCol, dirRow);
 
-            const float sizeSignal = multiJetSignal(jetPack.modSize, thisJet.offsetSize);
+            const float sizeSignal = multiJetSignal(MULTIJET_SIGNAL_SIZE, thisJet.offsetSize);
             const float size = multiJetScalar(
                 jetPack.size * thisJet.sizeScale,
                 jetPack.modSize,
@@ -277,7 +325,7 @@ namespace fastFluid {
                 0.5f
             );
 
-            const float densitySignal = multiJetSignal(jetPack.modDensity, thisJet.offsetDensity);
+            const float densitySignal = multiJetSignal(MULTIJET_SIGNAL_DENSITY, thisJet.offsetDensity);
             const float density = multiJetScalar(
                 jetPack.density * thisJet.densityScale,
                 jetPack.modDensity,
@@ -287,7 +335,7 @@ namespace fastFluid {
                 0.0f
             );
 
-            const float forceSignal = multiJetSignal(jetPack.modForce, thisJet.offsetForce);
+            const float forceSignal = multiJetSignal(MULTIJET_SIGNAL_FORCE, thisJet.offsetForce);
             const float force = multiJetScalar(
                 jetPack.force * thisJet.forceScale,
                 jetPack.modForce,
