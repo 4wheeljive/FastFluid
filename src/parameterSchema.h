@@ -48,19 +48,19 @@ const char* const SINGLEJET_PARAMS[] PROGMEM = {
 
 const char* const MULTIJET_PARAMS[] PROGMEM = {
    "numJets", "directionMode", "colorMode",
-   "radius", "radialAngleBase", 
+   "radius", // "radialAngleBase", 
    "size",  "direction", "density", "force", 
    "hueSpeed", "hueSpread",
-   "varRadius", "varRadialAngle",
-   "varSize", "varDirection", "varDensity",
-   "varForce", "varHueSpeed",
+   "varRadius", //"varRadialAngle",
+   /*"varSize",*/ "varDirection", //"varDensity",
+   "varForce", //"varHueSpeed",
    "modRadiusRate", "modRadiusLevel",
-   "modRadialAngleRate", "modRadialAngleLevel",
+   //"modRadialAngleRate", "modRadialAngleLevel",
    "modDirectionRate", "modDirectionLevel",
-   "modSizeRate", "modSizeLevel",
-   "modDensityRate", "modDensityLevel",
+   //"modSizeRate", "modSizeLevel",
+   //"modDensityRate", "modDensityLevel",
    "modForceRate", "modForceLevel",
-   "modHueSpeedRate", "modHueSpeedLevel"
+   //"modHueSpeedRate", "modHueSpeedLevel"
 };
 
 struct EmitterParamEntry {
@@ -71,7 +71,7 @@ struct EmitterParamEntry {
 
 const EmitterParamEntry EMITTER_PARAM_LOOKUP[] PROGMEM = {
    {"singlejet", SINGLEJET_PARAMS, 12},
-   {"multijet", MULTIJET_PARAMS, 32},
+   {"multijet", MULTIJET_PARAMS, 19},
 };
 
 static const EmitterParamEntry* getEmitterParams(uint8_t emitterIdx) {

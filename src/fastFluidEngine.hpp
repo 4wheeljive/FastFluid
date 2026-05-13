@@ -174,21 +174,18 @@ namespace fastFluid {
         const uint8_t count = multiJetCount();
         if (count == 0) return;
 
-        acquireSignals();
-
         const float arrowLength = clampf(jetPack.size * 2.0f, 3.0f, (float)MIN_DIMENSION * 0.28f);
         for (uint8_t i = 0; i < count; i++) {
             const JetParams& thisJet = jet[i];
             if (!thisJet.enabled) continue;
-            const MultiJetResolvedSignals signals = resolveMixedSignals(i, thisJet);
 
             float anchorCol;
             float anchorRow;
-            resolveMultiJetAnchor(i, count, thisJet, signals, anchorCol, anchorRow);
+            resolveMultiJetAnchor(i, count, thisJet, anchorCol, anchorRow);
 
             float dirCol;
             float dirRow;
-            resolveMultiJetDirection(thisJet, signals, anchorCol, anchorRow, dirCol, dirRow);
+            resolveMultiJetDirection(thisJet, anchorCol, anchorRow, dirCol, dirRow);
 
             const float tipCol = anchorCol + dirCol * arrowLength;
             const float tipRow = anchorRow + dirRow * arrowLength;
@@ -691,11 +688,11 @@ namespace fastFluid {
         unsigned long now = fl::millis();
         float rawDt = (now - lastFrameMs) * 0.001f;
         lastFrameMs = now;
-        dt = rawDt * globalSpeed;
+        dt = rawDt * globalSpeed * 0.5f; // change takes effect one frame late
         t += dt;
 
         // consider way to do this only upon change
-        pushGlobalDefaultsToCVars();
+        //pushGlobalDefaultsToCVars();
 
         // First-time setup of emitter/flow/obstacle state. Only one of each in fastFluid,
         // but keep the trigger pattern to fire defaults push exactly once at start.
