@@ -15,27 +15,36 @@ namespace fastFluid {
 
     static constexpr uint8_t MAX_NUM_JETS = 5;
     static constexpr float MULTIJET_INV_2PI = 1.0f / FF_2PI;
-    static constexpr uint8_t MULTIJET_HISTORY_LEN = 32;
-    static constexpr uint8_t MULTIJET_HISTORY_MASK = MULTIJET_HISTORY_LEN - 1;
-    static_assert((MULTIJET_HISTORY_LEN & MULTIJET_HISTORY_MASK) == 0,
-                  "MULTIJET_HISTORY_LEN must be a power of two");
 
-    enum MultiJetSignalId : uint8_t {
-        MULTIJET_SIGNAL_RADIAL_ANGLE = 0,
-        MULTIJET_SIGNAL_RADIUS,
-        MULTIJET_SIGNAL_SIZE,
-        MULTIJET_SIGNAL_DIRECTION,
-        MULTIJET_SIGNAL_DENSITY,
-        MULTIJET_SIGNAL_FORCE,
-        MULTIJET_SIGNAL_HUE_SPEED,
-        MULTIJET_SIGNAL_COUNT
+    enum MultiJetSignal : uint8_t {
+        MJ_SIGNAL_RADIUS = 0,
+        MJ_SIGNAL_RADIAL_ANGLE,
+        MJ_SIGNAL_SIZE,
+        MJ_SIGNAL_DIRECTION,
+        MJ_SIGNAL_DENSITY,
+        MJ_SIGNAL_FORCE,
+        MJ_SIGNAL_HUE_SPEED,
+        MJ_SIGNAL_COUNT
     };
+
+    float multiJetBaseSignals[MJ_SIGNAL_COUNT];
 
     JetParams jet[MAX_NUM_JETS];
     JetPackParams jetPack;
-    float multiJetSignalHistory[MULTIJET_SIGNAL_COUNT][MULTIJET_HISTORY_LEN];
-    uint8_t multiJetSignalHead = 0;
-    bool multiJetSignalPrimed = false;
+
+    struct MultiJetResolvedSignals {
+        float radius = 1.0f;
+        float radialAngle = 1.0f;
+        float size = 1.0f;
+        float direction = 1.0f;
+        float density = 1.0f;
+        float force = 1.0f;
+        float hueSpeed = 1.0f;
+    };
+
+    static constexpr float MULTIJET_PRIMARY_SIGNAL_WEIGHT = 0.35f;
+    static constexpr float MULTIJET_CROSS_SIGNAL_WEIGHT = 0.65f;
+    static constexpr float MULTIJET_MIX_NORMALIZE = 0.42f;
  
     static constexpr ModConfig JetPackParams::* MULTIJET_MODS[] = {
         &JetPackParams::modRadialAngle,
@@ -52,46 +61,6 @@ namespace fastFluid {
         return angle;
     }
 
-    static inline void writeMultiJetSignalSamples(uint8_t historyIndex) {
-        multiJetSignalHistory[MULTIJET_SIGNAL_RADIAL_ANGLE][historyIndex] =
-            move.directional_noise[jetPack.modRadialAngle.modTimer];
-        multiJetSignalHistory[MULTIJET_SIGNAL_RADIUS][historyIndex] =
-            move.directional_noise[jetPack.modRadius.modTimer];
-        multiJetSignalHistory[MULTIJET_SIGNAL_SIZE][historyIndex] =
-            move.directional_noise[jetPack.modSize.modTimer];
-        multiJetSignalHistory[MULTIJET_SIGNAL_DIRECTION][historyIndex] =
-            move.directional_noise[jetPack.modDirection.modTimer];
-        multiJetSignalHistory[MULTIJET_SIGNAL_DENSITY][historyIndex] =
-            move.directional_noise[jetPack.modDensity.modTimer];
-        multiJetSignalHistory[MULTIJET_SIGNAL_FORCE][historyIndex] =
-            move.directional_noise[jetPack.modForce.modTimer];
-        multiJetSignalHistory[MULTIJET_SIGNAL_HUE_SPEED][historyIndex] =
-            move.directional_noise[jetPack.modHueSpeed.modTimer];
-    }
-
-    static inline void captureMultiJetSignals() {
-        if (!multiJetSignalPrimed) {
-            for (uint8_t i = 0; i < MULTIJET_HISTORY_LEN; i++) {
-                writeMultiJetSignalSamples(i);
-            }
-            multiJetSignalHead = 0;
-            multiJetSignalPrimed = true;
-            return;
-        }
-
-        multiJetSignalHead = (multiJetSignalHead + 1) & MULTIJET_HISTORY_MASK;
-        writeMultiJetSignalSamples(multiJetSignalHead);
-    }
-
-    static inline float multiJetSignal(MultiJetSignalId signalId, float delayOffset) {
-        if (!multiJetSignalPrimed) return 0.0f;
-
-        const float absDelay = delayOffset < 0.0f ? -delayOffset : delayOffset;
-        const uint8_t delay = ((uint8_t)absDelay) & MULTIJET_HISTORY_MASK;
-        const uint8_t historyIndex = (multiJetSignalHead - delay) & MULTIJET_HISTORY_MASK;
-        return clampf(multiJetSignalHistory[signalId][historyIndex], -1.0f, 1.0f);
-    }
-
     static inline float multiJetScalar(float base, const ModConfig& mod,
                                        float variance, float signal,
                                        float modScale, float minValue) {
@@ -106,31 +75,18 @@ namespace fastFluid {
         outRow = inCol * sc.sin_val + inRow * sc.cos_val;
     }
 
-    // Reset the pack and the jet array together. The default is a generalized
-    // version of the old three-jet arrangement: three ring anchors, radial-out
-    // direction, hue spread, and shared modulators with per-jet delay offsets.
+    // Reset the pack and jet array together. Per-jet modulation personality is
+    // resolved per frame in resolveMixedSignals() rather than stored as state.
     static void resetMultiJetDefaults() {
         
         jetPack = JetPackParams{};
-        multiJetSignalPrimed = false;
-        multiJetSignalHead = 0;
 
         for (uint8_t i = 0; i < MAX_NUM_JETS; i++) {
             jet[i] = JetParams{};
             jet[i].enabled = true;
-
-            const float delayBase = (float)i * 17.0f;
-            jet[i].offsetRadialAngle = delayBase + 3.0f;
-            jet[i].offsetRadius = delayBase + 7.0f;
-            jet[i].offsetSize = delayBase + 17.0f;
-            jet[i].offsetDirection = delayBase + 13.0f;
-            jet[i].offsetDensity = delayBase + 19.0f;
-            jet[i].offsetForce = delayBase + 23.0f;
-            jet[i].offsetHueSpeed = delayBase + 29.0f;
         }
     } // resetMultiJetDefaults()
 
-    // Phase 1 of frame: write this component's timer slot ratios.
     static void multiJetPrepareModulators() {
         timings.ratio[jetPack.modRadialAngle.modTimer] = 0.00043f * jetPack.modRadialAngle.modRate;
         timings.ratio[jetPack.modRadius.modTimer] = 0.00049f * jetPack.modRadius.modRate;
@@ -141,30 +97,96 @@ namespace fastFluid {
         timings.ratio[jetPack.modHueSpeed.modTimer] = 0.00035f * jetPack.modHueSpeed.modRate;
     }
 
+    static void acquireSignals() {
+        multiJetBaseSignals[MJ_SIGNAL_RADIUS] =
+            move.directional_noise[jetPack.modRadius.modTimer];
+        multiJetBaseSignals[MJ_SIGNAL_RADIAL_ANGLE] =
+            move.directional_noise[jetPack.modRadialAngle.modTimer];
+        multiJetBaseSignals[MJ_SIGNAL_SIZE] =
+            move.directional_noise[jetPack.modSize.modTimer];
+        multiJetBaseSignals[MJ_SIGNAL_DIRECTION] =
+            move.directional_noise[jetPack.modDirection.modTimer];
+        multiJetBaseSignals[MJ_SIGNAL_DENSITY] =
+            move.directional_noise[jetPack.modDensity.modTimer];
+        multiJetBaseSignals[MJ_SIGNAL_FORCE] =
+            move.directional_noise[jetPack.modForce.modTimer];
+        multiJetBaseSignals[MJ_SIGNAL_HUE_SPEED] =
+            move.directional_noise[jetPack.modHueSpeed.modTimer];
+    }
+
+    static inline float mixWeight(uint8_t jetIndex, uint8_t propertyIndex, uint8_t sourceIndex) {
+        static constexpr float weights[8] = {
+            -0.95f, -0.62f, -0.33f, 0.24f,
+             0.41f,  0.68f,  0.87f, -0.48f
+        };
+        const uint8_t idx = (jetIndex * 13u + propertyIndex * 7u + sourceIndex * 5u) & 7u;
+        return weights[idx];
+    }
+
+    static inline float crossMixedSignal(uint8_t jetIndex, uint8_t propertyIndex) {
+        float sum = 0.0f;
+        for (uint8_t source = 0; source < MJ_SIGNAL_COUNT; source++) {
+            if (source == propertyIndex) continue;
+            sum += mixWeight(jetIndex, propertyIndex, source) * multiJetBaseSignals[source];
+        }
+        return clampf(sum * MULTIJET_MIX_NORMALIZE, -1.0f, 1.0f);
+    }
+
+    static inline float resolveMixedSignal(uint8_t jetIndex, uint8_t propertyIndex, float modScale) {
+        const float primary = multiJetBaseSignals[propertyIndex];
+        const float cross = crossMixedSignal(jetIndex, propertyIndex);
+        const float signal = MULTIJET_PRIMARY_SIGNAL_WEIGHT * primary +
+                             MULTIJET_CROSS_SIGNAL_WEIGHT * cross;
+        return clampf(signal * modScale, -1.0f, 1.0f);
+    }
+
+    static inline MultiJetResolvedSignals resolveMixedSignals(uint8_t jetIndex,
+                                                              const JetParams& thisJet) {
+        MultiJetResolvedSignals signals;
+        signals.radius = resolveMixedSignal(jetIndex, MJ_SIGNAL_RADIUS, thisJet.radiusModScale);
+        signals.radialAngle = resolveMixedSignal(
+            jetIndex,
+            MJ_SIGNAL_RADIAL_ANGLE,
+            thisJet.radialAngleModScale
+        );
+        signals.size = resolveMixedSignal(jetIndex, MJ_SIGNAL_SIZE, thisJet.sizeModScale);
+        signals.direction = resolveMixedSignal(
+            jetIndex,
+            MJ_SIGNAL_DIRECTION,
+            thisJet.directionModScale
+        );
+        signals.density = resolveMixedSignal(jetIndex, MJ_SIGNAL_DENSITY, thisJet.densityModScale);
+        signals.force = resolveMixedSignal(jetIndex, MJ_SIGNAL_FORCE, thisJet.forceModScale);
+        signals.hueSpeed = resolveMixedSignal(
+            jetIndex,
+            MJ_SIGNAL_HUE_SPEED,
+            thisJet.hueSpeedModScale
+        );
+        return signals;
+    }
+
     static inline uint8_t multiJetCount() {
         return jetPack.numJets > MAX_NUM_JETS ? MAX_NUM_JETS : jetPack.numJets;
     }
 
     static inline void resolveMultiJetAnchor(uint8_t jetIndex, uint8_t count,
                                              const JetParams& thisJet,
+                                             const MultiJetResolvedSignals& signals,
                                              float& anchorCol, float& anchorRow) {
         const float rawAngle = jetPack.radialAngleBase +
                                FF_2PI * ((float)jetIndex / (float)count);
 
-        const float angleSignal = multiJetSignal(MULTIJET_SIGNAL_RADIAL_ANGLE, thisJet.offsetRadialAngle);
         const float angle = rawAngle +
-                            angleSignal *
+                            signals.radialAngle *
                             jetPack.modRadialAngle.modLevel *
-                            jetPack.varRadialAngle *
-                            thisJet.radialAngleModScale;
+                            jetPack.varRadialAngle;
 
-        const float radiusSignal = multiJetSignal(MULTIJET_SIGNAL_RADIUS, thisJet.offsetRadius);
         float anchorRadius = multiJetScalar(
             jetPack.radius * thisJet.radiusScale,
             jetPack.modRadius,
             jetPack.varRadius,
-            radiusSignal,
-            thisJet.radiusModScale,
+            signals.radius,
+            1.0f,
             1.0f
         );
         anchorRadius = clampf(anchorRadius, (float)MIN_DIMENSION * 0.2f, (float)MIN_DIMENSION * 0.45f);
@@ -172,9 +194,10 @@ namespace fastFluid {
         SinCosResult sc = sincos_fast(wrapRad(angle));
         anchorCol = jetPack.centerCol + sc.cos_val * anchorRadius;
         anchorRow = jetPack.centerRow + sc.sin_val * anchorRadius;
-    }
+    } // resolveMultiJetAnchor()
 
     static inline void resolveMultiJetDirection(const JetParams& thisJet,
+                                                const MultiJetResolvedSignals& signals,
                                                 float anchorCol, float anchorRow,
                                                 float& dirCol, float& dirRow) {
         float radialCol = anchorCol - jetPack.centerCol;
@@ -216,11 +239,9 @@ namespace fastFluid {
                 break;
         }
 
-        const float directionSignal = multiJetSignal(MULTIJET_SIGNAL_DIRECTION, thisJet.offsetDirection);
         const float directionModulation = jetPack.modDirection.modLevel *
                                           jetPack.varDirection *
-                                          directionSignal *
-                                          thisJet.directionModScale;
+                                          signals.direction;
         const float rotation = (jetPack.directionMode == MULTIJET_DIR_ABSOLUTE)
             ? directionModulation
             : jetPack.direction + directionModulation;
@@ -231,15 +252,14 @@ namespace fastFluid {
             dirCol = rotatedCol;
             dirRow = rotatedRow;
         }
-    }
+    } // resolveMultiJetDirection()
 
     static inline float multiJetHueForJet(uint8_t jetIndex, uint8_t count,
-                                          const JetParams& thisJet) {
-        const float hueSignal = multiJetSignal(MULTIJET_SIGNAL_HUE_SPEED, thisJet.offsetHueSpeed);
+                                          const JetParams& thisJet,
+                                          const MultiJetResolvedSignals& signals) {
         const float hueShift = jetPack.modHueSpeed.modLevel *
                                jetPack.varHueSpeed *
-                               hueSignal *
-                               thisJet.hueSpeedModScale;
+                               signals.hueSpeed;
 
         if (jetPack.colorMode == MULTIJET_COLOR_WARM_ABSOLUTE) {
             static const float warmHues[3] = {
@@ -271,7 +291,8 @@ namespace fastFluid {
         }
 
         return fmodPos(baseHue + hueOffset + hueShift, 1.0f);
-    }
+
+    } // multiJetHueForJet
 
     static inline void emitLayeredJet(float anchorCol, float anchorRow,
                                       float dirCol, float dirRow,
@@ -295,57 +316,55 @@ namespace fastFluid {
         jetSplat(anchorCol + dirCol * layerOut, anchorRow + dirRow * layerOut, radius,
                  density * 0.15f,
                  velX * 0.65f, velY * 0.65f, hue);
-    }
+    } // emitLayeredJet()
 
-    static void emitMultiJet() {
+    static void runMultiJet() {
         const uint8_t count = multiJetCount();
         if (count == 0) return;
 
-        captureMultiJetSignals();
+        acquireSignals();
 
         for (uint8_t i = 0; i < count; i++) {
             const JetParams& thisJet = jet[i];
             if (!thisJet.enabled) continue;
+            const MultiJetResolvedSignals signals = resolveMixedSignals(i, thisJet);
 
             float anchorCol;
             float anchorRow;
-            resolveMultiJetAnchor(i, count, thisJet, anchorCol, anchorRow);
+            resolveMultiJetAnchor(i, count, thisJet, signals, anchorCol, anchorRow);
 
             float dirCol;
             float dirRow;
-            resolveMultiJetDirection(thisJet, anchorCol, anchorRow, dirCol, dirRow);
+            resolveMultiJetDirection(thisJet, signals, anchorCol, anchorRow, dirCol, dirRow);
 
-            const float sizeSignal = multiJetSignal(MULTIJET_SIGNAL_SIZE, thisJet.offsetSize);
             const float size = multiJetScalar(
                 jetPack.size * thisJet.sizeScale,
                 jetPack.modSize,
                 jetPack.varSize,
-                sizeSignal,
-                thisJet.sizeModScale,
+                signals.size,
+                1.0f,
                 0.5f
             );
 
-            const float densitySignal = multiJetSignal(MULTIJET_SIGNAL_DENSITY, thisJet.offsetDensity);
             const float density = multiJetScalar(
                 jetPack.density * thisJet.densityScale,
                 jetPack.modDensity,
                 jetPack.varDensity,
-                densitySignal,
-                thisJet.densityModScale,
+                signals.density,
+                1.0f,
                 0.0f
             );
 
-            const float forceSignal = multiJetSignal(MULTIJET_SIGNAL_FORCE, thisJet.offsetForce);
             const float force = multiJetScalar(
                 jetPack.force * thisJet.forceScale,
                 jetPack.modForce,
                 jetPack.varForce,
-                forceSignal,
-                thisJet.forceModScale,
+                signals.force,
+                1.0f,
                 0.05f
             );
 
-            const float hue = multiJetHueForJet(i, count, thisJet);
+            const float hue = multiJetHueForJet(i, count, thisJet, signals);
 
             emitLayeredJet(anchorCol, anchorRow, dirCol, dirRow,
                            hue, density, force, size);

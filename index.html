@@ -21,8 +21,8 @@
         .section {
             border: 1px solid #696969;
             background-color: #000000;
-            padding: 20px;
-            margin: 5px 0;  
+            padding: 10px;
+            margin: 5px;  
             border-radius: 8px;
         }
         .label {
@@ -32,7 +32,7 @@
         }
         ble-connection-panel {
             display: block;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
         animation-selector {
             display: block;
@@ -104,7 +104,7 @@
             border: 1px solid #444;
             border-radius: 4px;
             padding: 5px;
-            margin: 5px 0;
+            margin: 5px;
         }
         .control-group-label {
             color: #888;
@@ -194,10 +194,12 @@
                     label="Off" 
                     data-my-number="99">
                 </control-button>
-                <control-button label="Sync Global" data-my-number="91"></control-button>
-                <control-button label="Sync Emitter" data-my-number="92"></control-button>
-                <control-button label="Sync Flow" data-my-number="93"></control-button>
-                <control-button label="Sync Obstacle" data-my-number="94"></control-button>
+            </div>
+            <div class="label">Sync:
+                <control-button label="Global" data-my-number="91"></control-button>
+                <control-button label="Emitter" data-my-number="92"></control-button>
+                <control-button label="Flow" data-my-number="93"></control-button>
+                <control-button label="Obstacle" data-my-number="94"></control-button>
             </div>
             <div class = "control-group">
                 <control-slider 
@@ -795,20 +797,15 @@
                             "modJetAngleRate", "modJetAngleLevel",
                             "modJetSwingRate", "modJetSwingLevel"],
             "multijet":    ["numJets", "directionMode", "colorMode",
-                            "radius","radialAngleBase", 
-                            "size", "direction", "density", "force", 
-                            "hueSpeed", "hueSpread",
-                            "varRadius", "varRadialAngle",
-                            "varSize", "varDensity", "varDirection", 
-                            "varForce", "varHueSpeed",
-                            "modRadiusRate", "modRadiusLevel",
-                            "modRadialAngleRate", "modRadialAngleLevel",
-                            "modSizeRate", "modSizeLevel",
-                            "modDensityRate", "modDensityLevel",
-                            "modDirectionRate", "modDirectionLevel",
-                            "modForceRate", "modForceLevel",
-                            "modHueSpeedRate", "modHueSpeedLevel"]
-        };
+                            "radius","size","density","force","hueSpeed", "hueSpread", 
+                            "varRadius", "modRadiusRate", "modRadiusLevel",
+                            "varRadialAngle", "modRadialAngleRate", "modRadialAngleLevel",
+                            "varSize", "modSizeRate", "modSizeLevel",
+                            "varDirection", "modDirectionRate", "modDirectionLevel",
+                            "varDensity", "modDensityRate", "modDensityLevel",
+                            "varForce", "modForceRate", "modForceLevel",
+                            "varHueSpeed", "modHueSpeedRate", "modHueSpeedLevel"]
+        }; // "radialAngleBase", "direction", 
 
         const FLOW_PARAMS = {
             "smoke":       ["diffuseIterations", "projectIterations",

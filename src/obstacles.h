@@ -189,12 +189,12 @@ namespace fastFluid {
     // Forward decl — body lives in obstacles/obstacle_paddles.h. When a
     // second generator is added, this becomes a dispatch (or stays a
     // direct call if only one is active at a time).
-    static void generatePaddleObstacle(float t);
+    static void generatePaddleObstacle();
 
     // Regenerate mask from the active generator + apply BC.
     // Called from runfastFluid() each frame.
-    static void updateObstacle(float t) {
-        generatePaddleObstacle(t);
+    static void updateObstacle() {
+        generatePaddleObstacle();
         applyObstacleVelocity();
     }
 

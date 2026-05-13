@@ -67,7 +67,7 @@ namespace fastFluid {
 
     // Generate paddle geometry into the generic obstacle state arrays.
     // t is animation time (already scaled by globalSpeed).
-    static void generatePaddleObstacle(float t) {
+    static void generatePaddleObstacle() {
         // Mirror common bits into obstacleCommon so generic apply
         // functions can read them.
         obstacleCommon.enable  = paddles.enable;

@@ -323,11 +323,16 @@ namespace fastFluid {
     // Emitter and Flow enums defined in componentEnums.h
 
     // Function pointer types for dispatch (read shared t/dt from namespace)
-    using EmitterFn     = void(*)();
-    using ObstacleFn     = void(*)();
-    using FlowPrepFn    = void(*)();
-    using FlowAdvectFn  = void(*)();
-
+    using EmitterPrepModsFn = void(*)();
+    using EmitterPrepFn     = void(*)();
+    using EmitterRunFn      = void(*)();
+    using FlowPrepModsFn    = void(*)();
+    using FlowPrepFn        = void(*)();
+    using FlowAdvectFn      = void(*)();
+    using ObstaclePrepModsFn    = void(*)();
+    using ObstaclePrepFn    = void(*)();
+    using ObstacleApplyFn   = void(*)();
+    
     // ═══════════════════════════════════════════════════════════════════
     //  MODULATION TYPES
     // ═══════════════════════════════════════════════════════════════════

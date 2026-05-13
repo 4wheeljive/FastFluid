@@ -9,10 +9,10 @@
 
 #include <Arduino.h>
 
-#define FASTLED_OVERCLOCK 1.2
+//#define FASTLED_OVERCLOCK 1.2
 #include <FastLED.h>
 
-//#define SERIAL_PROFILE_REPORTS
+#define SERIAL_PROFILE_REPORTS
 
 //#include <FS.h>
 //#include "LittleFS.h"
@@ -43,6 +43,8 @@ uint16_t ledNum = 0;
 
 uint8_t EMITTER = 1;
 uint8_t FLOW = 0;
+uint8_t OBSTACLE = 0;
+
 uint8_t BRIGHTNESS = 50;
 
 uint8_t defaultMapping = 0;
@@ -162,7 +164,6 @@ void loop() {
 
 	PROFILE_FRAME_BEGIN();
 
-	
 	EVERY_N_SECONDS(3) {
 		uint8_t fps = FastLED.getFPS();
 		FASTLED_DBG(fps << " fps");
@@ -175,7 +176,6 @@ void loop() {
 			PROFILE_RESET();
 		}
 	#endif
-
 
 	if (!displayOn){
 		FastLED.clear();

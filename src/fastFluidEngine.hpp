@@ -174,18 +174,21 @@ namespace fastFluid {
         const uint8_t count = multiJetCount();
         if (count == 0) return;
 
+        acquireSignals();
+
         const float arrowLength = clampf(jetPack.size * 2.0f, 3.0f, (float)MIN_DIMENSION * 0.28f);
         for (uint8_t i = 0; i < count; i++) {
             const JetParams& thisJet = jet[i];
             if (!thisJet.enabled) continue;
+            const MultiJetResolvedSignals signals = resolveMixedSignals(i, thisJet);
 
             float anchorCol;
             float anchorRow;
-            resolveMultiJetAnchor(i, count, thisJet, anchorCol, anchorRow);
+            resolveMultiJetAnchor(i, count, thisJet, signals, anchorCol, anchorRow);
 
             float dirCol;
             float dirRow;
-            resolveMultiJetDirection(thisJet, anchorCol, anchorRow, dirCol, dirRow);
+            resolveMultiJetDirection(thisJet, signals, anchorCol, anchorRow, dirCol, dirRow);
 
             const float tipCol = anchorCol + dirCol * arrowLength;
             const float tipRow = anchorRow + dirRow * arrowLength;
@@ -357,20 +360,41 @@ namespace fastFluid {
     //  Flow and obstacle dispatch tables can be added the same way
     //  when additional flows/obstacles arrive.
 
-    const EmitterFn EMITTER_PREPARE_MOD[] = {
+    const EmitterPrepFn EMITTER_PREP_MODS[] = {
         singleJetPrepareModulators,    // EMITTER_SINGLEJET = 0
         multiJetPrepareModulators,     // EMITTER_MULTIJET = 1
     };
 
-    const EmitterFn EMITTER_RUN[] = {
+    const EmitterRunFn EMITTER_RUN[] = {
         emitSingleJet,                 // EMITTER_SINGLEJET = 0
-        emitMultiJet,                  // EMITTER_MULTIJET = 1
+        runMultiJet,                  // EMITTER_MULTIJET = 1
+    };
+
+    const FlowPrepModsFn FLOW_PREP_MODS[] = {
+        smokePrepareModulators
+    };
+
+    const FlowPrepFn FLOW_PREP[] = {
+        smokePrepare
+    };
+
+    const FlowAdvectFn FLOW_ADVECT[] = {
+        smokeAdvect
+    };
+
+    const ObstaclePrepModsFn OBSTACLE_PREP_MODS[] = {
+        paddlesPrepareModulators
+    };
+
+    const ObstacleApplyFn OBSTACLE_APPLY[] = {
+        updateObstacle
     };
 
     static_assert(sizeof(EMITTER_RUN) / sizeof(EMITTER_RUN[0]) == EMITTER_COUNT,
                   "EMITTER_RUN size must match EMITTER_COUNT");
-    static_assert(sizeof(EMITTER_PREPARE_MOD) / sizeof(EMITTER_PREPARE_MOD[0]) == EMITTER_COUNT,
-                  "EMITTER_PREPARE_MOD size must match EMITTER_COUNT");
+    static_assert(sizeof(EMITTER_PREP_MODS) / sizeof(EMITTER_PREP_MODS[0]) == EMITTER_COUNT,
+                  "EMITTER_PREP size must match EMITTER_COUNT");
+    //TODO: add additional
 
     static uint8_t configureActiveModulatorSlots() {
         uint8_t nextSlot = 0;
@@ -670,9 +694,10 @@ namespace fastFluid {
         dt = rawDt * globalSpeed;
         t += dt;
 
+        // consider way to do this only upon change
         pushGlobalDefaultsToCVars();
 
-        // First-time setup of emitter/flow state. Only one of each in fastFluid,
+        // First-time setup of emitter/flow/obstacle state. Only one of each in fastFluid,
         // but keep the trigger pattern to fire defaults push exactly once at start.
         if (EMITTER < EMITTER_COUNT && EMITTER != lastEmitter) {
             activeEmitter = (Emitter)EMITTER;
@@ -680,14 +705,12 @@ namespace fastFluid {
             pushEmitterDefaultsToCVars();
             sendEmitterState();
         }
-
         if (FLOW < FLOW_COUNT && FLOW != lastFlow) {
             activeFlow = (Flow)FLOW;
             lastFlow = FLOW;
             pushFlowDefaultsToCVars();
             sendFlowState();
         }
-
         if (OBSTACLE < OBSTACLE_COUNT && OBSTACLE != lastObstacle) {
             activeObstacle = (Obstacle)OBSTACLE;
             lastObstacle = OBSTACLE;
@@ -703,27 +726,22 @@ namespace fastFluid {
         updatePaletteState();
         uint8_t totalActiveTimers = configureActiveModulatorSlots();
 
-        // ─── Modulator pipeline (Phase 4.5 consolidation) ──────────
-        // 1. Each component writes its slot ratios. 2. Single
-        // calculate_modulators pass. 3. Components run, reading move[*].
-        // Avoids the previous shared-slot fragility (flow + emitter
-        // both writing slots 0+1, working only by capture-before-overwrite).
-        EMITTER_PREPARE_MOD[activeEmitter]();
-        smokePrepareModulators();
-        if (activeObstacleTimers > 0) {
-            paddlesPrepareModulators();
-        }
+        // Pipeline: Prepare and calculate modulators
+        EMITTER_PREP_MODS[activeEmitter]();
+        FLOW_PREP_MODS[activeFlow]();
+        OBSTACLE_PREP_MODS[activeObstacle]();
         calculate_modulators(timings, totalActiveTimers);
 
-        // Pipeline: obstacle → prepare → emit → advect → render → overlay
-        updateObstacle(t);
-        smokePrepare();
+        // Pipeline: obstacle → prepare flow → emit → advect flow → render → overlay
+        OBSTACLE_APPLY[activeObstacle](); // updateObstacle()
+        FLOW_PREP[activeFlow]();    //smokePrepare();
+
         PROFILE_START("emitter");
-        EMITTER_RUN[activeEmitter]();
+        EMITTER_RUN[activeEmitter]();  // runMultiJet();
         PROFILE_END();
 
-        PROFILE_START("fluidAdvect");
-        smokeAdvect();
+        PROFILE_START("flowAdvect");
+        FLOW_ADVECT[activeFlow]();  //smokeAdvect();
         PROFILE_END();
 
         PROFILE_START("render");
