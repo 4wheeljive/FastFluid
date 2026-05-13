@@ -33,13 +33,13 @@ namespace fastFluid {
         // parameters used by stand-alone jet
         float radius = (float)MIN_DIMENSION * 0.25f;
         float radialAngle = 0.0f;
-        float size = (float)MIN_DIMENSION / 12.0f;
+        float size = (float)MIN_DIMENSION * 0.1f;
         float direction = 0.0f;
         float density = 30.0f;
         float force = 0.25f;
         float hueSpeed = 0.25f;
         float spread = 0.0f;
-        float slideRange = (float)MIN_DIMENSION / 8.0f;
+        float slideRange = (float)MIN_DIMENSION *0.125f;
         ModConfig modRadialAngle = {0, 0.2f, 0.4f};
         ModConfig modRadius = {0, 0.4f, 1.5f};
         ModConfig modDirection = {0, 0.5f, 1.5f};

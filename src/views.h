@@ -30,8 +30,8 @@ namespace fastFluid {
     }
 
     static inline float debugVelocityMagnitude(uint8_t xc, uint8_t y) {
-        const float vu = smoke::u[y][xc];
-        const float vv = smoke::v[y][xc];
+        const float vu = u[y][xc];
+        const float vv = v[y][xc];
         return fl::sqrtf(vu * vu + vv * vv);
     }
 
@@ -40,19 +40,19 @@ namespace fastFluid {
     }
 
     static inline float debugVorticity(uint8_t xc, uint8_t y) {
-        const float vxp = (xc < WIDTH  - 1) ? smoke::v[y][xc + 1] : smoke::v[y][xc];
-        const float vxm = (xc > 0)          ? smoke::v[y][xc - 1] : smoke::v[y][xc];
-        const float uyp = (y  < HEIGHT - 1) ? smoke::u[y + 1][xc] : smoke::u[y][xc];
-        const float uym = (y  > 0)          ? smoke::u[y - 1][xc] : smoke::u[y][xc];
+        const float vxp = (xc < WIDTH  - 1) ? v[y][xc + 1] : v[y][xc];
+        const float vxm = (xc > 0)          ? v[y][xc - 1] : v[y][xc];
+        const float uyp = (y  < HEIGHT - 1) ? u[y + 1][xc] : u[y][xc];
+        const float uym = (y  > 0)          ? u[y - 1][xc] : u[y][xc];
         return 0.5f * (vxp - vxm - (uyp - uym));
     }
 
     static inline float debugDivergence(uint8_t xc, uint8_t y) {
-        const float h = 1.0f / smoke::SIM_SIZE;
-        const float uxp = (xc < WIDTH  - 1) ? smoke::u[y][xc + 1] : smoke::u[y][xc];
-        const float uxm = (xc > 0)          ? smoke::u[y][xc - 1] : smoke::u[y][xc];
-        const float vyp = (y  < HEIGHT - 1) ? smoke::v[y + 1][xc] : smoke::v[y][xc];
-        const float vym = (y  > 0)          ? smoke::v[y - 1][xc] : smoke::v[y][xc];
+        const float h = 1.0f / SIM_SIZE;
+        const float uxp = (xc < WIDTH  - 1) ? u[y][xc + 1] : u[y][xc];
+        const float uxm = (xc > 0)          ? u[y][xc - 1] : u[y][xc];
+        const float vyp = (y  < HEIGHT - 1) ? v[y + 1][xc] : v[y][xc];
+        const float vym = (y  > 0)          ? v[y - 1][xc] : v[y][xc];
         return -0.5f * h * (uxp - uxm + vyp - vym);
     }
 
@@ -60,7 +60,7 @@ namespace fastFluid {
         switch (view) {
             case DEBUG_VIEW_VELOCITY: return debugVelocityMagnitude(xc, y);
             case DEBUG_VIEW_VORTICITY: return debugVorticity(xc, y);
-            case DEBUG_VIEW_PRESSURE: return smoke::pressure[y][xc];
+            case DEBUG_VIEW_PRESSURE: return pressure[y][xc];
             case DEBUG_VIEW_DIVERGENCE:
             case DEBUG_VIEW_DIVERGENCE_SIGNED: return debugDivergence(xc, y);
             case DEBUG_VIEW_DYE_DENSITY: return debugDyeDensity(xc, y);

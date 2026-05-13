@@ -180,33 +180,37 @@ float cGlowStrength = 0.0f;
 float cHighlightSat = 2.0f;
 
 // EMITTER: singleJet --------------
-float cJetDensity = 30.0f;
-float cJetForce = 0.25f;
-float cJetRadius = 2.0f;
-float cJetSpread = 1.0f;
-float cJetAngle = 0.0f;
-float cJetHueSpeed = 0.69f;
-float cJetSwingRange = 4.0f;
-float cModJetForceRate = 0.5f;
-float cModJetForceLevel = 0.0f;
-float cModJetAngleRate = 0.5f;
-float cModJetAngleLevel = 0.0f;
-float cModJetSwingRate = 0.3f;
-float cModJetSwingLevel = 0.0f;
+//float cJetDensity = 30.0f;
+//float cJetForce = 0.25f;
+//float cJetRadius = 2.0f;
+//float cJetSpread = 1.0f;
+//float cJetAngle = 0.0f;
+//float cJetHueSpeed = 0.69f;
+//float cJetSwingRange = 4.0f;
+//float cModJetForceRate = 0.5f;
+//float cModJetForceLevel = 0.0f;
+//float cModJetAngleRate = 0.5f;
+//float cModJetAngleLevel = 0.0f;
+//float cModJetSwingRate = 0.3f;
+//float cModJetSwingLevel = 0.0f;
 
 // EMITTER: multiJet --------------
+
+// JETS: ---------------------
 uint8_t cNumJets = 3;
 uint8_t cDirectionMode = 0;
 uint8_t cColorMode = 0;
-float cRadius = 16.0f;
+float cRadius = (float)MIN_DIMENSION * 0.25f;
 float cRadialAngleBase = 0.0f;
-float cSize = 5.0f;
+float cSize = (float)MIN_DIMENSION * 0.1f;
 float cDensity = 30.0f;
 float cForce = 0.25f;
 float cDirection = 0.0f;
+float cSpread = 0.0f;
 float cHueSpeed = 0.25f;
 float cHueSpread = 1.0f;
-float cVarRadialAngle = 0.74f;
+float cSlideRange = (float)MIN_DIMENSION * 0.125f; 
+float cVarRadialAngle = 0.75f;
 float cVarRadius = 0.25f;
 float cVarSize = 0.25f;
 float cVarDirection = 3.1415927f;
@@ -227,6 +231,8 @@ float cModForceRate = 0.2f;
 float cModForceLevel = 0.2f;
 float cModHueSpeedRate = 0.3f;
 float cModHueSpeedLevel = 0.0f;
+float cModSlideRangeRate = 0.3f;
+float cModSlideRangeLevel = 0.0f;
 
 // FLOW: smoke --------------------
 uint8_t cDiffuseIterations = 6;
@@ -260,13 +266,8 @@ bool  cPaddleOverlay = false;
 //  X-MACRO PARAMETER TABLE
 // ═══════════════════════════════════════════════════════════════════
 
-#define PARAMETER_TABLE \
-   X(uint8_t, OverrideMapping, 0) \
-   X(float, GlobalSpeed, 0.5f) \
-   X(float, PaletteBlendRate, 32.0f) \
-   X(float, PaletteFloor, 0.05f) \
-   X(uint8_t, DebugView, 0) \
-   X(float, JetDensity, 50.0f) \
+/*
+X(float, JetDensity, 50.0f) \
    X(float, JetForce, 0.25f) \
    X(float, JetRadius, 2.0f) \
    X(float, JetSpread, 1.0f) \
@@ -279,15 +280,27 @@ bool  cPaddleOverlay = false;
    X(float, ModJetAngleLevel, 2.0f) \
    X(float, ModJetSwingRate, 0.3f) \
    X(float, ModJetSwingLevel, 0.0f) \
+   
+*/
+
+
+#define PARAMETER_TABLE \
+   X(uint8_t, OverrideMapping, 0) \
+   X(float, GlobalSpeed, 0.5f) \
+   X(float, PaletteBlendRate, 32.0f) \
+   X(float, PaletteFloor, 0.05f) \
+   X(uint8_t, DebugView, 0) \
    X(uint8_t, NumJets, 3) \
    X(uint8_t, DirectionMode, 0) \
    X(uint8_t, ColorMode, 0) \
-   X(float, Radius, 16.0f) \
+   X(float, Radius, (float)MIN_DIMENSION * 0.25f) \
    X(float, RadialAngleBase, 0.0f) \
    X(float, Size, 5.0f) \
    X(float, Density, 30.0f) \
    X(float, Force, 0.25f) \
    X(float, Direction, 0.0f) \
+   X(float, Spread, 0.0f) \
+   X(float, SlideRange, 0.0f) \
    X(float, HueSpeed, 0.25f) \
    X(float, HueSpread, 1.0f) \
    X(float, VarRadialAngle, 0.74f) \

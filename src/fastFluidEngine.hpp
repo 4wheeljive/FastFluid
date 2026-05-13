@@ -62,8 +62,8 @@ namespace fastFluid {
         // ─── Stage 1+2+3: base RGB → flow sat/bright → highlight sat ───
         for (int y = 0; y < HEIGHT; y++) {
             for (int xc = 0; xc < WIDTH; xc++) {
-                const float vu = smoke::u[y][xc];
-                const float vv = smoke::v[y][xc];
+                const float vu = u[y][xc];
+                const float vv = v[y][xc];
                 float vmag = fl::sqrtf(vu * vu + vv * vv) * 1.8f;
                 if (vmag > 255.0f) vmag = 255.0f;
 
@@ -113,25 +113,25 @@ namespace fastFluid {
                 for (int y = 0; y < HEIGHT; y++) {
                     for (int xc = 0; xc < WIDTH; xc++) {
                         float v_ = chan[y][xc] - 0.55f;
-                        smoke::pressure[y][xc] = (v_ < 0.0f) ? 0.0f : v_;
+                        pressure[y][xc] = (v_ < 0.0f) ? 0.0f : v_;
                     }
                 }
                 // 5-tap blur (0.42 center, 0.145 cardinal neighbors). Edge cells
                 // sample the center for the missing neighbor (clamp-to-edge).
                 for (int y = 0; y < HEIGHT; y++) {
                     for (int xc = 0; xc < WIDTH; xc++) {
-                        float c  = smoke::pressure[y][xc];
-                        float n  = (y > 0)          ? smoke::pressure[y - 1][xc] : c;
-                        float s  = (y < HEIGHT - 1) ? smoke::pressure[y + 1][xc] : c;
-                        float w_ = (xc > 0)         ? smoke::pressure[y][xc - 1] : c;
-                        float e  = (xc < WIDTH - 1) ? smoke::pressure[y][xc + 1] : c;
-                        smoke::divergence[y][xc] = c * 0.42f + (n + s + w_ + e) * 0.145f;
+                        float c  = pressure[y][xc];
+                        float n  = (y > 0)          ? pressure[y - 1][xc] : c;
+                        float s  = (y < HEIGHT - 1) ? pressure[y + 1][xc] : c;
+                        float w_ = (xc > 0)         ? pressure[y][xc - 1] : c;
+                        float e  = (xc < WIDTH - 1) ? pressure[y][xc + 1] : c;
+                        divergence[y][xc] = c * 0.42f + (n + s + w_ + e) * 0.145f;
                     }
                 }
                 // Add blurred glow * strength back to channel
                 for (int y = 0; y < HEIGHT; y++) {
                     for (int xc = 0; xc < WIDTH; xc++) {
-                        chan[y][xc] += smoke::divergence[y][xc] * gs;
+                        chan[y][xc] += divergence[y][xc] * gs;
                     }
                 }
             }
@@ -303,19 +303,19 @@ namespace fastFluid {
         switch (activeEmitter) {
             case EMITTER_SINGLEJET: {
                 JetParams& jet = singleJet::jet;
-                cJetDensity = jet.density;
-                cJetForce = jet.force;
-                cJetRadius = jet.size;
-                cJetSpread = jet.spread;
-                cJetAngle = jet.direction;
-                cJetHueSpeed = jet.hueSpeed;
-                cJetSwingRange = jet.slideRange;
-                cModJetForceRate = jet.modForce.modRate;
-                cModJetForceLevel = jet.modForce.modLevel;
-                cModJetAngleRate = jet.modDirection.modRate;
-                cModJetAngleLevel = jet.modDirection.modLevel;
-                cModJetSwingRate = jet.modSlideRange.modRate;
-                cModJetSwingLevel = jet.modSlideRange.modLevel;
+                cDensity = jet.density;
+                cForce = jet.force;
+                cRadius = jet.size;
+                cSpread = jet.spread;
+                cDirection = jet.direction;
+                cHueSpeed = jet.hueSpeed;
+                cSlideRange = jet.slideRange;
+                cModForceRate = jet.modForce.modRate;
+                cModForceLevel = jet.modForce.modLevel;
+                cModDirectionRate = jet.modDirection.modRate;
+                cModDirectionLevel = jet.modDirection.modLevel;
+                cModSlideRangeRate = jet.modSlideRange.modRate;
+                cModSlideRangeLevel = jet.modSlideRange.modLevel;
                 break;
             }
             case EMITTER_MULTIJET: {
@@ -360,20 +360,21 @@ namespace fastFluid {
     }
     
     static void pushFlowDefaultsToCVars() {
+        smoke::SmokeParams& smoke = smoke::smoke;
         smoke::smoke = smoke::SmokeParams{};
-        cViscosity = smoke::smoke.viscosity;
-        cDiffusion = smoke::smoke.diffusion;
-        cVelocityDissipation = smoke::smoke.velocityDissipation;
-        cDyeDissipation = smoke::smoke.dyeDissipation;
-        cVorticity = smoke::smoke.vorticity;
-        cGravityForce = smoke::smoke.gravityForce;
-        cGravityAngle = smoke::smoke.gravityAngle;
-        cDiffuseIterations = smoke::smoke.diffuseIterations;
-        cProjectIterations = smoke::smoke.projectIterations;
-        cModVelDissipRate = smoke::smoke.modVelDissip.modRate;
-        cModVelDissipLevel = smoke::smoke.modVelDissip.modLevel;
-        cModDyeDissipRate = smoke::smoke.modDyeDissip.modRate;
-        cModDyeDissipLevel = smoke::smoke.modDyeDissip.modLevel;
+        cViscosity = smoke.viscosity;
+        cDiffusion = smoke.diffusion;
+        cVelocityDissipation = smoke.velocityDissipation;
+        cDyeDissipation = smoke.dyeDissipation;
+        cVorticity = smoke.vorticity;
+        cGravityForce = smoke.gravityForce;
+        cGravityAngle = smoke.gravityAngle;
+        cDiffuseIterations = smoke.diffuseIterations;
+        cProjectIterations = smoke.projectIterations;
+        cModVelDissipRate = smoke.modVelDissip.modRate;
+        cModVelDissipLevel = smoke.modVelDissip.modLevel;
+        cModDyeDissipRate = smoke.modDyeDissip.modRate;
+        cModDyeDissipLevel = smoke.modDyeDissip.modLevel;
     }
 
     static void pushObstacleDefaultsToCVars() {
@@ -407,19 +408,19 @@ namespace fastFluid {
 
     static void syncEmittersFromCVars() {
         // singleJet
-        singleJet::jet.density = cJetDensity;
-        singleJet::jet.force = cJetForce;
-        singleJet::jet.size = cJetRadius;
-        singleJet::jet.spread = cJetSpread;
-        singleJet::jet.direction = cJetAngle;
-        singleJet::jet.hueSpeed = cJetHueSpeed;
-        singleJet::jet.slideRange = cJetSwingRange;
-        singleJet::jet.modForce.modRate = cModJetForceRate;
-        singleJet::jet.modForce.modLevel = cModJetForceLevel;
-        singleJet::jet.modDirection.modRate = cModJetAngleRate;
-        singleJet::jet.modDirection.modLevel = cModJetAngleLevel;
-        singleJet::jet.modSlideRange.modRate = cModJetSwingRate;
-        singleJet::jet.modSlideRange.modLevel = cModJetSwingLevel;
+        singleJet::jet.density = cDensity;
+        singleJet::jet.force = cForce;
+        singleJet::jet.size = cRadius;
+        singleJet::jet.spread = cSpread;
+        singleJet::jet.direction = cDirection;
+        singleJet::jet.hueSpeed = cHueSpeed;
+        singleJet::jet.slideRange = cSlideRange;
+        singleJet::jet.modForce.modRate = cModForceRate;
+        singleJet::jet.modForce.modLevel = cModForceLevel;
+        singleJet::jet.modDirection.modRate = cModDirectionRate;
+        singleJet::jet.modDirection.modLevel = cModDirectionLevel;
+        singleJet::jet.modSlideRange.modRate = cModSlideRangeRate;
+        singleJet::jet.modSlideRange.modLevel = cModSlideRangeLevel;
 
         // multiJet
         multiJet::jetPack.numJets = cNumJets;

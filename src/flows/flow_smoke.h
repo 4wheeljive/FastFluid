@@ -14,13 +14,14 @@
 //  Ported from colorTrailsOrig/navier_stokes_1.py.
 
 #include "fastFluidTypes.h"
+//#include "flows.h"
 #include "modulators.h"
 
 namespace fastFluid {
 
-    extern bool obstacleHas;
-    static void applyObstacleVelocity();
-    static void applyObstacleField(float (*grid)[WIDTH]);
+    //bool obstacleHas;
+    //static void applyObstacleVelocity();
+    //static void applyObstacleField(float (*grid)[WIDTH]);
 
 namespace smoke {
 
@@ -59,6 +60,7 @@ namespace smoke {
     static float workVelDissip = 0.5f;
     static float workDyeDissip = 0.5f;
 
+    /*
     // Persistent simulation state (survives across frames)
     static float u[HEIGHT][WIDTH], v[HEIGHT][WIDTH];
     static float uPrev[HEIGHT][WIDTH], vPrev[HEIGHT][WIDTH];
@@ -67,7 +69,9 @@ namespace smoke {
     // Internal "size" parameter for the solver (scales velocity-to-cells conversion).
     // Stam's algorithm assumes a square grid; we pick a single representative size.
     static constexpr float SIM_SIZE = (float)MIN_DIMENSION;
+    */
 
+    /*
     // ───────────────────────────────────────────────────────────────
     //  Boundary conditions
     //    b == 0: scalar (dye, pressure) — no enforcement (relies on clamp in samplers)
@@ -87,13 +91,16 @@ namespace smoke {
             }
         }
     }
+    */
 
+    /*
     // Sample with edge clamping (mirror behavior of Python's set_bnd for scalars)
     static inline float sampleClamped(float (*x)[WIDTH], int yi, int xi) {
         if (yi < 0) yi = 0; else if (yi >= HEIGHT) yi = HEIGHT - 1;
         if (xi < 0) xi = 0; else if (xi >= WIDTH)  xi = WIDTH  - 1;
         return x[yi][xi];
     }
+    */
 
     // ───────────────────────────────────────────────────────────────
     //  Linear solver (Jacobi iteration)

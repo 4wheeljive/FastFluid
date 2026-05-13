@@ -16,7 +16,6 @@
 //  after flow_fluid.h.
 
 #include "fastFluidTypes.h"
-#include "flows/flow_smoke.h"
 
 namespace fastFluid {
     FL_FAST_MATH_BEGIN
@@ -74,8 +73,8 @@ namespace fastFluid {
                 gR[y][x] += c.r * wScale;
                 gG[y][x] += c.g * wScale;
                 gB[y][x] += c.b * wScale;
-                smoke::u[y][x] += velX * w;
-                smoke::v[y][x] += velY * w;
+                u[y][x] += velX * w;
+                v[y][x] += velY * w;
             }
         }
     }

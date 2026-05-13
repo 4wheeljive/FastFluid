@@ -27,7 +27,8 @@
 //  Ported from colorTrailsOrig/navier_stokes_3.py
 //  (apply_obstacle_boundary).
 
-#include "flows/flow_smoke.h"
+//#include "flows/flow_smoke.h"
+#include "fastFluidTypes.h"
 
 namespace fastFluid {
     FL_FAST_MATH_BEGIN
@@ -41,13 +42,16 @@ namespace fastFluid {
     static bool  obstacleMaskArr[HEIGHT][WIDTH];
     static float obstacleSoftMaskArr[HEIGHT][WIDTH];
 
+    static void applyObstacleVelocity();
+    static void applyObstacleField(float (*grid)[WIDTH]);
+
     // Up to 2 axis-aligned solid rectangles. Each: {row0, row1, col0, col1}.
     // (Two is enough for a paddle pair with a centered gap; future bitmap
     //  obstacles may want more, in which case bump the first dimension.)
     static int   obstacleSegments[2][4];
     static int   obstacleSegmentCount = 0;
     static int   obstacleBounds[4] = {0, 0, 0, 0};   // {row0, row1, col0, col1}
-    bool         obstacleHas = false;                // matches `extern` decl in flow_fluid.h
+    bool         obstacleHas = false;
 
     // Cross-generator knobs — the small set of common bits any obstacle
     // has. Each generator mirrors its own user-facing values into here
@@ -85,10 +89,10 @@ namespace fastFluid {
             for (int y = r0; y <= r1; y++) {
                 for (int xc = c0; xc <= c1; xc++) {
                     if (!obstacleMaskArr[y][xc]) continue;
-                    smoke::u[y][xc]     = 0.0f;
-                    smoke::v[y][xc]     = 0.0f;
-                    smoke::uPrev[y][xc] = 0.0f;
-                    smoke::vPrev[y][xc] = 0.0f;
+                    u[y][xc]     = 0.0f;
+                    v[y][xc]     = 0.0f;
+                    uPrev[y][xc] = 0.0f;
+                    vPrev[y][xc] = 0.0f;
                     gR[y][xc]    = 0.0f;
                     gG[y][xc]    = 0.0f;
                     gB[y][xc]    = 0.0f;
@@ -106,19 +110,19 @@ namespace fastFluid {
 
             // Top row: no downward (positive v) flow into obstacle.
             for (int xc = c0; xc <= c1; xc++) {
-                if (smoke::v[top][xc] > 0.0f) smoke::v[top][xc] = 0.0f;
+                if (v[top][xc] > 0.0f) v[top][xc] = 0.0f;
             }
             // Bottom row: no upward (negative v) flow into obstacle.
             for (int xc = c0; xc <= c1; xc++) {
-                if (smoke::v[bottom][xc] < 0.0f) smoke::v[bottom][xc] = 0.0f;
+                if (v[bottom][xc] < 0.0f) v[bottom][xc] = 0.0f;
             }
             // Left col: no rightward (positive u) flow into obstacle.
             for (int y = r0; y <= r1; y++) {
-                if (smoke::u[y][left] > 0.0f) smoke::u[y][left] = 0.0f;
+                if (u[y][left] > 0.0f) u[y][left] = 0.0f;
             }
             // Right col: no leftward (negative u) flow into obstacle.
             for (int y = r0; y <= r1; y++) {
-                if (smoke::u[y][right] < 0.0f) smoke::u[y][right] = 0.0f;
+                if (u[y][right] < 0.0f) u[y][right] = 0.0f;
             }
         }
 
@@ -134,10 +138,10 @@ namespace fastFluid {
                 if (sm <= 0.0f) continue;
                 const float invSoft = 1.0f - sm;
                 const float dyeFade = 1.0f - sm * 0.35f;
-                smoke::u[y][xc]     *= invSoft;
-                smoke::v[y][xc]     *= invSoft;
-                smoke::uPrev[y][xc] *= invSoft;
-                smoke::vPrev[y][xc] *= invSoft;
+                u[y][xc]     *= invSoft;
+                v[y][xc]     *= invSoft;
+                uPrev[y][xc] *= invSoft;
+                vPrev[y][xc] *= invSoft;
                 gR[y][xc]    *= dyeFade;
                 gG[y][xc]    *= dyeFade;
                 gB[y][xc]    *= dyeFade;
@@ -147,8 +151,8 @@ namespace fastFluid {
             }
         }
 
-        smoke::setBnd(1, smoke::u);
-        smoke::setBnd(2, smoke::v);
+        setBnd(1, u);
+        setBnd(2, v);
     }
 
     // Generic per-channel hard-clear inside solid segments.

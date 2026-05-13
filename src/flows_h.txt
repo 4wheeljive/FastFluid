@@ -1,0 +1,20 @@
+#pragma once
+
+// ═══════════════════════════════════════════════════════════════════
+//  FLOWS — flows.h
+// ═══════════════════════════════════════════════════════════════════
+
+#include "fastFluidTypes.h"
+#include "obstacles.h"
+
+
+namespace fastFluid {
+    FL_FAST_MATH_BEGIN
+    FL_OPTIMIZATION_LEVEL_O3_BEGIN
+
+
+
+    FL_OPTIMIZATION_LEVEL_O3_END
+    FL_FAST_MATH_END
+
+} // namespace fastFluid

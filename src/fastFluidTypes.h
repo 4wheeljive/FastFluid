@@ -40,6 +40,41 @@ namespace fastFluid {
     uint8_t paletteBlendRate = 32;
     float paletteFloor = 0.05f;
 
+    // Persistent simulation state (survives across frames)
+    static float u[HEIGHT][WIDTH], v[HEIGHT][WIDTH];
+    static float uPrev[HEIGHT][WIDTH], vPrev[HEIGHT][WIDTH];
+    static float pressure[HEIGHT][WIDTH], divergence[HEIGHT][WIDTH];
+
+    // Internal "size" parameter for the solver (scales velocity-to-cells conversion).
+    // Stam's algorithm assumes a square grid; we pick a single representative size.
+    static constexpr float SIM_SIZE = (float)MIN_DIMENSION;
+
+    // ───────────────────────────────────────────────────────────────
+    //  Boundary conditions
+    //    b == 0: scalar (dye, pressure) — no enforcement (relies on clamp in samplers)
+    //    b == 1: u-velocity — zero at left/right walls (no penetration)
+    //    b == 2: v-velocity — zero at top/bottom walls (no penetration)
+    // ───────────────────────────────────────────────────────────────
+    static void setBnd(int b, float (*x)[WIDTH]) {
+        if (b == 1) {
+            for (int y = 0; y < HEIGHT; y++) {
+                x[y][0]         = 0.0f;
+                x[y][WIDTH - 1] = 0.0f;
+            }
+        } else if (b == 2) {
+            for (int xc = 0; xc < WIDTH; xc++) {
+                x[0][xc]          = 0.0f;
+                x[HEIGHT - 1][xc] = 0.0f;
+            }
+        }
+    }
+
+    // Sample with edge clamping (mirror behavior of Python's set_bnd for scalars)
+    static inline float sampleClamped(float (*x)[WIDTH], int yi, int xi) {
+        if (yi < 0) yi = 0; else if (yi >= HEIGHT) yi = HEIGHT - 1;
+        if (xi < 0) xi = 0; else if (xi >= WIDTH)  xi = WIDTH  - 1;
+        return x[yi][xi];
+    }
 
     // ═══════════════════════════════════════════════════════════════════
     //  MATH HELPERS
