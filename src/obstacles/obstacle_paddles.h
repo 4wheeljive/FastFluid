@@ -22,6 +22,8 @@
 #include "../modulators.h"
 
 namespace fastFluid {
+namespace paddles {
+
     FL_FAST_MATH_BEGIN
     FL_OPTIMIZATION_LEVEL_O3_BEGIN
 
@@ -61,13 +63,13 @@ namespace fastFluid {
     // Always writes (regardless of paddles.enable) so the slot is in a
     // known state — cost is one slot's noise calc that nobody reads when
     // disabled. Trivial.
-    static void paddlesPrepareModulators() {
+    static void prepObstacleMods() {
         timings.ratio[paddles.modSlide.modTimer] = 0.0004f * paddles.modSlide.modRate;
     }
 
     // Generate paddle geometry into the generic obstacle state arrays.
     // t is animation time (already scaled by globalSpeed).
-    static void generatePaddleObstacle() {
+    static void generateObstacle() {
         // Mirror common bits into obstacleCommon so generic apply
         // functions can read them.
         obstacleCommon.enable  = paddles.enable;
@@ -206,9 +208,15 @@ namespace fastFluid {
         obstacleBounds[2] = col0;
         obstacleBounds[3] = col1;
         obstacleHas = (obstacleSegmentCount > 0);
+    } // generateObstacle()
+
+    static void updateObstacle() {
+        paddles::generateObstacle();
+        applyObstacleVelocity();
     }
 
     FL_OPTIMIZATION_LEVEL_O3_END
     FL_FAST_MATH_END
 
+} // namespace paddles
 } // namespace fastFluid

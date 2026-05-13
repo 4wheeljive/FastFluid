@@ -17,6 +17,13 @@
 #include "modulators.h"
 
 namespace fastFluid {
+
+    extern bool obstacleHas;
+    static void applyObstacleVelocity();
+    static void applyObstacleField(float (*grid)[WIDTH]);
+
+namespace smoke {
+
     FL_FAST_MATH_BEGIN
     FL_OPTIMIZATION_LEVEL_O3_BEGIN
 
@@ -60,13 +67,6 @@ namespace fastFluid {
     // Internal "size" parameter for the solver (scales velocity-to-cells conversion).
     // Stam's algorithm assumes a square grid; we pick a single representative size.
     static constexpr float SIM_SIZE = (float)MIN_DIMENSION;
-
-    // Forward declarations of obstacle hooks (defined in obstacles/obstacle.h,
-    // which is included after this header in fastFluidEngine.hpp). The functions
-    // are no-ops when the obstacle module is disabled.
-    extern bool obstacleHas;
-    static void applyObstacleVelocity();
-    static void applyObstacleField(float (*grid)[WIDTH]);
 
     // ───────────────────────────────────────────────────────────────
     //  Boundary conditions
@@ -332,14 +332,14 @@ namespace fastFluid {
     // Phase 1 of frame: write this component's timer slot ratios.
     // Engine collects all components' ratios, then runs ONE central
     // calculate_modulators call before any component reads `move[*]`.
-    static void smokePrepareModulators() {
+    static void prepFlowMods() {
         timings.ratio[smoke.modVelDissip.modTimer] = 0.0004f  * smoke.modVelDissip.modRate;
         timings.ratio[smoke.modDyeDissip.modTimer] = 0.00045f * smoke.modDyeDissip.modRate;
     }
 
     // Phase 3 of frame: read modulator output and compute work values.
     // Called AFTER calculate_modulators has run.
-    static void smokePrepare() {
+    static void prepFlow() {
         const ModConfig& velMod = smoke.modVelDissip;
         const ModConfig& dyeMod = smoke.modDyeDissip;
 
@@ -358,7 +358,7 @@ namespace fastFluid {
         workDyeDissip = fmaxf(0.01f, fminf(1.0f, workDyeDissip));
     }
 
-    static void smokeAdvect() {
+    static void advectFlow() {
         // Decompose 2D gravity from intensity + angle.
         // Angle convention matches jetAngle: 0°=up, 90°=right, 180°=down, 270°=left.
         //   u (horizontal, +x = right):  sin(angle) * force
@@ -453,4 +453,5 @@ namespace fastFluid {
     FL_OPTIMIZATION_LEVEL_O3_END
     FL_FAST_MATH_END
 
+} //namespace fastFluid::smoke
 } // namespace fastFluid

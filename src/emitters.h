@@ -74,8 +74,8 @@ namespace fastFluid {
                 gR[y][x] += c.r * wScale;
                 gG[y][x] += c.g * wScale;
                 gB[y][x] += c.b * wScale;
-                u[y][x]  += velX * w;
-                v[y][x]  += velY * w;
+                smoke::u[y][x] += velX * w;
+                smoke::v[y][x] += velY * w;
             }
         }
     }

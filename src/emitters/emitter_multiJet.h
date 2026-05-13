@@ -10,6 +10,8 @@
 #include "../jets.h"
 
 namespace fastFluid {
+namespace multiJet {
+
     FL_FAST_MATH_BEGIN
     FL_OPTIMIZATION_LEVEL_O3_BEGIN
 
@@ -88,7 +90,7 @@ namespace fastFluid {
        
     } // resetMultiJetDefaults()
 
-    static void multiJetPrepareModulators() {
+    static void prepEmitterMods() {
         //timings.ratio[jetPack.modRadialAngle.modTimer] = 0.00043f * jetPack.modRadialAngle.modRate;
         timings.ratio[jetPack.modRadius.modTimer] = 0.00049f * jetPack.modRadius.modRate;
         //timings.ratio[jetPack.modSize.modTimer] = 0.00036f * jetPack.modSize.modRate;
@@ -287,7 +289,7 @@ namespace fastFluid {
     
     } // emitLayeredJet()
 
-    static void runMultiJet() {
+    static void runEmitter() {
         const uint8_t count = multiJetCount();
         if (count == 0) return;
 
@@ -345,4 +347,5 @@ namespace fastFluid {
     FL_OPTIMIZATION_LEVEL_O3_END
     FL_FAST_MATH_END
 
+} // namespace multiJet
 } // namespace fastFluid

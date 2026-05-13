@@ -38,20 +38,21 @@ namespace fastFluid {
         float density = 30.0f;
         float force = 0.25f;
         float hueSpeed = 0.25f;
+        float spread = 0.0f;
+        float slideRange = (float)MIN_DIMENSION / 8.0f;
+        ModConfig modRadialAngle = {0, 0.2f, 0.4f};
+        ModConfig modRadius = {0, 0.4f, 1.5f};
+        ModConfig modDirection = {0, 0.5f, 1.5f};
+        ModConfig modSize = {0, 0.1f, 0.0f};
+        ModConfig modDensity = {0, 0.1f, 0.0f};
+        ModConfig modForce = {0, 0.2f, 0.2f};
+        ModConfig modHueSpeed = {0, 0.3f, 0.0f};
+        ModConfig modSpread = {0, 0.3f, 0.0f};
+        ModConfig modSlideRange = {0, 0.3f, 0.0f};
 
-        // parameters used in multiple jet configurations
-
-        /*
-        // Cheap per-jet delay selectors for shared modulation histories.
-        // They do not create static position, direction, size, force, or hue offsets.
-        float offsetRadius = 0.0f;
-        float offsetRadialAngle = 0.0f;
-        float offsetSize = 0.0f;
-        float offsetDirection = 0.0f;
-        float offsetDensity = 0.0f;
-        float offsetForce = 0.0f;
-        float offsetHueSpeed = 0.0f;
-        */
+        // In a multiJet emitter, the above parameters are set by 
+        // a shared "jetPack". In that case, the following parameters
+        // set individual jet variances     
 
         // Static per-jet scaling factors
         float radiusScale = 1.0f;   
@@ -60,7 +61,7 @@ namespace fastFluid {
         float forceScale = 1.0f;
         float hueSpeedScale = 1.0f;
 
-        // Per-jet modulation strength. Values near 1 keep jets synchronized;
+        // Static per-jet modulation strength. Values near 1 keep jets synchronized;
         // small differences create related but non-identical motion.
         float radiusModScale = 1.0f;
         float radialAngleModScale = 1.0f;
@@ -69,6 +70,16 @@ namespace fastFluid {
         float densityModScale = 1.0f;
         float forceModScale = 1.0f;
         float hueSpeedModScale = 1.0f;
+
+        /*
+        float offsetRadius = 0.0f;
+        float offsetRadialAngle = 0.0f;
+        float offsetSize = 0.0f;
+        float offsetDirection = 0.0f;
+        float offsetDensity = 0.0f;
+        float offsetForce = 0.0f;
+        float offsetHueSpeed = 0.0f;
+        */
 
     };
 

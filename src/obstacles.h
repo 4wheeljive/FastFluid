@@ -85,10 +85,10 @@ namespace fastFluid {
             for (int y = r0; y <= r1; y++) {
                 for (int xc = c0; xc <= c1; xc++) {
                     if (!obstacleMaskArr[y][xc]) continue;
-                    u[y][xc]     = 0.0f;
-                    v[y][xc]     = 0.0f;
-                    uPrev[y][xc] = 0.0f;
-                    vPrev[y][xc] = 0.0f;
+                    smoke::u[y][xc]     = 0.0f;
+                    smoke::v[y][xc]     = 0.0f;
+                    smoke::uPrev[y][xc] = 0.0f;
+                    smoke::vPrev[y][xc] = 0.0f;
                     gR[y][xc]    = 0.0f;
                     gG[y][xc]    = 0.0f;
                     gB[y][xc]    = 0.0f;
@@ -106,19 +106,19 @@ namespace fastFluid {
 
             // Top row: no downward (positive v) flow into obstacle.
             for (int xc = c0; xc <= c1; xc++) {
-                if (v[top][xc] > 0.0f) v[top][xc] = 0.0f;
+                if (smoke::v[top][xc] > 0.0f) smoke::v[top][xc] = 0.0f;
             }
             // Bottom row: no upward (negative v) flow into obstacle.
             for (int xc = c0; xc <= c1; xc++) {
-                if (v[bottom][xc] < 0.0f) v[bottom][xc] = 0.0f;
+                if (smoke::v[bottom][xc] < 0.0f) smoke::v[bottom][xc] = 0.0f;
             }
             // Left col: no rightward (positive u) flow into obstacle.
             for (int y = r0; y <= r1; y++) {
-                if (u[y][left] > 0.0f) u[y][left] = 0.0f;
+                if (smoke::u[y][left] > 0.0f) smoke::u[y][left] = 0.0f;
             }
             // Right col: no leftward (negative u) flow into obstacle.
             for (int y = r0; y <= r1; y++) {
-                if (u[y][right] < 0.0f) u[y][right] = 0.0f;
+                if (smoke::u[y][right] < 0.0f) smoke::u[y][right] = 0.0f;
             }
         }
 
@@ -134,10 +134,10 @@ namespace fastFluid {
                 if (sm <= 0.0f) continue;
                 const float invSoft = 1.0f - sm;
                 const float dyeFade = 1.0f - sm * 0.35f;
-                u[y][xc]     *= invSoft;
-                v[y][xc]     *= invSoft;
-                uPrev[y][xc] *= invSoft;
-                vPrev[y][xc] *= invSoft;
+                smoke::u[y][xc]     *= invSoft;
+                smoke::v[y][xc]     *= invSoft;
+                smoke::uPrev[y][xc] *= invSoft;
+                smoke::vPrev[y][xc] *= invSoft;
                 gR[y][xc]    *= dyeFade;
                 gG[y][xc]    *= dyeFade;
                 gB[y][xc]    *= dyeFade;
@@ -147,8 +147,8 @@ namespace fastFluid {
             }
         }
 
-        setBnd(1, u);
-        setBnd(2, v);
+        smoke::setBnd(1, smoke::u);
+        smoke::setBnd(2, smoke::v);
     }
 
     // Generic per-channel hard-clear inside solid segments.
@@ -186,7 +186,7 @@ namespace fastFluid {
         }
     }
 
-    // Forward decl — body lives in obstacles/obstacle_paddles.h. When a
+    /*// Forward decl — body lives in obstacles/obstacle_paddles.h. When a
     // second generator is added, this becomes a dispatch (or stays a
     // direct call if only one is active at a time).
     static void generatePaddleObstacle();
@@ -196,7 +196,7 @@ namespace fastFluid {
     static void updateObstacle() {
         generatePaddleObstacle();
         applyObstacleVelocity();
-    }
+    }*/
 
     FL_OPTIMIZATION_LEVEL_O3_END
     FL_FAST_MATH_END

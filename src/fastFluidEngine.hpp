@@ -12,6 +12,12 @@
 #include "obstacles/obstacle_paddles.h"
 
 namespace fastFluid {
+    static void renderFluidToLeds();
+}
+
+#include "views.h"
+
+namespace fastFluid {
 
     // ═══════════════════════════════════════════════════════════════════
     //  DISPLAY PIPELINE
@@ -35,7 +41,7 @@ namespace fastFluid {
         float blackPoint    = 0.105f;
         float flowSat       = 2.0f;
         float flowBright    = 0.75f;
-        float glowStrength  = 0.0f; // was 0.24
+        float glowStrength  = 0.0f;
         float highlightSat  = 2.0f;
     };
 
@@ -46,194 +52,7 @@ namespace fastFluid {
 
     static void renderFluidToLeds();
 
-    enum DebugView : uint8_t {
-        DEBUG_VIEW_COLOR = 0,
-        DEBUG_VIEW_VELOCITY = 1,
-        DEBUG_VIEW_VORTICITY = 2,
-        DEBUG_VIEW_PRESSURE = 3,
-        DEBUG_VIEW_DIVERGENCE = 4,
-        DEBUG_VIEW_DIVERGENCE_SIGNED = 5,
-        DEBUG_VIEW_DYE_DENSITY = 6,
-        DEBUG_VIEW_EMITTER_OVERLAY = 7
-    };
 
-    static inline void writeDebugPixel(uint8_t xc, uint8_t y, float r, float g, float b) {
-        const uint16_t idx = xyFunc(xc, y);
-        if (idx >= NUM_LEDS) return;
-
-        leds[idx].r = f2u8d(clampf(r, 0.0f, 1.0f) * 255.0f, xc, y);
-        leds[idx].g = f2u8d(clampf(g, 0.0f, 1.0f) * 255.0f, xc, y);
-        leds[idx].b = f2u8d(clampf(b, 0.0f, 1.0f) * 255.0f, xc, y);
-    }
-
-    static inline float debugVelocityMagnitude(uint8_t xc, uint8_t y) {
-        const float vu = u[y][xc];
-        const float vv = v[y][xc];
-        return fl::sqrtf(vu * vu + vv * vv);
-    }
-
-    static inline float debugDyeDensity(uint8_t xc, uint8_t y) {
-        return gR[y][xc] + gG[y][xc] + gB[y][xc];
-    }
-
-    static inline float debugVorticity(uint8_t xc, uint8_t y) {
-        const float vxp = (xc < WIDTH  - 1) ? v[y][xc + 1] : v[y][xc];
-        const float vxm = (xc > 0)          ? v[y][xc - 1] : v[y][xc];
-        const float uyp = (y  < HEIGHT - 1) ? u[y + 1][xc] : u[y][xc];
-        const float uym = (y  > 0)          ? u[y - 1][xc] : u[y][xc];
-        return 0.5f * (vxp - vxm - (uyp - uym));
-    }
-
-    static inline float debugDivergence(uint8_t xc, uint8_t y) {
-        const float h = 1.0f / SIM_SIZE;
-        const float uxp = (xc < WIDTH  - 1) ? u[y][xc + 1] : u[y][xc];
-        const float uxm = (xc > 0)          ? u[y][xc - 1] : u[y][xc];
-        const float vyp = (y  < HEIGHT - 1) ? v[y + 1][xc] : v[y][xc];
-        const float vym = (y  > 0)          ? v[y - 1][xc] : v[y][xc];
-        return -0.5f * h * (uxp - uxm + vyp - vym);
-    }
-
-    static inline float debugScalarValue(uint8_t view, uint8_t xc, uint8_t y) {
-        switch (view) {
-            case DEBUG_VIEW_VELOCITY: return debugVelocityMagnitude(xc, y);
-            case DEBUG_VIEW_VORTICITY: return debugVorticity(xc, y);
-            case DEBUG_VIEW_PRESSURE: return pressure[y][xc];
-            case DEBUG_VIEW_DIVERGENCE:
-            case DEBUG_VIEW_DIVERGENCE_SIGNED: return debugDivergence(xc, y);
-            case DEBUG_VIEW_DYE_DENSITY: return debugDyeDensity(xc, y);
-            default: return 0.0f;
-        }
-    }
-
-    static inline bool debugViewIsSigned(uint8_t view) {
-        return view == DEBUG_VIEW_VORTICITY ||
-               view == DEBUG_VIEW_PRESSURE ||
-               view == DEBUG_VIEW_DIVERGENCE_SIGNED;
-    }
-
-    static inline void blendOverlayPixel(int px, int py,
-                                         float r, float g, float b,
-                                         float alpha) {
-        if (px < 0 || px >= WIDTH || py < 0 || py >= HEIGHT) return;
-        alpha = clampf(alpha, 0.0f, 1.0f);
-        if (alpha <= 0.0f) return;
-
-        const uint16_t idx = xyFunc((uint8_t)px, (uint8_t)py);
-        if (idx >= NUM_LEDS) return;
-
-        const float inv = 1.0f - alpha;
-        leds[idx].r = f2u8d((float)leds[idx].r * inv + r * 255.0f * alpha, px, py);
-        leds[idx].g = f2u8d((float)leds[idx].g * inv + g * 255.0f * alpha, px, py);
-        leds[idx].b = f2u8d((float)leds[idx].b * inv + b * 255.0f * alpha, px, py);
-    }
-
-    static void drawOverlayDisc(float cx, float cy,
-                                float r, float g, float b,
-                                float radius) {
-        const int x0 = max(0,               (int)fl::floorf(cx - radius - 1.0f));
-        const int x1 = min((int)WIDTH  - 1, (int)fl::ceilf (cx + radius + 1.0f));
-        const int y0 = max(0,               (int)fl::floorf(cy - radius - 1.0f));
-        const int y1 = min((int)HEIGHT - 1, (int)fl::ceilf (cy + radius + 1.0f));
-
-        for (int py = y0; py <= y1; py++) {
-            for (int px = x0; px <= x1; px++) {
-                const float dx = (px + 0.5f) - cx;
-                const float dy = (py + 0.5f) - cy;
-                const float dist = fl::sqrtf(dx * dx + dy * dy);
-                const float alpha = clampf(radius + 0.5f - dist, 0.0f, 1.0f);
-                blendOverlayPixel(px, py, r, g, b, alpha);
-            }
-        }
-    }
-
-    static void drawOverlayLine(float x0, float y0, float x1, float y1,
-                                float r, float g, float b) {
-        const float dx = x1 - x0;
-        const float dy = y1 - y0;
-        const float maxd = fl::fabsf(dx) > fl::fabsf(dy) ? fl::fabsf(dx) : fl::fabsf(dy);
-        const int steps = max(1, (int)(maxd * 2.5f));
-
-        for (int i = 0; i <= steps; i++) {
-            const float u_ = (float)i / (float)steps;
-            const float x = x0 + dx * u_;
-            const float y = y0 + dy * u_;
-            const int xi = (int)fl::floorf(x);
-            const int yi = (int)fl::floorf(y);
-            const float fx = x - xi;
-            const float fy = y - yi;
-            blendOverlayPixel(xi,     yi,     r, g, b, (1.0f - fx) * (1.0f - fy));
-            blendOverlayPixel(xi + 1, yi,     r, g, b, fx * (1.0f - fy));
-            blendOverlayPixel(xi,     yi + 1, r, g, b, (1.0f - fx) * fy);
-            blendOverlayPixel(xi + 1, yi + 1, r, g, b, fx * fy);
-        }
-    }
-
-    static void drawEmitterDebugOverlay() {
-        if (activeEmitter != EMITTER_MULTIJET) return;
-
-        const uint8_t count = multiJetCount();
-        if (count == 0) return;
-
-        const float arrowLength = clampf(jetPack.size * 2.0f, 3.0f, (float)MIN_DIMENSION * 0.28f);
-        for (uint8_t i = 0; i < count; i++) {
-            const JetParams& thisJet = jet[i];
-            if (!thisJet.enabled) continue;
-
-            float anchorCol;
-            float anchorRow;
-            resolveMultiJetAnchor(i, count, thisJet, anchorCol, anchorRow);
-
-            float dirCol;
-            float dirRow;
-            resolveMultiJetDirection(thisJet, anchorCol, anchorRow, dirCol, dirRow);
-
-            const float tipCol = anchorCol + dirCol * arrowLength;
-            const float tipRow = anchorRow + dirRow * arrowLength;
-            drawOverlayLine(anchorCol, anchorRow, tipCol, tipRow, 0.1f, 0.85f, 1.0f);
-            drawOverlayDisc(tipCol, tipRow, 0.1f, 0.85f, 1.0f, 0.85f);
-            drawOverlayDisc(anchorCol, anchorRow, 1.0f, 0.95f, 0.1f, 1.35f);
-        }
-    }
-
-    static void renderDebugView(uint8_t view) {
-        if (view > DEBUG_VIEW_EMITTER_OVERLAY) view = DEBUG_VIEW_COLOR;
-        if (view == DEBUG_VIEW_COLOR || view == DEBUG_VIEW_EMITTER_OVERLAY) {
-            renderFluidToLeds();
-            return;
-        }
-
-        const bool signedView = debugViewIsSigned(view);
-        float maxValue = 1e-6f;
-
-        for (uint8_t y = 0; y < HEIGHT; y++) {
-            for (uint8_t xc = 0; xc < WIDTH; xc++) {
-                float value = debugScalarValue(view, xc, y);
-                if (view == DEBUG_VIEW_DIVERGENCE) value = fl::fabsf(value);
-                if (signedView) value = fl::fabsf(value);
-                if (value > maxValue) maxValue = value;
-            }
-        }
-
-        const float invMax = 1.0f / maxValue;
-        for (uint8_t y = 0; y < HEIGHT; y++) {
-            for (uint8_t xc = 0; xc < WIDTH; xc++) {
-                float value = debugScalarValue(view, xc, y);
-
-                if (signedView) {
-                    const float mag = clampf(fl::fabsf(value) * invMax, 0.0f, 1.0f);
-                    if (value >= 0.0f) {
-                        writeDebugPixel(xc, y, mag, mag * 0.18f, 0.0f);
-                    } else {
-                        writeDebugPixel(xc, y, 0.0f, mag * 0.35f, mag);
-                    }
-                } else {
-                    if (view == DEBUG_VIEW_DIVERGENCE) value = fl::fabsf(value);
-                    const float mag = clampf(value * invMax, 0.0f, 1.0f);
-                    writeDebugPixel(xc, y, mag, mag, mag);
-                }
-            }
-        }
-    }
 
     static void renderFluidToLeds() {
         const float invBlack = 1.0f / fmaxf(1e-3f, 1.0f - render.blackPoint);
@@ -243,8 +62,8 @@ namespace fastFluid {
         // ─── Stage 1+2+3: base RGB → flow sat/bright → highlight sat ───
         for (int y = 0; y < HEIGHT; y++) {
             for (int xc = 0; xc < WIDTH; xc++) {
-                const float vu = u[y][xc];
-                const float vv = v[y][xc];
+                const float vu = smoke::u[y][xc];
+                const float vv = smoke::v[y][xc];
                 float vmag = fl::sqrtf(vu * vu + vv * vv) * 1.8f;
                 if (vmag > 255.0f) vmag = 255.0f;
 
@@ -294,25 +113,25 @@ namespace fastFluid {
                 for (int y = 0; y < HEIGHT; y++) {
                     for (int xc = 0; xc < WIDTH; xc++) {
                         float v_ = chan[y][xc] - 0.55f;
-                        pressure[y][xc] = (v_ < 0.0f) ? 0.0f : v_;
+                        smoke::pressure[y][xc] = (v_ < 0.0f) ? 0.0f : v_;
                     }
                 }
                 // 5-tap blur (0.42 center, 0.145 cardinal neighbors). Edge cells
                 // sample the center for the missing neighbor (clamp-to-edge).
                 for (int y = 0; y < HEIGHT; y++) {
                     for (int xc = 0; xc < WIDTH; xc++) {
-                        float c  = pressure[y][xc];
-                        float n  = (y > 0)          ? pressure[y - 1][xc] : c;
-                        float s  = (y < HEIGHT - 1) ? pressure[y + 1][xc] : c;
-                        float w_ = (xc > 0)         ? pressure[y][xc - 1] : c;
-                        float e  = (xc < WIDTH - 1) ? pressure[y][xc + 1] : c;
-                        divergence[y][xc] = c * 0.42f + (n + s + w_ + e) * 0.145f;
+                        float c  = smoke::pressure[y][xc];
+                        float n  = (y > 0)          ? smoke::pressure[y - 1][xc] : c;
+                        float s  = (y < HEIGHT - 1) ? smoke::pressure[y + 1][xc] : c;
+                        float w_ = (xc > 0)         ? smoke::pressure[y][xc - 1] : c;
+                        float e  = (xc < WIDTH - 1) ? smoke::pressure[y][xc + 1] : c;
+                        smoke::divergence[y][xc] = c * 0.42f + (n + s + w_ + e) * 0.145f;
                     }
                 }
                 // Add blurred glow * strength back to channel
                 for (int y = 0; y < HEIGHT; y++) {
                     for (int xc = 0; xc < WIDTH; xc++) {
-                        chan[y][xc] += divergence[y][xc] * gs;
+                        chan[y][xc] += smoke::divergence[y][xc] * gs;
                     }
                 }
             }
@@ -358,33 +177,33 @@ namespace fastFluid {
     //  when additional flows/obstacles arrive.
 
     const EmitterPrepFn EMITTER_PREP_MODS[] = {
-        singleJetPrepareModulators,    // EMITTER_SINGLEJET = 0
-        multiJetPrepareModulators,     // EMITTER_MULTIJET = 1
+        singleJet::prepEmitterMods,          // EMITTER_SINGLEJET = 0
+        multiJet::prepEmitterMods          // EMITTER_MULTIJET = 1
     };
 
     const EmitterRunFn EMITTER_RUN[] = {
-        emitSingleJet,                 // EMITTER_SINGLEJET = 0
-        runMultiJet,                  // EMITTER_MULTIJET = 1
+        singleJet::runEmitter,           // EMITTER_SINGLEJET = 0
+        multiJet::runEmitter            // EMITTER_MULTIJET = 1
     };
 
     const FlowPrepModsFn FLOW_PREP_MODS[] = {
-        smokePrepareModulators
+        smoke::prepFlowMods              // FLOW_SMOKE = 0
     };
 
     const FlowPrepFn FLOW_PREP[] = {
-        smokePrepare
+        smoke::prepFlow
     };
 
     const FlowAdvectFn FLOW_ADVECT[] = {
-        smokeAdvect
+        smoke::advectFlow
     };
 
     const ObstaclePrepModsFn OBSTACLE_PREP_MODS[] = {
-        paddlesPrepareModulators
+        paddles::prepObstacleMods
     };
 
     const ObstacleApplyFn OBSTACLE_APPLY[] = {
-        updateObstacle
+        paddles::updateObstacle
     };
 
     static_assert(sizeof(EMITTER_RUN) / sizeof(EMITTER_RUN[0]) == EMITTER_COUNT,
@@ -402,12 +221,12 @@ namespace fastFluid {
 
         switch (activeEmitter) {
             case EMITTER_SINGLEJET:
-                nextSlot = assignModSlots(singleJet, SINGLE_JET_MODS, nextSlot);
-                activeEmitterTimers = modCount(SINGLE_JET_MODS);
+                nextSlot = assignModSlots(singleJet::jet, singleJet::SINGLE_JET_MODS, nextSlot);
+                activeEmitterTimers = modCount(singleJet::SINGLE_JET_MODS);
                 break;
             case EMITTER_MULTIJET:
-                nextSlot = assignModSlots(jetPack, MULTIJET_MODS, nextSlot);
-                activeEmitterTimers = modCount(MULTIJET_MODS);
+                nextSlot = assignModSlots(multiJet::jetPack, multiJet::MULTIJET_MODS, nextSlot);
+                activeEmitterTimers = modCount(multiJet::MULTIJET_MODS);
                 break;
             default:
                 break;
@@ -415,8 +234,8 @@ namespace fastFluid {
 
         switch (activeFlow) {
             case FLOW_SMOKE:
-                nextSlot = assignModSlots(smoke, SMOKE_MODS, nextSlot);
-                activeFlowTimers = modCount(SMOKE_MODS);
+                nextSlot = assignModSlots(smoke::smoke, smoke::SMOKE_MODS, nextSlot);
+                activeFlowTimers = modCount(smoke::SMOKE_MODS);
                 break;
             default:
                 break;
@@ -424,9 +243,9 @@ namespace fastFluid {
 
         switch (activeObstacle) {
             case OBSTACLE_PADDLES:
-                if (paddles.enable) {
-                    nextSlot = assignModSlots(paddles, PADDLES_MODS, nextSlot);
-                    activeObstacleTimers = modCount(PADDLES_MODS);
+                if (paddles::paddles.enable) {
+                    nextSlot = assignModSlots(paddles::paddles, paddles::PADDLES_MODS, nextSlot);
+                    activeObstacleTimers = modCount(paddles::PADDLES_MODS);
                 }
             default:
                 break;
@@ -483,56 +302,57 @@ namespace fastFluid {
     static void pushEmitterDefaultsToCVars() {
         switch (activeEmitter) {
             case EMITTER_SINGLEJET: {
-                singleJet = SingleJetParams{};
-                cJetDensity = singleJet.jetDensity;
-                cJetForce = singleJet.jetForce;
-                cJetRadius = singleJet.jetRadius;
-                cJetSpread = singleJet.jetSpread;
-                cJetAngle = singleJet.jetAngle;
-                cJetHueSpeed = singleJet.jetHueSpeed;
-                cJetSwingRange = singleJet.jetSwingRange;
-                cModJetForceRate = singleJet.modJetForce.modRate;
-                cModJetForceLevel = singleJet.modJetForce.modLevel;
-                cModJetAngleRate = singleJet.modJetAngle.modRate;
-                cModJetAngleLevel = singleJet.modJetAngle.modLevel;
-                cModJetSwingRate = singleJet.modJetSwing.modRate;
-                cModJetSwingLevel = singleJet.modJetSwing.modLevel;
+                JetParams& jet = singleJet::jet;
+                cJetDensity = jet.density;
+                cJetForce = jet.force;
+                cJetRadius = jet.size;
+                cJetSpread = jet.spread;
+                cJetAngle = jet.direction;
+                cJetHueSpeed = jet.hueSpeed;
+                cJetSwingRange = jet.slideRange;
+                cModJetForceRate = jet.modForce.modRate;
+                cModJetForceLevel = jet.modForce.modLevel;
+                cModJetAngleRate = jet.modDirection.modRate;
+                cModJetAngleLevel = jet.modDirection.modLevel;
+                cModJetSwingRate = jet.modSlideRange.modRate;
+                cModJetSwingLevel = jet.modSlideRange.modLevel;
                 break;
             }
             case EMITTER_MULTIJET: {
-                resetMultiJetDefaults();
-                cNumJets             = jetPack.numJets;
-                cDirectionMode       = jetPack.directionMode;
-                cColorMode           = jetPack.colorMode;
-                cRadius          = jetPack.radius;
-                cRadialAngleBase         = jetPack.radialAngleBase;
-                cSize           = jetPack.size;
-                cDensity             = jetPack.density;
-                cForce               = jetPack.force;
-                cDirection      = jetPack.direction;
-                cHueSpeed            = jetPack.hueSpeed;
-                cHueSpread           = jetPack.hueSpread;
-                cVarRadius  = jetPack.varRadius;
-                cVarRadialAngle = jetPack.varRadialAngle;
-                cVarSize   	= jetPack.varSize;
-				cVarDirection   = jetPack.varDirection;
-                cVarDensity     = jetPack.varDensity;
-                cVarForce       = jetPack.varForce;
-                cVarHueSpeed         = jetPack.varHueSpeed;
-                cModRadiusRate   = jetPack.modRadius.modRate;
-                cModRadiusLevel  = jetPack.modRadius.modLevel;
-                cModRadialAngleRate  = jetPack.modRadialAngle.modRate;
-                cModRadialAngleLevel = jetPack.modRadialAngle.modLevel;
-                cModSizeRate    = jetPack.modSize.modRate;
-                cModSizeLevel   = jetPack.modSize.modLevel;
-                cModDensityRate      = jetPack.modDensity.modRate;
-                cModDensityLevel     = jetPack.modDensity.modLevel;
-                cModDirectionRate    = jetPack.modDirection.modRate;
-                cModDirectionLevel   = jetPack.modDirection.modLevel;
-                cModForceRate        = jetPack.modForce.modRate;
-                cModForceLevel       = jetPack.modForce.modLevel;
-                cModHueSpeedRate          = jetPack.modHueSpeed.modRate;
-                cModHueSpeedLevel         = jetPack.modHueSpeed.modLevel;
+                multiJet::resetMultiJetDefaults();
+                JetPackParams& pack = multiJet::jetPack;
+                cNumJets = pack.numJets;
+                cDirectionMode = pack.directionMode;
+                cColorMode = pack.colorMode;
+                cRadius = pack.radius;
+                cRadialAngleBase = pack.radialAngleBase;
+                cSize = pack.size;
+                cDensity = pack.density;
+                cForce = pack.force;
+                cDirection = pack.direction;
+                cHueSpeed = pack.hueSpeed;
+                cHueSpread = pack.hueSpread;
+                cVarRadius = pack.varRadius;
+                cVarRadialAngle = pack.varRadialAngle;
+                cVarSize = pack.varSize;
+                cVarDirection = pack.varDirection;
+                cVarDensity = pack.varDensity;
+                cVarForce = pack.varForce;
+                cVarHueSpeed = pack.varHueSpeed;
+                cModRadiusRate = pack.modRadius.modRate;
+                cModRadiusLevel = pack.modRadius.modLevel;
+                cModRadialAngleRate = pack.modRadialAngle.modRate;
+                cModRadialAngleLevel = pack.modRadialAngle.modLevel;
+                cModSizeRate = pack.modSize.modRate;
+                cModSizeLevel = pack.modSize.modLevel;
+                cModDensityRate = pack.modDensity.modRate;
+                cModDensityLevel = pack.modDensity.modLevel;
+                cModDirectionRate = pack.modDirection.modRate;
+                cModDirectionLevel = pack.modDirection.modLevel;
+                cModForceRate = pack.modForce.modRate;
+                cModForceLevel = pack.modForce.modLevel;
+                cModHueSpeedRate = pack.modHueSpeed.modRate;
+                cModHueSpeedLevel = pack.modHueSpeed.modLevel;
                 break;
             }
             default: break;
@@ -540,33 +360,33 @@ namespace fastFluid {
     }
     
     static void pushFlowDefaultsToCVars() {
-        smoke = SmokeParams{};
-        cViscosity = smoke.viscosity;
-        cDiffusion = smoke.diffusion;
-        cVelocityDissipation = smoke.velocityDissipation;
-        cDyeDissipation = smoke.dyeDissipation;
-        cVorticity = smoke.vorticity;
-        cGravityForce = smoke.gravityForce;
-        cGravityAngle = smoke.gravityAngle;
-        cDiffuseIterations = smoke.diffuseIterations;
-        cProjectIterations = smoke.projectIterations;
-        cModVelDissipRate = smoke.modVelDissip.modRate;
-        cModVelDissipLevel = smoke.modVelDissip.modLevel;
-        cModDyeDissipRate = smoke.modDyeDissip.modRate;
-        cModDyeDissipLevel = smoke.modDyeDissip.modLevel;
+        smoke::smoke = smoke::SmokeParams{};
+        cViscosity = smoke::smoke.viscosity;
+        cDiffusion = smoke::smoke.diffusion;
+        cVelocityDissipation = smoke::smoke.velocityDissipation;
+        cDyeDissipation = smoke::smoke.dyeDissipation;
+        cVorticity = smoke::smoke.vorticity;
+        cGravityForce = smoke::smoke.gravityForce;
+        cGravityAngle = smoke::smoke.gravityAngle;
+        cDiffuseIterations = smoke::smoke.diffuseIterations;
+        cProjectIterations = smoke::smoke.projectIterations;
+        cModVelDissipRate = smoke::smoke.modVelDissip.modRate;
+        cModVelDissipLevel = smoke::smoke.modVelDissip.modLevel;
+        cModDyeDissipRate = smoke::smoke.modDyeDissip.modRate;
+        cModDyeDissipLevel = smoke::smoke.modDyeDissip.modLevel;
     }
 
     static void pushObstacleDefaultsToCVars() {
-        paddles = PaddlesParams{};
-        cPaddleEnable     = paddles.enable;
-        cPaddleOverlay    = paddles.overlay;
-        cPaddleWidth      = paddles.width;
-        cPaddleSlideRate  = paddles.modSlide.modRate;
-        cPaddleSlideLevel = paddles.modSlide.modLevel;
-        cPaddleSoftEdge   = paddles.softEdge;
-        cPaddleR          = paddles.colorR;
-        cPaddleG          = paddles.colorG;
-        cPaddleB          = paddles.colorB;
+        paddles::paddles = paddles::PaddlesParams{};
+        cPaddleEnable     = paddles::paddles.enable;
+        cPaddleOverlay    = paddles::paddles.overlay;
+        cPaddleWidth      = paddles::paddles.width;
+        cPaddleSlideRate  = paddles::paddles.modSlide.modRate;
+        cPaddleSlideLevel = paddles::paddles.modSlide.modLevel;
+        cPaddleSoftEdge   = paddles::paddles.softEdge;
+        cPaddleR          = paddles::paddles.colorR;
+        cPaddleG          = paddles::paddles.colorG;
+        cPaddleB          = paddles::paddles.colorB;
     }
 
     // Sync ALL emitters' cVars into their structs every frame. Inactive
@@ -587,81 +407,81 @@ namespace fastFluid {
 
     static void syncEmittersFromCVars() {
         // singleJet
-        singleJet.jetDensity = cJetDensity;
-        singleJet.jetForce = cJetForce;
-        singleJet.jetRadius = cJetRadius;
-        singleJet.jetSpread = cJetSpread;
-        singleJet.jetAngle = cJetAngle;
-        singleJet.jetHueSpeed = cJetHueSpeed;
-        singleJet.jetSwingRange = cJetSwingRange;
-        singleJet.modJetForce.modRate = cModJetForceRate;
-        singleJet.modJetForce.modLevel = cModJetForceLevel;
-        singleJet.modJetAngle.modRate = cModJetAngleRate;
-        singleJet.modJetAngle.modLevel = cModJetAngleLevel;
-        singleJet.modJetSwing.modRate = cModJetSwingRate;
-        singleJet.modJetSwing.modLevel = cModJetSwingLevel;
+        singleJet::jet.density = cJetDensity;
+        singleJet::jet.force = cJetForce;
+        singleJet::jet.size = cJetRadius;
+        singleJet::jet.spread = cJetSpread;
+        singleJet::jet.direction = cJetAngle;
+        singleJet::jet.hueSpeed = cJetHueSpeed;
+        singleJet::jet.slideRange = cJetSwingRange;
+        singleJet::jet.modForce.modRate = cModJetForceRate;
+        singleJet::jet.modForce.modLevel = cModJetForceLevel;
+        singleJet::jet.modDirection.modRate = cModJetAngleRate;
+        singleJet::jet.modDirection.modLevel = cModJetAngleLevel;
+        singleJet::jet.modSlideRange.modRate = cModJetSwingRate;
+        singleJet::jet.modSlideRange.modLevel = cModJetSwingLevel;
 
         // multiJet
-        jetPack.numJets = cNumJets;
-        jetPack.directionMode = cDirectionMode;
-        jetPack.colorMode = cColorMode;
-        jetPack.radialAngleBase = cRadialAngleBase;
-        jetPack.density = cDensity;
-        jetPack.force = cForce;
-        jetPack.size = cSize;
-        jetPack.radius = cRadius;
-        jetPack.direction = cDirection;
-        jetPack.hueSpeed = cHueSpeed;
-        jetPack.hueSpread = cHueSpread;
-        jetPack.varRadialAngle = cVarRadialAngle;
-        jetPack.varRadius = cVarRadius;
-        jetPack.varDirection = cVarDirection;
-        jetPack.varSize = cVarSize;
-        jetPack.varForce = cVarForce;
-        jetPack.varDensity = cVarDensity;
-        jetPack.varHueSpeed = cVarHueSpeed;
-        jetPack.modRadialAngle.modRate = cModRadialAngleRate;
-        jetPack.modRadialAngle.modLevel = cModRadialAngleLevel;
-        jetPack.modRadius.modRate = cModRadiusRate;
-        jetPack.modRadius.modLevel = cModRadiusLevel;
-        jetPack.modDirection.modRate = cModDirectionRate;
-        jetPack.modDirection.modLevel = cModDirectionLevel;
-        jetPack.modSize.modRate = cModSizeRate;
-        jetPack.modSize.modLevel = cModSizeLevel;
-        jetPack.modForce.modRate = cModForceRate;
-        jetPack.modForce.modLevel = cModForceLevel;
-        jetPack.modDensity.modRate = cModDensityRate;
-        jetPack.modDensity.modLevel = cModDensityLevel;
-        jetPack.modHueSpeed.modRate = cModHueSpeedRate;
-        jetPack.modHueSpeed.modLevel = cModHueSpeedLevel;
+        multiJet::jetPack.numJets = cNumJets;
+        multiJet::jetPack.directionMode = cDirectionMode;
+        multiJet::jetPack.colorMode = cColorMode;
+        multiJet::jetPack.radialAngleBase = cRadialAngleBase;
+        multiJet::jetPack.density = cDensity;
+        multiJet::jetPack.force = cForce;
+        multiJet::jetPack.size = cSize;
+        multiJet::jetPack.radius = cRadius;
+        multiJet::jetPack.direction = cDirection;
+        multiJet::jetPack.hueSpeed = cHueSpeed;
+        multiJet::jetPack.hueSpread = cHueSpread;
+        multiJet::jetPack.varRadialAngle = cVarRadialAngle;
+        multiJet::jetPack.varRadius = cVarRadius;
+        multiJet::jetPack.varDirection = cVarDirection;
+        multiJet::jetPack.varSize = cVarSize;
+        multiJet::jetPack.varForce = cVarForce;
+        multiJet::jetPack.varDensity = cVarDensity;
+        multiJet::jetPack.varHueSpeed = cVarHueSpeed;
+        multiJet::jetPack.modRadialAngle.modRate = cModRadialAngleRate;
+        multiJet::jetPack.modRadialAngle.modLevel = cModRadialAngleLevel;
+        multiJet::jetPack.modRadius.modRate = cModRadiusRate;
+        multiJet::jetPack.modRadius.modLevel = cModRadiusLevel;
+        multiJet::jetPack.modDirection.modRate = cModDirectionRate;
+        multiJet::jetPack.modDirection.modLevel = cModDirectionLevel;
+        multiJet::jetPack.modSize.modRate = cModSizeRate;
+        multiJet::jetPack.modSize.modLevel = cModSizeLevel;
+        multiJet::jetPack.modForce.modRate = cModForceRate;
+        multiJet::jetPack.modForce.modLevel = cModForceLevel;
+        multiJet::jetPack.modDensity.modRate = cModDensityRate;
+        multiJet::jetPack.modDensity.modLevel = cModDensityLevel;
+        multiJet::jetPack.modHueSpeed.modRate = cModHueSpeedRate;
+        multiJet::jetPack.modHueSpeed.modLevel = cModHueSpeedLevel;
     }
 
     static void syncFlowFromCVars() {
-        smoke.viscosity = cViscosity;
-        smoke.diffusion = cDiffusion;
-        smoke.velocityDissipation = cVelocityDissipation;
-        smoke.dyeDissipation = cDyeDissipation;
-        smoke.vorticity = cVorticity;
-        smoke.gravityForce = cGravityForce;
-        smoke.gravityAngle = cGravityAngle;
-        smoke.diffuseIterations = cDiffuseIterations;
-        smoke.projectIterations = cProjectIterations;
-        smoke.modVelDissip.modRate = cModVelDissipRate;
-        smoke.modVelDissip.modLevel = cModVelDissipLevel;
-        smoke.modDyeDissip.modRate = cModDyeDissipRate;
-        smoke.modDyeDissip.modLevel = cModDyeDissipLevel;
+        smoke::smoke.viscosity = cViscosity;
+        smoke::smoke.diffusion = cDiffusion;
+        smoke::smoke.velocityDissipation = cVelocityDissipation;
+        smoke::smoke.dyeDissipation = cDyeDissipation;
+        smoke::smoke.vorticity = cVorticity;
+        smoke::smoke.gravityForce = cGravityForce;
+        smoke::smoke.gravityAngle = cGravityAngle;
+        smoke::smoke.diffuseIterations = cDiffuseIterations;
+        smoke::smoke.projectIterations = cProjectIterations;
+        smoke::smoke.modVelDissip.modRate = cModVelDissipRate;
+        smoke::smoke.modVelDissip.modLevel = cModVelDissipLevel;
+        smoke::smoke.modDyeDissip.modRate = cModDyeDissipRate;
+        smoke::smoke.modDyeDissip.modLevel = cModDyeDissipLevel;
     }
 
     static void syncObstaclesFromCVars() {
-        paddles.enable            = cPaddleEnable;
-        paddles.overlay           = cPaddleOverlay;
-        paddles.width             = cPaddleWidth;
-        paddles.modSlide.modRate  = cPaddleSlideRate;
-        paddles.modSlide.modLevel = cPaddleSlideLevel;
-        paddles.softEdge          = cPaddleSoftEdge;
-        paddles.colorR            = cPaddleR;
-        paddles.colorG            = cPaddleG;
-        paddles.colorB            = cPaddleB;
+        paddles::paddles.enable            = cPaddleEnable;
+        paddles::paddles.overlay           = cPaddleOverlay;
+        paddles::paddles.width             = cPaddleWidth;
+        paddles::paddles.modSlide.modRate  = cPaddleSlideRate;
+        paddles::paddles.modSlide.modLevel = cPaddleSlideLevel;
+        paddles::paddles.softEdge          = cPaddleSoftEdge;
+        paddles::paddles.colorR            = cPaddleR;
+        paddles::paddles.colorG            = cPaddleG;
+        paddles::paddles.colorB            = cPaddleB;
     }
 
     static void updatePaletteState() {
