@@ -231,8 +231,8 @@ float cModForceRate = 0.2f;
 float cModForceLevel = 0.2f;
 float cModHueSpeedRate = 0.3f;
 float cModHueSpeedLevel = 0.0f;
-float cModSlideRangeRate = 0.3f;
-float cModSlideRangeLevel = 0.0f;
+float cModSlideRate = 0.3f;
+float cModSlideLevel = 0.0f;
 
 // FLOW: smoke --------------------
 uint8_t cDiffuseIterations = 6;
@@ -324,6 +324,8 @@ X(float, JetDensity, 50.0f) \
    X(float, ModForceLevel, 0.2f) \
    X(float, ModHueSpeedRate, 0.3f) \
    X(float, ModHueSpeedLevel, 0.0f) \
+   X(float, ModSlideRate, 0.3f) \
+   X(float, ModSlideLevel, 0.0f) \
    X(float, Viscosity, 0.0f) \
    X(float, Diffusion, 0.0f) \
    X(float, VelocityDissipation, 0.5f) \

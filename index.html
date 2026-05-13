@@ -702,21 +702,24 @@
             highlightSat:        {min: 0.0, max: 2.0, default: 2.0, step: 0.01},
             glowStrength:        {min: 0.0, max: 2.0, default: 0.0, step: 0.01},
 
-            // EMITTER: singleJet
-            jetDensity:    {min: 0, max: 200, default: 50, step: 1},
-            jetForce:      {min: 0.05, max: 5, default: 0.25, step: 0.05},
-            jetRadius:     {min: 1, max: 15, default: 4, step: 0.5},
-            jetSpread:     {min: 0, max: 60, default: 1.5, step: 0.5},
-            jetHueSpeed:   {min: 0, max: 1.5, default: 0.7, step: 0.05},
-            jetSwingRange: {min: 0, max: 30, default: 4, step: 0.5},
-            modJetForceRate:  {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
-            modJetForceLevel: {min: 0, max: 2.0, default: 0.1, step: 0.1},
-            modJetAngleRate:     {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
-            modJetAngleLevel:    {min: 0, max: 2.0, default: 2.0, step: 0.1},
-            modJetSwingRate:  {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
-            modJetSwingLevel: {min: 0, max: 2.0, default: 0.0, step: 0.1},
+            /*
+            EMITTER: singleJet
+            density:    {min: 0, max: 200, default: 50, step: 1},
+            force:      {min: 0.05, max: 5, default: 0.25, step: 0.05},
+            radius:     {min: 1, max: 15, default: 4, step: 0.5},
+            spread:     {min: 0, max: 60, default: 1.5, step: 0.5},
+            hueSpeed:   {min: 0, max: 1.5, default: 0.7, step: 0.05},
+            modForceRate:  {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
+            modForceLevel: {min: 0, max: 2.0, default: 0.1, step: 0.1},
+            modDirectionRate:     {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
+            modDirectionLevel:    {min: 0, max: 2.0, default: 2.0, step: 0.1},
+
 
             // EMITTER: multiJet
+            */
+
+            // JETS 
+           
             numJets:           {min: 1, max: 5, default: 3, step: 1, label: 'Jets'},
             directionMode: {
                 min: 0, max: 5, default: 0, step: 1,
@@ -738,6 +741,7 @@
             force:              {min: 0, max: 5, default: 0.25, step: 0.05},
             hueSpeed:           {min: 0, max: 1.5, default: 0.25, step: 0.05},
             hueSpread:          {min: 0, max: 2.0, default: 1.0, step: 0.05},
+            slideRange:     {min: 0, max: 30, default: 4, step: 0.5},
             varRadius: {min: 0, max: 1.0, default: 0.25, step: 0.05},
             varRadialAngle:{min: 0, max: 3.142, default: 0.74, step: 0.01},
             varSize:  {min: 0, max: 1.0, default: 0.25, step: 0.05},
@@ -759,6 +763,8 @@
             modForceLevel:      {min: 0, max: 2.0, default: 0.2, step: 0.1},
             modHueSpeedRate:         {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
             modHueSpeedLevel:        {min: 0, max: 2.0, default: 0, step: 0.1},
+            modSlideRate:  {min: 0.1, max: 3.0, default: 0.3, step: 0.1},
+            modSlideLevel: {min: 0, max: 2.0, default: 0.0, step: 0.1},
 
             // FLOW: smoke
             viscosity:           {min: 0, max: 0.01, default: 0.0, step: 0.0005},
@@ -791,21 +797,22 @@
                                 "flowSat", "flowBright", "highlightSat", "glowStrength"];
 
         const EMITTER_PARAMS = {
-            "singlejet":     ["jetDensity", "jetForce", "jetRadius", "jetSpread", "jetHueSpeed",
-                            "jetSwingRange",
-                            "modJetForceRate", "modJetForceLevel",
-                            "modJetAngleRate", "modJetAngleLevel",
-                            "modJetSwingRate", "modJetSwingLevel"],
+            "singlejet":    ["radius", "size", "direction", "density", "force", 
+                            "spread", "hueSpeed", "slideRange",
+                            "modForceRate", "modForceLevel",
+                            "modDirectionRate", "modDirectionLevel",
+                            "modSlideRate", "modSlideLevel"],
             "multijet":    ["numJets", "directionMode", "colorMode",
-                            "radius","size","density","force","hueSpeed", "hueSpread", 
+                            "radius", "radialAngleBase", "size", "direction",
+                            "density", "force", "hueSpeed", "hueSpread", 
                             "varRadius", "modRadiusRate", "modRadiusLevel",
-                            "varRadialAngle", "modRadialAngleRate", "modRadialAngleLevel",
-                            "varSize", "modSizeRate", "modSizeLevel",
+                            //"varRadialAngle", "modRadialAngleRate", "modRadialAngleLevel",
+                            //"varSize", "modSizeRate", "modSizeLevel",
                             "varDirection", "modDirectionRate", "modDirectionLevel",
-                            "varDensity", "modDensityRate", "modDensityLevel",
+                            //"varDensity", "modDensityRate", "modDensityLevel",
                             "varForce", "modForceRate", "modForceLevel",
                             "varHueSpeed", "modHueSpeedRate", "modHueSpeedLevel"]
-        }; // "radialAngleBase", "direction", 
+        }; //  
 
         const FLOW_PARAMS = {
             "smoke":       ["diffuseIterations", "projectIterations",

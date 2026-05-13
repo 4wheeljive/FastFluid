@@ -314,8 +314,8 @@ namespace fastFluid {
                 cModForceLevel = jet.modForce.modLevel;
                 cModDirectionRate = jet.modDirection.modRate;
                 cModDirectionLevel = jet.modDirection.modLevel;
-                cModSlideRangeRate = jet.modSlideRange.modRate;
-                cModSlideRangeLevel = jet.modSlideRange.modLevel;
+                cModSlideRate = jet.modSlideRange.modRate;
+                cModSlideLevel = jet.modSlideRange.modLevel;
                 break;
             }
             case EMITTER_MULTIJET: {
@@ -419,8 +419,8 @@ namespace fastFluid {
         singleJet::jet.modForce.modLevel = cModForceLevel;
         singleJet::jet.modDirection.modRate = cModDirectionRate;
         singleJet::jet.modDirection.modLevel = cModDirectionLevel;
-        singleJet::jet.modSlideRange.modRate = cModSlideRangeRate;
-        singleJet::jet.modSlideRange.modLevel = cModSlideRangeLevel;
+        singleJet::jet.modSlideRange.modRate = cModSlideRate;
+        singleJet::jet.modSlideRange.modLevel = cModSlideLevel;
 
         // multiJet
         multiJet::jetPack.numJets = cNumJets;

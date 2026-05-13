@@ -45,7 +45,7 @@ All simulation code lives in `namespace fastFluid`.
 2. Detect emitter/flow/obstacle selection changes and push that component's defaults into cVars.
 3. Sync global, emitter, flow, and obstacle structs from cVars.
 4. Assign active modulator timer slots.
-5. Component `prepareModulators()` functions write timer ratios.
+5. Component `prepVarMods()` functions write timer ratios.
 6. One central `calculate_modulators()` fills `move.*` signals.
 7. Update obstacle mask and enforce obstacle velocity.
 8. Prepare flow values.
@@ -63,7 +63,7 @@ Important grids:
 
 - `gR/gG/gB[HEIGHT][WIDTH]`: live float dye/color buffers.
 - `tR/tG/tB[HEIGHT][WIDTH]`: dye/render scratch buffers.
-- `u/v[HEIGHT][WIDTH]`: persistent velocity field in `flow_smoke.h`.
+- `u/v[HEIGHT][WIDTH]`: persistent velocity.
 - `uPrev/vPrev`, `pressure`, `divergence`: solver scratch.
 
 Keep the color pipeline float until the final LED copy. Quantization should happen at `f2u8d()` with Bayer dithering. Avoid introducing mid-pipeline `uint8_t` or `CRGB` color storage unless it is only for final LED output.
@@ -155,7 +155,7 @@ The control path is split across several files. When adding or renaming a parame
 - `src/bleControl.h`
   - usually uses schema/X-macro helpers, but check special button/checkbox handling
 
-The UI uses lower-camel parameter ids like `force`, while C++ cVars are usually `cForce` and X-macro names are `Force`. Do not mix old singleJet-specific names and generic multiJet names accidentally. [USER NOTE: I'm going to ask for your help related to this.]
+The UI uses lower-camel parameter ids like `force`, while C++ cVars are usually `cForce` and X-macro names are `Force`.
 
 Defaults should generally be pushed on component selection/startup, not every frame. Per-frame pushes from defaults to cVars can overwrite user changes before `sync*FromCVars()` sees them.
 
@@ -167,7 +167,7 @@ Files:
 - `src/noise.h`
 - `ModConfig` in `src/fastFluidTypes.h`
 
-Each active component exposes a `static constexpr ModConfig ...::* MODS[]` array. The engine assigns timer slots with `assignModSlots()`. Component `prepareModulators()` functions write `timings.ratio[modTimer]`; then `calculate_modulators()` fills:
+Each active component exposes a `static constexpr ModConfig ...::* MODS[]` array. The engine assigns timer slots with `assignModSlots()`. Component `preVarMods()` functions write `timings.ratio[modTimer]`; then `calculate_modulators()` fills:
 
 - `move.linear`
 - `move.radial_phase`
