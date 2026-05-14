@@ -49,17 +49,18 @@ const char* const SINGLEJET_PARAMS[] PROGMEM = {
 const char* const MULTIJET_PARAMS[] PROGMEM = {
    "numJets", "directionMode", "colorMode",
    "radius", "radialAngleBase", 
-   "size",  "direction", "density", "force", 
+   "size",  "direction", 
+   "density", "force", 
    "hueSpeed", "hueSpread",
-   "varRadius", "varRadialAngle",
-   "varDirection", "varForce", 
-   "modRadiusRate", "modRadiusLevel",
-   //"modRadialAngleRate", "modRadialAngleLevel",
-   "modDirectionRate", "modDirectionLevel",
-   //"modSizeRate", "modSizeLevel",
-   //"modDensityRate", "modDensityLevel",
-   "modForceRate", "modForceLevel",
-   //"modHueSpeedRate", "modHueSpeedLevel"
+   "varRadius", "modRadiusRate", "modRadiusLevel",
+   "varRadialAngle", "modRadialAngleRate", "modRadialAngleLevel",
+   //"varSize", "modSizeRate", "modSizeLevel",
+   //"varDensity", "modDensityRate", "modDensityLevel",
+   "varDirection", "modDirectionRate", "modDirectionLevel",
+   //"varForce", "modForceRate", "modForceLevel",
+   "varHueSpeed", "modHueSpeedRate", "modHueSpeedLevel",
+   "fxNoiseRate", "fxNoiseLevel",
+   "fxSineRate", "fxSineLevel",
 };
 
 struct EmitterParamEntry {
@@ -70,7 +71,7 @@ struct EmitterParamEntry {
 
 const EmitterParamEntry EMITTER_PARAM_LOOKUP[] PROGMEM = {
    {"singlejet", SINGLEJET_PARAMS, 13},
-   {"multijet", MULTIJET_PARAMS, 21},
+   {"multijet", MULTIJET_PARAMS, 27},
 };
 
 static const EmitterParamEntry* getEmitterParams(uint8_t emitterIdx) {
@@ -194,10 +195,10 @@ float cHueSpread = 1.0f;
 float cSlideRange = (float)MIN_DIMENSION * 0.5f; 
 float cVarRadialAngle = 0.75f;
 float cVarRadius = 0.25f;
-float cVarSize = 0.25f;
+//float cVarSize = 0.25f;
 float cVarDirection = 3.1415927f;
-float cVarDensity = 0.25f;
-float cVarForce = 0.15f;
+//float cVarDensity = 0.25f;
+//float cVarForce = 0.15f;
 float cVarHueSpeed = 0.1f;
 float cModRadialAngleRate = 0.2f;
 float cModRadialAngleLevel = 0.4f;
@@ -205,16 +206,21 @@ float cModRadiusRate = 0.4f;
 float cModRadiusLevel = 1.5f;
 float cModDirectionRate = 0.5f;
 float cModDirectionLevel = 1.5f;
-float cModSizeRate = 0.1f;
-float cModSizeLevel = 0.0f;
-float cModDensityRate = 0.1f;
-float cModDensityLevel = 0.0f;
+//float cModSizeRate = 0.1f;
+//float cModSizeLevel = 0.0f;
+//float cModDensityRate = 0.1f;
+//float cModDensityLevel = 0.0f;
 float cModForceRate = 0.2f;
 float cModForceLevel = 0.2f;
 float cModHueSpeedRate = 0.3f;
 float cModHueSpeedLevel = 0.0f;
 float cModSlideRate = 0.3f;
 float cModSlideLevel = 0.0f;
+float cFxNoiseRate = 0.3f;
+float cFxNoiseLevel = 0.0f;
+float cFxSineRate = 0.3f;
+float cFxSineLevel = 0.0f;
+
 
 // FLOW: smoke --------------------
 uint8_t cDiffuseIterations = 6;
@@ -248,6 +254,17 @@ bool  cPaddleOverlay = false;
 //  X-MACRO PARAMETER TABLE
 // ═══════════════════════════════════════════════════════════════════
 
+/*
+   X(float, VarSize, 0.25f) \
+   X(float, VarDensity, 0.25f) \
+   X(float, VarForce, 0.15f) \
+   X(float, ModSizeRate, 0.1f) \
+   X(float, ModSizeLevel, 0.0f) \
+   X(float, ModDensityRate, 0.1f) \
+   X(float, ModDensityLevel, 0.0f) \
+   
+   */
+
 #define PARAMETER_TABLE \
    X(uint8_t, OverrideMapping, 0) \
    X(float, GlobalSpeed, 0.5f) \
@@ -270,26 +287,23 @@ bool  cPaddleOverlay = false;
    X(float, VarRadialAngle, 0.75f) \
    X(float, VarRadius, 0.25f) \
    X(float, VarDirection, 0.75f) \
-   X(float, VarSize, 0.25f) \
-   X(float, VarDensity, 0.25f) \
-   X(float, VarForce, 0.15f) \
    X(float, VarHueSpeed, 0.1f) \
    X(float, ModRadiusRate, 0.4f) \
    X(float, ModRadiusLevel, 1.5f) \
    X(float, ModRadialAngleRate, 0.2f) \
    X(float, ModRadialAngleLevel, 0.4f) \
-   X(float, ModSizeRate, 0.1f) \
-   X(float, ModSizeLevel, 0.0f) \
    X(float, ModDirectionRate, 0.5f) \
    X(float, ModDirectionLevel, 1.5f) \
-   X(float, ModDensityRate, 0.1f) \
-   X(float, ModDensityLevel, 0.0f) \
    X(float, ModForceRate, 0.2f) \
    X(float, ModForceLevel, 0.2f) \
    X(float, ModHueSpeedRate, 0.3f) \
    X(float, ModHueSpeedLevel, 0.0f) \
    X(float, ModSlideRate, 0.3f) \
    X(float, ModSlideLevel, 0.0f) \
+   X(float, FxNoiseRate, 0.3f) \
+   X(float, FxNoiseLevel, 0.0f) \
+   X(float, FxSineRate, 0.3f) \
+   X(float, FxSineLevel, 0.0f) \
    X(float, Viscosity, 0.0f) \
    X(float, Diffusion, 0.0f) \
    X(float, VelocityDissipation, 0.5f) \

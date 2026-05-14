@@ -334,25 +334,29 @@ namespace fastFluid {
                 cHueSpread = pack.hueSpread;
                 cVarRadius = pack.varRadius;
                 cVarRadialAngle = pack.varRadialAngle;
-                cVarSize = pack.varSize;
+                //cVarSize = pack.varSize;
                 cVarDirection = pack.varDirection;
-                cVarDensity = pack.varDensity;
-                cVarForce = pack.varForce;
+                //cVarDensity = pack.varDensity;
+                //cVarForce = pack.varForce;
                 cVarHueSpeed = pack.varHueSpeed;
                 cModRadiusRate = pack.modRadius.modRate;
                 cModRadiusLevel = pack.modRadius.modLevel;
                 cModRadialAngleRate = pack.modRadialAngle.modRate;
                 cModRadialAngleLevel = pack.modRadialAngle.modLevel;
-                cModSizeRate = pack.modSize.modRate;
-                cModSizeLevel = pack.modSize.modLevel;
-                cModDensityRate = pack.modDensity.modRate;
-                cModDensityLevel = pack.modDensity.modLevel;
+                //cModSizeRate = pack.modSize.modRate;
+                //cModSizeLevel = pack.modSize.modLevel;
+                //cModDensityRate = pack.modDensity.modRate;
+                //cModDensityLevel = pack.modDensity.modLevel;
                 cModDirectionRate = pack.modDirection.modRate;
                 cModDirectionLevel = pack.modDirection.modLevel;
-                cModForceRate = pack.modForce.modRate;
-                cModForceLevel = pack.modForce.modLevel;
+                //cModForceRate = pack.modForce.modRate;
+                //cModForceLevel = pack.modForce.modLevel;
                 cModHueSpeedRate = pack.modHueSpeed.modRate;
                 cModHueSpeedLevel = pack.modHueSpeed.modLevel;
+                cFxNoiseRate = pack.fxNoise.modRate;
+                cFxNoiseLevel = pack.fxNoise.modLevel;
+                cFxSineRate = pack.fxSine.modRate;
+                cFxSineLevel = pack.fxSine.modLevel;
                 break;
             }
             default: break;
@@ -437,9 +441,9 @@ namespace fastFluid {
         multiJet::jetPack.varRadialAngle = cVarRadialAngle;
         multiJet::jetPack.varRadius = cVarRadius;
         multiJet::jetPack.varDirection = cVarDirection;
-        multiJet::jetPack.varSize = cVarSize;
-        multiJet::jetPack.varForce = cVarForce;
-        multiJet::jetPack.varDensity = cVarDensity;
+        //multiJet::jetPack.varSize = cVarSize;
+        //multiJet::jetPack.varForce = cVarForce;
+        //multiJet::jetPack.varDensity = cVarDensity;
         multiJet::jetPack.varHueSpeed = cVarHueSpeed;
         multiJet::jetPack.modRadialAngle.modRate = cModRadialAngleRate;
         multiJet::jetPack.modRadialAngle.modLevel = cModRadialAngleLevel;
@@ -447,14 +451,18 @@ namespace fastFluid {
         multiJet::jetPack.modRadius.modLevel = cModRadiusLevel;
         multiJet::jetPack.modDirection.modRate = cModDirectionRate;
         multiJet::jetPack.modDirection.modLevel = cModDirectionLevel;
-        multiJet::jetPack.modSize.modRate = cModSizeRate;
-        multiJet::jetPack.modSize.modLevel = cModSizeLevel;
-        multiJet::jetPack.modForce.modRate = cModForceRate;
-        multiJet::jetPack.modForce.modLevel = cModForceLevel;
-        multiJet::jetPack.modDensity.modRate = cModDensityRate;
-        multiJet::jetPack.modDensity.modLevel = cModDensityLevel;
+        //multiJet::jetPack.modSize.modRate = cModSizeRate;
+        //multiJet::jetPack.modSize.modLevel = cModSizeLevel;
+        //multiJet::jetPack.modForce.modRate = cModForceRate;
+        //multiJet::jetPack.modForce.modLevel = cModForceLevel;
+        //multiJet::jetPack.modDensity.modRate = cModDensityRate;
+        //multiJet::jetPack.modDensity.modLevel = cModDensityLevel;
         multiJet::jetPack.modHueSpeed.modRate = cModHueSpeedRate;
         multiJet::jetPack.modHueSpeed.modLevel = cModHueSpeedLevel;
+        multiJet::jetPack.fxNoise.modLevel = cFxNoiseLevel;
+        multiJet::jetPack.fxNoise.modRate = cFxNoiseRate;
+        multiJet::jetPack.fxSine.modLevel = cFxSineLevel;
+        multiJet::jetPack.fxSine.modRate = cFxSineRate;
     }
 
     static void syncFlowFromCVars() {

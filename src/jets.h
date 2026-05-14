@@ -23,6 +23,13 @@ namespace fastFluid {
         MULTIJET_COLOR_PER_JET = 2
     };
 
+	enum diffFX : uint8_t {
+		SYNCHRONOUS = 0,
+		NOISE = 1,
+		SINE = 2,
+		DELAY =3
+	};
+
     struct JetParams {
 
         bool enabled = true;
@@ -53,15 +60,12 @@ namespace fastFluid {
         // a shared "jetPack". In that case, the following parameters
         // set individual jet variances     
 
-        /*
+        
         // Static per-jet scaling factors
-        float radiusScale = 1.0f;   
-        float sizeScale = 1.0f;
-        float densityScale = 1.0f;
-        float forceScale = 1.0f;
-        float hueSpeedScale = 1.0f;
-        */
-
+        float radiusFxFactor = 1.0f;
+        float directionFxFactor = 1.0f;   
+        float forceFxFactor = 1.0f;
+        
         // Static per-jet modulation strength. Values near 1 keep jets synchronized;
         // small differences create related but non-identical motion.
         float radiusModScale = 1.0f;
@@ -88,6 +92,9 @@ namespace fastFluid {
         uint8_t numJets = 3;
         uint8_t directionMode = MULTIJET_DIR_RADIAL_OUT;
         uint8_t colorMode = MULTIJET_COLOR_HUE_SPREAD;
+        uint8_t fxRadius = NOISE;
+        uint8_t fxDirection = NOISE;
+        uint8_t fxForce = SYNCHRONOUS;
 
         float centerCol = (float)WIDTH * 0.5f;
         float centerRow = (float)HEIGHT * 0.5f;
@@ -125,6 +132,10 @@ namespace fastFluid {
         ModConfig modDensity = {0, 0.1f, 0.0f};
         ModConfig modForce = {0, 0.2f, 0.2f};
         ModConfig modHueSpeed = {0, 0.3f, 0.0f};
+        ModConfig fxNoise = {0, 0.3f, 0.0f};
+        ModConfig fxSine = {0, 0.3f, 0.0f};
+        //ModConfig fxDelay = {0, 0.3f, 0.0f};
+
     };
 
 } // namespace fastFluid

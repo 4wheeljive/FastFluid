@@ -22,6 +22,19 @@ namespace multiJet {
     float directionSignal = 0.0f;
     float forceSignal = 0.0f;
     float hueSpeedSignal = 0.0f;
+    float fxNoiseSignal = 0.0f;
+    float fxSineSignal = 0.0f;
+    float fxDelaySignal = 0.0f;
+
+    static constexpr uint16_t FX_NOISE_HISTORY_MS = 20000;
+    static constexpr uint16_t FX_NOISE_HISTORY_SAMPLE_MS = 20;
+    static constexpr uint16_t FX_NOISE_HISTORY_SAMPLES =
+        (FX_NOISE_HISTORY_MS / FX_NOISE_HISTORY_SAMPLE_MS) + 1;
+    float fxNoiseHistory[FX_NOISE_HISTORY_SAMPLES];
+    uint16_t fxNoiseHistoryWrite = 0;
+    uint16_t fxNoiseHistoryCount = 0;
+    unsigned long fxNoiseHistoryLastMs = 0;
+    bool fxNoiseHistorySeeded = false;
 
     static inline JetParams makeMultiJetParams(float radiusModScale,
                                                float directionModScale,
@@ -41,29 +54,30 @@ namespace multiJet {
         makeMultiJetParams(1.40f, 0.60f, 1.30f)
     };
 
+    /*
+        makeMultiJetParams(1.00f, 1.00f, 1.00f),
+        makeMultiJetParams(1.00f, 1.00f, 1.00f),
+        makeMultiJetParams(1.00f, 1.00f, 1.00f),
+        makeMultiJetParams(1.00f, 1.00f, 1.00f),
+        makeMultiJetParams(1.00f, 1.00f, 1.00f)
+    */
+
     JetPackParams jetPack;
 
     static constexpr ModConfig JetPackParams::* MULTIJET_MODS[] = {
         &JetPackParams::modRadius,
         &JetPackParams::modDirection,
         &JetPackParams::modForce,
-        &JetPackParams::modHueSpeed
+        &JetPackParams::modHueSpeed,
+        &JetPackParams::fxNoise,
+        //&JetPackParams::fxSine,
     };
-
+    
     static inline float wrapRad(float angle) {
         angle -= fl::floorf(angle * MULTIJET_INV_2PI) * FF_2PI;
         return angle;
     }
-    
-    /*
-    static inline float multiJetScalar(float base, const ModConfig& mod,
-                                       float variance, float signal,
-                                       float modScale, float minValue) {
-        const float depth = fmaxf(0.0f, mod.modLevel) * variance * modScale;
-        return fmaxf(minValue, base * (1.0f + depth * signal));
-    }
-    */
-
+   
     static inline void rotateVector(float inCol, float inRow, float angle,
                                     float& outCol, float& outRow) {
         SinCosResult sc = sincos_fast(wrapRad(angle));
@@ -78,17 +92,95 @@ namespace multiJet {
     static void prepEmitterMods() {
         timings.ratio[jetPack.modRadius.modTimer] = 0.00049f * jetPack.modRadius.modRate;
         timings.ratio[jetPack.modDirection.modTimer] = 0.0006f * jetPack.modDirection.modRate;
-        timings.ratio[jetPack.modForce.modTimer] = 0.00037f * jetPack.modForce.modRate;
+        //timings.ratio[jetPack.modForce.modTimer] = 0.00037f * jetPack.modForce.modRate;
         timings.ratio[jetPack.modHueSpeed.modTimer] = 0.00035f * jetPack.modHueSpeed.modRate;
+        timings.ratio[jetPack.fxNoise.modTimer] = 0.0001f * jetPack.fxNoise.modRate;
+		//timings.ratio[jetPack.fxSine.modTimer] = 0.0002f * jetPack.fxSine.modRate;
+    }
+
+    static inline void pushFxNoiseHistory(float sample) {
+        fxNoiseHistory[fxNoiseHistoryWrite] = sample;
+        fxNoiseHistoryWrite = (fxNoiseHistoryWrite + 1) % FX_NOISE_HISTORY_SAMPLES;
+        if (fxNoiseHistoryCount < FX_NOISE_HISTORY_SAMPLES) {
+            fxNoiseHistoryCount++;
+        }
+    }
+
+    static inline void seedFxNoiseHistory(float sample, unsigned long nowMs) {
+        for (uint16_t i = 0; i < FX_NOISE_HISTORY_SAMPLES; i++) {
+            fxNoiseHistory[i] = sample;
+        }
+        fxNoiseHistoryWrite = 0;
+        fxNoiseHistoryCount = 0;
+        fxNoiseHistoryLastMs = nowMs - FX_NOISE_HISTORY_SAMPLE_MS;
+        fxNoiseHistorySeeded = true;
+    }
+
+    static inline void updateFxNoiseHistory(float sample) {
+        const unsigned long nowMs = fl::millis();
+        if (!fxNoiseHistorySeeded) {
+            seedFxNoiseHistory(sample, nowMs);
+        }
+
+        while ((unsigned long)(nowMs - fxNoiseHistoryLastMs) >= FX_NOISE_HISTORY_SAMPLE_MS) {
+            fxNoiseHistoryLastMs += FX_NOISE_HISTORY_SAMPLE_MS;
+            pushFxNoiseHistory(sample);
+        }
+    }
+
+    static inline float readFxNoiseHistory(uint16_t lookbackMs) {
+        if (fxNoiseHistoryCount == 0) return fxNoiseSignal;
+
+        uint16_t slotsBack =
+            (lookbackMs + (FX_NOISE_HISTORY_SAMPLE_MS / 2)) / FX_NOISE_HISTORY_SAMPLE_MS;
+        const uint16_t maxSlotsBack = fxNoiseHistoryCount - 1;
+        if (slotsBack > maxSlotsBack) {
+            slotsBack = maxSlotsBack;
+        }
+
+        const uint16_t latestIndex =
+            (fxNoiseHistoryWrite + FX_NOISE_HISTORY_SAMPLES - 1) % FX_NOISE_HISTORY_SAMPLES;
+        const uint16_t readIndex =
+            (latestIndex + FX_NOISE_HISTORY_SAMPLES - slotsBack) % FX_NOISE_HISTORY_SAMPLES;
+        return fxNoiseHistory[readIndex];
     }
 
     static void acquireSignals() {
         radiusSignal = move.directional_noise[jetPack.modRadius.modTimer];
         directionSignal = move.directional_noise[jetPack.modDirection.modTimer];
-        forceSignal = move.directional_noise[jetPack.modForce.modTimer];
+        //forceSignal = move.directional_noise[jetPack.modForce.modTimer];
         hueSpeedSignal = move.directional_noise[jetPack.modHueSpeed.modTimer];
+        fxNoiseSignal = move.directional_noise[jetPack.fxNoise.modTimer];
+        updateFxNoiseHistory(fxNoiseSignal);
+		fxSineSignal = move.directional_sine[jetPack.fxSine.modTimer];
     }
-    
+
+    float jetNoiseSignal(uint8_t jetIndex) {
+        uint16_t noiseLookback = 5000;
+        noiseLookback *= jetIndex;
+        return readFxNoiseHistory(noiseLookback);
+    }
+
+    float jetSineSignal(uint8_t jetIndex) {
+        return 0.0f; // placeholder until later
+    }
+
+    float jetDelaySignal(uint8_t jetIndex) {
+        uint16_t delayLookback = 40;
+        delayLookback *= jetIndex;
+        return readFxNoiseHistory(delayLookback);
+    }
+
+    static float diffSignal(uint8_t fxMode, uint8_t jetIndex) {
+		switch (fxMode) {
+            case SYNCHRONOUS:  return 0.0f; break;
+            case NOISE:        return jetNoiseSignal(jetIndex); break;
+            case SINE:         return jetSineSignal(jetIndex); break;
+            case DELAY:        return jetDelaySignal(jetIndex); break;
+            default:	       return 0.0f; break;
+        }
+    }
+
     static inline uint8_t multiJetCount() {
         return jetPack.numJets > MAX_NUM_JETS ? MAX_NUM_JETS : jetPack.numJets;
     }
@@ -105,19 +197,13 @@ namespace multiJet {
                             jetPack.varRadialAngle *
                             thisJet.radialAngleModScale;
 
-        /*
-        float anchorRadius = multiJetScalar(
-            jetPack.radius, // * thisJet.radiusScale,
-            jetPack.modRadius,
-            jetPack.varRadius,
-            radiusSignal,
-            thisJet.radiusModScale,
-            1.0f
-        );
-        */
+
+		float radiusFxDepth = 0.9f;   // how much we want each jet's radius to vary from other jets based on diffSignal  		
+		float radiusFxFactor = 1.0f + diffSignal(jetPack.fxRadius, jetIndex) * radiusFxDepth; 
 
         float radius = jetPack.radius * 
-                       (1.0f + radiusSignal * jetPack.modRadius.modLevel * thisJet.radiusModScale);
+                       (1.0f + radiusSignal * jetPack.modRadius.modLevel *
+                        thisJet.radiusModScale * radiusFxFactor);
         radius = fmaxf(0.0f, radius);
         radius = clampf(radius, (float)MIN_DIMENSION * 0.2f, (float)MIN_DIMENSION * 0.45f);
 
@@ -127,7 +213,7 @@ namespace multiJet {
     
     } // resolveMultiJetAnchor()
 
-    static inline void resolveMultiJetDirection(const JetParams& thisJet,
+    static inline void resolveMultiJetDirection(uint8_t jetIndex, const JetParams& thisJet,
                                                 float anchorCol, float anchorRow,
                                                 float& dirCol, float& dirRow) {
         float radialCol = anchorCol - jetPack.centerCol;
@@ -169,10 +255,14 @@ namespace multiJet {
                 break;
         }
 
-       const float directionModulation = directionSignal *
-                                         jetPack.modDirection.modLevel *
-                                         jetPack.varDirection *
-                                         thisJet.directionModScale;
+        float directionFxDepth = 0.9f;   // how much we want each jet's direction to vary from other jets based on diffSignal 
+        float directionFxFactor = 1.0f + diffSignal(jetPack.fxDirection, jetIndex) * directionFxDepth; 
+        
+        const float directionModulation = directionSignal *
+                                          jetPack.modDirection.modLevel *
+                                          jetPack.varDirection *
+                                          thisJet.directionModScale * 
+                                          directionFxFactor;
         const float rotation = (jetPack.directionMode == MULTIJET_DIR_ABSOLUTE)
             ? directionModulation
             : jetPack.direction + directionModulation;
@@ -193,8 +283,8 @@ namespace multiJet {
                                jetPack.varHueSpeed *
                                thisJet.hueSpeedModScale;
 
-        const float baseHue = fmodPos(t * jetPack.hueSpeed, 1.0f); // was * thisJet.hueSpeedScale
-        
+        const float baseHue = fmodPos(t * jetPack.hueSpeed, 1.0f);
+
         float hueOffset = 0.0f;
 
         switch (jetPack.colorMode) {
@@ -260,23 +350,15 @@ namespace multiJet {
 
             float dirCol;
             float dirRow;
-            resolveMultiJetDirection(thisJet, anchorCol, anchorRow, dirCol, dirRow);
-
-            /*const float force = multiJetScalar(
-                jetPack.force, // * thisJet.forceScale,
-                jetPack.modForce,
-                jetPack.varForce,
-                forceSignal,
-                thisJet.forceModScale,
-                0.05f
-            );*/
+            resolveMultiJetDirection(i, thisJet, anchorCol, anchorRow, dirCol, dirRow);
 
             const float hue = multiJetHueForJet(i, count, thisJet);
             
             const float density = jetPack.density;
             
-            float force = jetPack.force * (1.0f + forceSignal * jetPack.modForce.modLevel * thisJet.forceModScale);
-            force = fmaxf(0.0f, force);
+            const float force = jetPack.force;
+            //float force = jetPack.force * (1.0f + forceSignal * jetPack.modForce.modLevel * thisJet.forceModScale);
+            //force = fmaxf(0.0f, force);
             
             const float size = jetPack.size; 
 

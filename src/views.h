@@ -148,7 +148,7 @@ namespace fastFluid {
 
             float dirCol;
             float dirRow;
-            multiJet::resolveMultiJetDirection(thisJet, anchorCol, anchorRow, dirCol, dirRow);
+            multiJet::resolveMultiJetDirection(i, thisJet, anchorCol, anchorRow, dirCol, dirRow);
 
             const float tipCol = anchorCol + dirCol * arrowLength;
             const float tipRow = anchorRow + dirRow * arrowLength;
