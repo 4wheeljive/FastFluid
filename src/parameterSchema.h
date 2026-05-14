@@ -39,21 +39,20 @@ const char* const EMITTERS[] PROGMEM = {
 const uint8_t EMITTER_COUNTS[] = {2};
 
 const char* const SINGLEJET_PARAMS[] PROGMEM = {
-   "jetDensity", "jetForce", "jetRadius", "jetSpread", "jetHueSpeed",
-   "jetSwingRange",
-   "modJetForceRate", "modJetForceLevel",
-   "modJetAngleRate", "modJetAngleLevel",
-   "modJetSwingRate", "modJetSwingLevel"
+   "size", "spread", "slideRange", "direction",
+   "density", "force",  "hueSpeed",
+   "modForceRate", "modForceLevel",
+   "modDirectionRate", "modDirectionLevel",
+   "modSlideRate", "modSlideLevel"
 };
 
 const char* const MULTIJET_PARAMS[] PROGMEM = {
    "numJets", "directionMode", "colorMode",
-   "radius", // "radialAngleBase", 
+   "radius", "radialAngleBase", 
    "size",  "direction", "density", "force", 
    "hueSpeed", "hueSpread",
-   "varRadius", //"varRadialAngle",
-   /*"varSize",*/ "varDirection", //"varDensity",
-   "varForce", //"varHueSpeed",
+   "varRadius", "varRadialAngle",
+   "varDirection", "varForce", 
    "modRadiusRate", "modRadiusLevel",
    //"modRadialAngleRate", "modRadialAngleLevel",
    "modDirectionRate", "modDirectionLevel",
@@ -70,8 +69,8 @@ struct EmitterParamEntry {
 };
 
 const EmitterParamEntry EMITTER_PARAM_LOOKUP[] PROGMEM = {
-   {"singlejet", SINGLEJET_PARAMS, 12},
-   {"multijet", MULTIJET_PARAMS, 19},
+   {"singlejet", SINGLEJET_PARAMS, 13},
+   {"multijet", MULTIJET_PARAMS, 21},
 };
 
 static const EmitterParamEntry* getEmitterParams(uint8_t emitterIdx) {
@@ -179,23 +178,6 @@ float cFlowBright = 0.75f;
 float cGlowStrength = 0.0f;
 float cHighlightSat = 2.0f;
 
-// EMITTER: singleJet --------------
-//float cJetDensity = 30.0f;
-//float cJetForce = 0.25f;
-//float cJetRadius = 2.0f;
-//float cJetSpread = 1.0f;
-//float cJetAngle = 0.0f;
-//float cJetHueSpeed = 0.69f;
-//float cJetSwingRange = 4.0f;
-//float cModJetForceRate = 0.5f;
-//float cModJetForceLevel = 0.0f;
-//float cModJetAngleRate = 0.5f;
-//float cModJetAngleLevel = 0.0f;
-//float cModJetSwingRate = 0.3f;
-//float cModJetSwingLevel = 0.0f;
-
-// EMITTER: multiJet --------------
-
 // JETS: ---------------------
 uint8_t cNumJets = 3;
 uint8_t cDirectionMode = 0;
@@ -206,10 +188,10 @@ float cSize = (float)MIN_DIMENSION * 0.1f;
 float cDensity = 30.0f;
 float cForce = 0.25f;
 float cDirection = 0.0f;
-float cSpread = 0.0f;
+float cSpread = (float)MIN_DIMENSION * 0.05f;
 float cHueSpeed = 0.25f;
 float cHueSpread = 1.0f;
-float cSlideRange = (float)MIN_DIMENSION * 0.125f; 
+float cSlideRange = (float)MIN_DIMENSION * 0.5f; 
 float cVarRadialAngle = 0.75f;
 float cVarRadius = 0.25f;
 float cVarSize = 0.25f;
@@ -266,24 +248,6 @@ bool  cPaddleOverlay = false;
 //  X-MACRO PARAMETER TABLE
 // ═══════════════════════════════════════════════════════════════════
 
-/*
-X(float, JetDensity, 50.0f) \
-   X(float, JetForce, 0.25f) \
-   X(float, JetRadius, 2.0f) \
-   X(float, JetSpread, 1.0f) \
-   X(float, JetAngle, 0.0f) \
-   X(float, JetHueSpeed, 0.7f) \
-   X(float, JetSwingRange, 4.0f) \
-   X(float, ModJetForceRate, 0.3f) \
-   X(float, ModJetForceLevel, 0.1f) \
-   X(float, ModJetAngleRate, 0.3f) \
-   X(float, ModJetAngleLevel, 2.0f) \
-   X(float, ModJetSwingRate, 0.3f) \
-   X(float, ModJetSwingLevel, 0.0f) \
-   
-*/
-
-
 #define PARAMETER_TABLE \
    X(uint8_t, OverrideMapping, 0) \
    X(float, GlobalSpeed, 0.5f) \
@@ -295,17 +259,17 @@ X(float, JetDensity, 50.0f) \
    X(uint8_t, ColorMode, 0) \
    X(float, Radius, (float)MIN_DIMENSION * 0.25f) \
    X(float, RadialAngleBase, 0.0f) \
-   X(float, Size, 5.0f) \
-   X(float, Density, 30.0f) \
+   X(float, Size, (float)MIN_DIMENSION * 0.1f) \
+   X(float, Density, 25.0f) \
    X(float, Force, 0.25f) \
    X(float, Direction, 0.0f) \
-   X(float, Spread, 0.0f) \
-   X(float, SlideRange, 0.0f) \
+   X(float, Spread, (float)MIN_DIMENSION * 0.05f) \
+   X(float, SlideRange, (float)WIDTH * 0.5f) \
    X(float, HueSpeed, 0.25f) \
    X(float, HueSpread, 1.0f) \
-   X(float, VarRadialAngle, 0.74f) \
+   X(float, VarRadialAngle, 0.75f) \
    X(float, VarRadius, 0.25f) \
-   X(float, VarDirection, 3.1415927f) \
+   X(float, VarDirection, 0.75f) \
    X(float, VarSize, 0.25f) \
    X(float, VarDensity, 0.25f) \
    X(float, VarForce, 0.15f) \

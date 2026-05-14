@@ -305,7 +305,7 @@ namespace fastFluid {
                 JetParams& jet = singleJet::jet;
                 cDensity = jet.density;
                 cForce = jet.force;
-                cRadius = jet.size;
+                cSize = jet.size;
                 cSpread = jet.spread;
                 cDirection = jet.direction;
                 cHueSpeed = jet.hueSpeed;

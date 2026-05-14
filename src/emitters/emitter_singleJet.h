@@ -23,13 +23,13 @@ namespace singleJet {
 
     JetParams jet = {
         .radius = (float)MIN_DIMENSION * 0.25,
-        .size = (float)MIN_DIMENSION / 12.0f,
+        .size = (float)MIN_DIMENSION * 0.1f,
         .direction = 0.0f,
-        .density = 30.0f,
+        .density = 25.0f,
         .force = 0.25f,
-        .hueSpeed = 0.7f,
-        .spread = (float)MIN_DIMENSION / 22.0f,
-        .slideRange = (float)MIN_DIMENSION / 8.0f,
+        .hueSpeed = 0.25f,
+        .spread = (float)MIN_DIMENSION * 0.05f,
+        .slideRange = (float)WIDTH * 0.5f,
         .modDirection = {1, 0.3f, 2.0f},
         .modForce = {0, 0.3f, 0.1f},
         .modSlideRange = {2, 0.3f, 0.0f}
@@ -66,7 +66,7 @@ namespace singleJet {
         // Direction: noise-based offset around base direction.
         // Coefficient π/4 per modLevel unit → modLevel=2 reaches full ±π/2 (±90°).
         constexpr float DIRECTION_SCALE = FF_2PI * 0.125f;   // π/4
-        const float directionOffset = directionMod.modLevel * DIRECTION_SCALE * directionSignal;
+        const float directionOffset = directionMod.modLevel * directionSignal * DIRECTION_SCALE;
 
         // Wrap final angle to [0, 2π) for sincos_fast (UB for negative inputs).
         constexpr float INV_2PI = 1.0f / FF_2PI;
@@ -92,7 +92,7 @@ namespace singleJet {
 
         // Jet position: bottom-center, offset horizontally by slide.
         const float jx = (float)WIDTH * 0.5f + slideOffset;
-        const float jy = (float)HEIGHT - 2.0f;
+        const float jy = (float)HEIGHT - 1.0f;
 
         // ─── 3-layered Gaussian splat ──────────────────────────────
         // Each layer is shifted along the jet axis. Offsets scale with
