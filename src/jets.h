@@ -47,7 +47,7 @@ namespace fastFluid {
         float spread = (float)MIN_DIMENSION * 0.05f;
         float slideRange = (float)MIN_DIMENSION *0.125f;
         ModConfig modRadialAngle = {0, 0.2f, 0.4f};
-        ModConfig modRadius = {0, 0.4f, 1.5f};
+        ModConfig modRadius = {0, 0.5f, 1.5f};
         ModConfig modDirection = {0, 0.5f, 1.5f};
         ModConfig modSize = {0, 0.1f, 0.0f};
         ModConfig modDensity = {0, 0.1f, 0.0f};
@@ -59,7 +59,6 @@ namespace fastFluid {
         // In a multiJet emitter, the above parameters are set by 
         // a shared "jetPack". In that case, the following parameters
         // set individual jet variances     
-
         
         // Static per-jet scaling factors
         float radiusFxFactor = 1.0f;
@@ -75,17 +74,6 @@ namespace fastFluid {
         float densityModScale = 1.0f;
         float forceModScale = 1.0f;
         float hueSpeedModScale = 1.0f;
-
-        /*
-        float offsetRadius = 0.0f;
-        float offsetRadialAngle = 0.0f;
-        float offsetSize = 0.0f;
-        float offsetDirection = 0.0f;
-        float offsetDensity = 0.0f;
-        float offsetForce = 0.0f;
-        float offsetHueSpeed = 0.0f;
-        */
-
     };
 
     struct JetPackParams {
@@ -99,10 +87,11 @@ namespace fastFluid {
         float centerCol = (float)WIDTH * 0.5f;
         float centerRow = (float)HEIGHT * 0.5f;
 
-        float radialAngleBase = 0.0f;  // Rotates the evenly-spaced ring.
         float radius = (float)MIN_DIMENSION * 0.25f;
+        float radialAngleBase = 0.0f;  // Sets the base angle of jet[0]
+        float rotation = 0.0f; // Rotates the ring of jets; units are rotations per minute
         float size = (float)MIN_DIMENSION * 0.1f;
-        // Absolute angle in absolute mode; shared rotation offset otherwise.
+        // direction = absolute jet direction in absolute mode; shared direction offset otherwise.
         float direction = 0.0f;
         float density = 25.0f;
         float force = 0.25f;
@@ -117,24 +106,25 @@ namespace fastFluid {
         // conjunction with each jet's paramModScale factosr that set how each jet responds to
         // modulations of various parameters.     
         
-        float varRadialAngle = 0.8f;
-        float varRadius = 0.3f;
-        float varSize = 0.3f;
-        float varDirection = 0.8f; // was FF_PI;
-        float varDensity = 0.3f;
-        float varForce = 0.3f;
-        float varHueSpeed = 0.3f;
+        float varRadius = 1.0f;
+        float varRadialAngle = 1.0f;
+        float varSize = 1.0f;
+        float varDirection = 1.0f; // was FF_PI;
+        float varDensity = 1.0f;
+        float varForce = 1.0f;
+        float varHueSpeed = 1.0f;
 
-        ModConfig modRadialAngle = {0, 0.2f, 0.4f};
         ModConfig modRadius = {0, 0.4f, 1.5f};
+        ModConfig modRadialAngle = {0, 0.2f, 0.4f};
+        ModConfig modRotation = {0, 0.2f, 0.4f};
         ModConfig modDirection = {0, 0.5f, 1.5f};
         ModConfig modSize = {0, 0.1f, 0.0f};
         ModConfig modDensity = {0, 0.1f, 0.0f};
         ModConfig modForce = {0, 0.2f, 0.2f};
         ModConfig modHueSpeed = {0, 0.3f, 0.0f};
         
-        uint32_t radiusStep     = 5000;
-        uint32_t directionStep  = 40000;
+        uint32_t radiusStep     = 50000;
+        uint32_t directionStep  = 100000;
 
 
     };

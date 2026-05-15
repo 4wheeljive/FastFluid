@@ -31,8 +31,8 @@ namespace smoke {
     struct SmokeParams {
         float viscosity           = 0.0f;     // velocity diffusion coefficient
         float diffusion           = 0.0f;     // dye diffusion coefficient
-        float velocityDissipation = 0.5f;     // per-second velocity decay (0..1, 1=no decay)
-        float dyeDissipation      = 0.4f;     // per-second dye decay (0..1, 1=no decay)
+        float velocityDissipation = 0.25f;     // per-second velocity decay (0..1, 1=no decay)
+        float dyeDissipation      = 0.25f;     // per-second dye decay (0..1, 1=no decay)
         float vorticity           = 0.0f;     // confinement strength (0 = disabled)
         // Directional gravity: applied as a uniform force inside the velocity step.
         // Angle convention matches jetAngle: 0°=up, 90°=right, 180°=down, 270°=left.
@@ -45,8 +45,8 @@ namespace smoke {
         uint8_t diffuseIterations = 6;        // Jacobi passes for diffuse
         uint8_t projectIterations = 10;       // Jacobi passes for pressure projection
 
-        ModConfig modVelDissip = {0, 0.5f, 0.0f};   // modTimer, modRate, modLevel
-        ModConfig modDyeDissip = {1, 0.5f, 0.0f};
+        ModConfig modVelDissip = {0, 0.3f, 0.3f};   // modTimer, modRate, modLevel
+        ModConfig modDyeDissip = {1, 0.3f, 0.3f};
     };
 
     static constexpr ModConfig SmokeParams::* SMOKE_MODS[] = {

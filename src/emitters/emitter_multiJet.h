@@ -19,40 +19,45 @@ namespace multiJet {
     static constexpr float MULTIJET_INV_2PI = 1.0f / FF_2PI;
 
     float radiusSignal = 0.0f;
+    float radialAngleSignal = 0.0f;
     float directionSignal = 0.0f;
     float forceSignal = 0.0f;
     float hueSpeedSignal = 0.0f;
 
     static inline JetParams makeMultiJetParams(float radiusModScale,
+                                               float radialAngleModScale,
                                                float directionModScale,
                                                float forceModScale) {
         JetParams params{};
         params.radiusModScale = radiusModScale;
+        params.radialAngleModScale = radialAngleModScale;
         params.directionModScale = directionModScale;
         params.forceModScale = forceModScale;
         return params;
     }
 
     JetParams jet[MAX_NUM_JETS] = {
-        makeMultiJetParams(1.00f, 1.00f, 1.00f),
-        makeMultiJetParams(0.80f, 1.30f, 0.70f),
-        makeMultiJetParams(1.20f, 0.80f, 1.15f),
-        makeMultiJetParams(0.90f, 1.20f, 0.85f),
-        makeMultiJetParams(1.40f, 0.60f, 1.30f)
+        makeMultiJetParams(1.00f, 1.00f, 1.00f, 1.00f),
+        makeMultiJetParams(1.00f, 1.00f, 1.00f, 1.00f),
+        makeMultiJetParams(1.00f, 1.00f, 1.00f, 1.00f),
+        makeMultiJetParams(1.00f, 1.00f, 1.00f, 1.00f),
+        makeMultiJetParams(1.00f, 1.00f, 1.00f, 1.00f)
     };
 
     /*
-        makeMultiJetParams(1.00f, 1.00f, 1.00f),
-        makeMultiJetParams(1.00f, 1.00f, 1.00f),
-        makeMultiJetParams(1.00f, 1.00f, 1.00f),
-        makeMultiJetParams(1.00f, 1.00f, 1.00f),
-        makeMultiJetParams(1.00f, 1.00f, 1.00f)
+        makeMultiJetParams(1.00f, 1.00f, 1.00f, 1.00f),
+        makeMultiJetParams(0.80f, 1.30f, 0.70f, 1.00f),
+        makeMultiJetParams(1.20f, 0.80f, 1.15f, 1.00f),
+        makeMultiJetParams(0.90f, 1.20f, 0.85f, 1.00f),
+        makeMultiJetParams(1.40f, 0.60f, 1.30f, 1.00f)
+        
     */
 
     JetPackParams jetPack;
 
     static constexpr ModConfig JetPackParams::* MULTIJET_MODS[] = {
         &JetPackParams::modRadius,
+        &JetPackParams::modRadialAngle,
         &JetPackParams::modDirection,
         //&JetPackParams::modForce,
         &JetPackParams::modHueSpeed,
@@ -76,6 +81,7 @@ namespace multiJet {
 
     static void prepEmitterMods() {
         timings.ratio[jetPack.modRadius.modTimer] = 0.00049f * jetPack.modRadius.modRate;
+        timings.ratio[jetPack.modRadialAngle.modTimer] = 0.0004f * jetPack.modRadialAngle.modRate;
         timings.ratio[jetPack.modDirection.modTimer] = 0.0006f * jetPack.modDirection.modRate;
         timings.ratio[jetPack.modHueSpeed.modTimer] = 0.00035f * jetPack.modHueSpeed.modRate;
     }
@@ -87,6 +93,7 @@ namespace multiJet {
 
     static void acquireSignals() {
         radiusSignal = move.directional_noise[jetPack.modRadius.modTimer];
+        radialAngleSignal = move.directional_noise[jetPack.modRadialAngle.modTimer];
         directionSignal = move.directional_noise[jetPack.modDirection.modTimer];
         hueSpeedSignal = move.directional_noise[jetPack.modHueSpeed.modTimer];
     }
@@ -112,24 +119,10 @@ namespace multiJet {
     }
 
     float getNoiseSignal(uint8_t jetIndex, param param) {
-		uint32_t t = (uint32_t)now * 32u; // fl::millis()
+		uint32_t t = (uint32_t)now * 16u;
         uint32_t offset = (uint32_t)jetIndex * getStep(param);
         float noiseVal = inoise16(t, t + offset) * (2.0f / 65535.0f) - 1.0f;
         return noiseVal;
-
-        /*
-        uint32_t step = getStep(param);
-        uint32_t x = fl::millis() * 16;
-        uint32_t y = jetIndex * 20000u + paramSalt;
-        float noiseVal = inoise16(x, y) * (2.0f / 65535.0f) - 1.0f;
-        */
-    
-        /*
-        uint32_t t1 = now;
-		uint32_t t2 = now + (i * step);
-		uint16_t rawNoiseVal = inoise16(t1, t2);
-	    float noiseVal = rawNoiseVal * (2.0f / 65535.0f) - 1.0f; // [-1, +1]
-        */
 	}
 
     static float diffSignal(uint8_t fxMode, uint8_t jetIndex, param param) {
@@ -153,13 +146,13 @@ namespace multiJet {
                                FF_2PI * ((float)jetIndex / (float)count);
 
         const float angle = rawAngle +
-                            //angleSignal *
+                            radialAngleSignal *
                             jetPack.modRadialAngle.modLevel *
                             jetPack.varRadialAngle *
                             thisJet.radialAngleModScale;
 
 
-		float radiusFxDepth = 1.0f;   // how much we want each jet's radius to vary from other jets based on diffSignal  		
+		float radiusFxDepth = 1.5f;   // how much we want each jet's radius to vary from other jets based on diffSignal  		
 		float radiusFxFactor = 1.0f + diffSignal(jetPack.fxRadius, jetIndex, RADIUS) * radiusFxDepth; 
 
         float radius = jetPack.radius * 
@@ -216,7 +209,7 @@ namespace multiJet {
                 break;
         }
 
-        float directionFxDepth = 1.0f;   // how much we want each jet's direction to vary from other jets based on diffSignal 
+        float directionFxDepth = 1.5f;   // how much we want each jet's direction to vary from other jets based on diffSignal 
         float directionFxFactor = 1.0f + diffSignal(jetPack.fxDirection, jetIndex, DIRECTION) * directionFxDepth; 
         
         const float directionModulation = directionSignal *

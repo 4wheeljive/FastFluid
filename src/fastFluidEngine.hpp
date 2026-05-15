@@ -40,7 +40,7 @@ namespace fastFluid {
         float colorContrast = 1.0f;
         float blackPoint    = 0.105f;
         float flowSat       = 2.0f;
-        float flowBright    = 0.75f;
+        float flowBright    = 0.5f;
         float glowStrength  = 0.0f;
         float highlightSat  = 2.0f;
     };
