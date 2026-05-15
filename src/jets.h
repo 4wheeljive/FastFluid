@@ -132,9 +132,10 @@ namespace fastFluid {
         ModConfig modDensity = {0, 0.1f, 0.0f};
         ModConfig modForce = {0, 0.2f, 0.2f};
         ModConfig modHueSpeed = {0, 0.3f, 0.0f};
-        ModConfig fxNoise = {0, 0.3f, 0.0f};
-        ModConfig fxSine = {0, 0.3f, 0.0f};
-        //ModConfig fxDelay = {0, 0.3f, 0.0f};
+        
+        uint32_t radiusStep     = 5000;
+        uint32_t directionStep  = 40000;
+
 
     };
 

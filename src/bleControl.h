@@ -258,13 +258,8 @@ void sendEmitterState() {
       Serial.println("Sending emitter state...");
    }
 
-   ArduinoJson::JsonDocument stateDoc;
-   stateDoc["emitter"] = EMITTER;
-
    // Get parameter list for current visualizer
    const EmitterParamEntry* emitterParams = getEmitterParams(EMITTER);
-
-   ArduinoJson::JsonObject params = stateDoc["parameters"].to<ArduinoJson::JsonObject>();
 
    if (debug) {
        Serial.print("Current emitter: ");
@@ -290,44 +285,13 @@ void sendEmitterState() {
        }
    }
 
-   // Add parameter values to JSON based on visualizer params
-   for (uint8_t i = 0; i < emitterParams->count; i++) {
-       char paramName[32];
-       ::strcpy(paramName, (char*)pgm_read_ptr(&emitterParams->params[i]));
-
-       bool paramFound = false;
-       // Use X-macro to match parameter names and add values
-       // Handle case-insensitive comparison for parameter names
-       #define X(type, parameter, def) \
-           if (strcasecmp(paramName, #parameter) == 0) { \
-               params[paramName] = c##parameter; \
-               if (debug) { \
-                   Serial.print("Added parameter "); \
-                   Serial.print(paramName); \
-                   Serial.print(": "); \
-                   Serial.println(c##parameter); \
-               } \
-               paramFound = true; \
-           }
-       PARAMETER_TABLE
-       #undef X
-
-       if (!paramFound) {
-           Serial.print("Warning: Parameter not found in X-macro table: ");
-           Serial.println(paramName);
-       }
-   }
-
-   // Send as a single JSON doc with nested val object (avoids double-encoding
-   // that would exceed BLE MTU when string-escaping the inner JSON).
+   // Keep the string notification small. Multijet's full parameter object is
+   // close to the BLE MTU, so parameter values are sent as normal number
+   // receipts immediately after this state header.
    ArduinoJson::JsonDocument envelope;
    envelope["id"] = "emitterState";
    ArduinoJson::JsonObject val = envelope["val"].to<ArduinoJson::JsonObject>();
    val["emitter"] = EMITTER;
-   ArduinoJson::JsonObject valParams = val["parameters"].to<ArduinoJson::JsonObject>();
-   for (auto kv : params) {
-       valParams[kv.key()] = kv.value();
-   }
 
    String json;
    serializeJson(envelope, json);
@@ -339,6 +303,33 @@ void sendEmitterState() {
 
    pStringCharacteristic->setValue(json);
    pStringCharacteristic->notify();
+
+   if (emitterParams != nullptr) {
+       for (uint8_t i = 0; i < emitterParams->count; i++) {
+           char paramName[32];
+           ::strcpy(paramName, (char*)pgm_read_ptr(&emitterParams->params[i]));
+
+           bool paramFound = false;
+           #define X(type, parameter, def) \
+               if (strcasecmp(paramName, #parameter) == 0) { \
+                   sendReceiptNumber("in" #parameter, c##parameter); \
+                   if (debug) { \
+                       Serial.print("Sent emitter parameter "); \
+                       Serial.print(paramName); \
+                       Serial.print(": "); \
+                       Serial.println(c##parameter); \
+                   } \
+                   paramFound = true; \
+               }
+           PARAMETER_TABLE
+           #undef X
+
+           if (!paramFound) {
+               Serial.print("Warning: Parameter not found in X-macro table: ");
+               Serial.println(paramName);
+           }
+       }
+   }
 
 }  // sendEmitterState()
 

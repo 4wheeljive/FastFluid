@@ -59,8 +59,7 @@ const char* const MULTIJET_PARAMS[] PROGMEM = {
    "varDirection", "modDirectionRate", "modDirectionLevel",
    //"varForce", "modForceRate", "modForceLevel",
    "varHueSpeed", "modHueSpeedRate", "modHueSpeedLevel",
-   "fxNoiseRate", "fxNoiseLevel",
-   "fxSineRate", "fxSineLevel",
+   "radiusStep", "directionStep",
 };
 
 struct EmitterParamEntry {
@@ -71,7 +70,7 @@ struct EmitterParamEntry {
 
 const EmitterParamEntry EMITTER_PARAM_LOOKUP[] PROGMEM = {
    {"singlejet", SINGLEJET_PARAMS, 13},
-   {"multijet", MULTIJET_PARAMS, 27},
+   {"multijet", MULTIJET_PARAMS, 25},
 };
 
 static const EmitterParamEntry* getEmitterParams(uint8_t emitterIdx) {
@@ -216,10 +215,8 @@ float cModHueSpeedRate = 0.3f;
 float cModHueSpeedLevel = 0.0f;
 float cModSlideRate = 0.3f;
 float cModSlideLevel = 0.0f;
-float cFxNoiseRate = 0.3f;
-float cFxNoiseLevel = 0.0f;
-float cFxSineRate = 0.3f;
-float cFxSineLevel = 0.0f;
+uint32_t cRadiusStep = 5000;
+uint32_t cDirectionStep = 40000;
 
 
 // FLOW: smoke --------------------
@@ -300,10 +297,8 @@ bool  cPaddleOverlay = false;
    X(float, ModHueSpeedLevel, 0.0f) \
    X(float, ModSlideRate, 0.3f) \
    X(float, ModSlideLevel, 0.0f) \
-   X(float, FxNoiseRate, 0.3f) \
-   X(float, FxNoiseLevel, 0.0f) \
-   X(float, FxSineRate, 0.3f) \
-   X(float, FxSineLevel, 0.0f) \
+   X(uint32_t, RadiusStep, 5000) \
+   X(uint32_t, DirectionStep, 40000) \
    X(float, Viscosity, 0.0f) \
    X(float, Diffusion, 0.0f) \
    X(float, VelocityDissipation, 0.5f) \

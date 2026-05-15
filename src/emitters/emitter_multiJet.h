@@ -22,19 +22,6 @@ namespace multiJet {
     float directionSignal = 0.0f;
     float forceSignal = 0.0f;
     float hueSpeedSignal = 0.0f;
-    float fxNoiseSignal = 0.0f;
-    float fxSineSignal = 0.0f;
-    float fxDelaySignal = 0.0f;
-
-    static constexpr uint16_t FX_NOISE_HISTORY_MS = 20000;
-    static constexpr uint16_t FX_NOISE_HISTORY_SAMPLE_MS = 20;
-    static constexpr uint16_t FX_NOISE_HISTORY_SAMPLES =
-        (FX_NOISE_HISTORY_MS / FX_NOISE_HISTORY_SAMPLE_MS) + 1;
-    float fxNoiseHistory[FX_NOISE_HISTORY_SAMPLES];
-    uint16_t fxNoiseHistoryWrite = 0;
-    uint16_t fxNoiseHistoryCount = 0;
-    unsigned long fxNoiseHistoryLastMs = 0;
-    bool fxNoiseHistorySeeded = false;
 
     static inline JetParams makeMultiJetParams(float radiusModScale,
                                                float directionModScale,
@@ -67,10 +54,8 @@ namespace multiJet {
     static constexpr ModConfig JetPackParams::* MULTIJET_MODS[] = {
         &JetPackParams::modRadius,
         &JetPackParams::modDirection,
-        &JetPackParams::modForce,
+        //&JetPackParams::modForce,
         &JetPackParams::modHueSpeed,
-        &JetPackParams::fxNoise,
-        //&JetPackParams::fxSine,
     };
     
     static inline float wrapRad(float angle) {
@@ -92,91 +77,67 @@ namespace multiJet {
     static void prepEmitterMods() {
         timings.ratio[jetPack.modRadius.modTimer] = 0.00049f * jetPack.modRadius.modRate;
         timings.ratio[jetPack.modDirection.modTimer] = 0.0006f * jetPack.modDirection.modRate;
-        //timings.ratio[jetPack.modForce.modTimer] = 0.00037f * jetPack.modForce.modRate;
         timings.ratio[jetPack.modHueSpeed.modTimer] = 0.00035f * jetPack.modHueSpeed.modRate;
-        timings.ratio[jetPack.fxNoise.modTimer] = 0.0001f * jetPack.fxNoise.modRate;
-		//timings.ratio[jetPack.fxSine.modTimer] = 0.0002f * jetPack.fxSine.modRate;
     }
 
-    static inline void pushFxNoiseHistory(float sample) {
-        fxNoiseHistory[fxNoiseHistoryWrite] = sample;
-        fxNoiseHistoryWrite = (fxNoiseHistoryWrite + 1) % FX_NOISE_HISTORY_SAMPLES;
-        if (fxNoiseHistoryCount < FX_NOISE_HISTORY_SAMPLES) {
-            fxNoiseHistoryCount++;
-        }
-    }
-
-    static inline void seedFxNoiseHistory(float sample, unsigned long nowMs) {
-        for (uint16_t i = 0; i < FX_NOISE_HISTORY_SAMPLES; i++) {
-            fxNoiseHistory[i] = sample;
-        }
-        fxNoiseHistoryWrite = 0;
-        fxNoiseHistoryCount = 0;
-        fxNoiseHistoryLastMs = nowMs - FX_NOISE_HISTORY_SAMPLE_MS;
-        fxNoiseHistorySeeded = true;
-    }
-
-    static inline void updateFxNoiseHistory(float sample) {
-        const unsigned long nowMs = fl::millis();
-        if (!fxNoiseHistorySeeded) {
-            seedFxNoiseHistory(sample, nowMs);
-        }
-
-        while ((unsigned long)(nowMs - fxNoiseHistoryLastMs) >= FX_NOISE_HISTORY_SAMPLE_MS) {
-            fxNoiseHistoryLastMs += FX_NOISE_HISTORY_SAMPLE_MS;
-            pushFxNoiseHistory(sample);
-        }
-    }
-
-    static inline float readFxNoiseHistory(uint16_t lookbackMs) {
-        if (fxNoiseHistoryCount == 0) return fxNoiseSignal;
-
-        uint16_t slotsBack =
-            (lookbackMs + (FX_NOISE_HISTORY_SAMPLE_MS / 2)) / FX_NOISE_HISTORY_SAMPLE_MS;
-        const uint16_t maxSlotsBack = fxNoiseHistoryCount - 1;
-        if (slotsBack > maxSlotsBack) {
-            slotsBack = maxSlotsBack;
-        }
-
-        const uint16_t latestIndex =
-            (fxNoiseHistoryWrite + FX_NOISE_HISTORY_SAMPLES - 1) % FX_NOISE_HISTORY_SAMPLES;
-        const uint16_t readIndex =
-            (latestIndex + FX_NOISE_HISTORY_SAMPLES - slotsBack) % FX_NOISE_HISTORY_SAMPLES;
-        return fxNoiseHistory[readIndex];
-    }
+    enum param : uint8_t {
+		RADIUS = 0,
+		DIRECTION = 1
+	};
 
     static void acquireSignals() {
         radiusSignal = move.directional_noise[jetPack.modRadius.modTimer];
         directionSignal = move.directional_noise[jetPack.modDirection.modTimer];
-        //forceSignal = move.directional_noise[jetPack.modForce.modTimer];
         hueSpeedSignal = move.directional_noise[jetPack.modHueSpeed.modTimer];
-        fxNoiseSignal = move.directional_noise[jetPack.fxNoise.modTimer];
-        updateFxNoiseHistory(fxNoiseSignal);
-		fxSineSignal = move.directional_sine[jetPack.fxSine.modTimer];
     }
 
-    float jetNoiseSignal(uint8_t jetIndex) {
-        uint16_t noiseLookback = 5000;
-        noiseLookback *= jetIndex;
-        return readFxNoiseHistory(noiseLookback);
+    /* 
+    ----------------------------------------------------
+    timeScale = 16;   // slow-ish drift
+    timeScale = 64;   // faster visible drift
+
+    step = 1000;      // nearby, coordinated
+    step = 5000;      // gentle variation
+    step = 20000;     // more separated
+    step = 60000;     // strongly decorrelated
+    ----------------------------------------------------
+    */
+
+    uint32_t getStep(uint8_t param) {
+        switch(param) {
+            case RADIUS:     return jetPack.radiusStep; break;
+            case DIRECTION:  return jetPack.directionStep; break;
+            default:         return 0; break;
+        }
     }
 
-    float jetSineSignal(uint8_t jetIndex) {
-        return 0.0f; // placeholder until later
-    }
+    float getNoiseSignal(uint8_t jetIndex, param param) {
+		uint32_t t = (uint32_t)now * 32u; // fl::millis()
+        uint32_t offset = (uint32_t)jetIndex * getStep(param);
+        float noiseVal = inoise16(t, t + offset) * (2.0f / 65535.0f) - 1.0f;
+        return noiseVal;
 
-    float jetDelaySignal(uint8_t jetIndex) {
-        uint16_t delayLookback = 40;
-        delayLookback *= jetIndex;
-        return readFxNoiseHistory(delayLookback);
-    }
+        /*
+        uint32_t step = getStep(param);
+        uint32_t x = fl::millis() * 16;
+        uint32_t y = jetIndex * 20000u + paramSalt;
+        float noiseVal = inoise16(x, y) * (2.0f / 65535.0f) - 1.0f;
+        */
+    
+        /*
+        uint32_t t1 = now;
+		uint32_t t2 = now + (i * step);
+		uint16_t rawNoiseVal = inoise16(t1, t2);
+	    float noiseVal = rawNoiseVal * (2.0f / 65535.0f) - 1.0f; // [-1, +1]
+        */
+	}
 
-    static float diffSignal(uint8_t fxMode, uint8_t jetIndex) {
+    static float diffSignal(uint8_t fxMode, uint8_t jetIndex, param param) {
 		switch (fxMode) {
             case SYNCHRONOUS:  return 0.0f; break;
-            case NOISE:        return jetNoiseSignal(jetIndex); break;
-            case SINE:         return jetSineSignal(jetIndex); break;
-            case DELAY:        return jetDelaySignal(jetIndex); break;
+            case NOISE:        return getNoiseSignal(jetIndex, param); break;
+            case SINE:         return 0.0f; break;
+            case DELAY:        return 0.0f; break;
             default:	       return 0.0f; break;
         }
     }
@@ -198,8 +159,8 @@ namespace multiJet {
                             thisJet.radialAngleModScale;
 
 
-		float radiusFxDepth = 0.9f;   // how much we want each jet's radius to vary from other jets based on diffSignal  		
-		float radiusFxFactor = 1.0f + diffSignal(jetPack.fxRadius, jetIndex) * radiusFxDepth; 
+		float radiusFxDepth = 1.0f;   // how much we want each jet's radius to vary from other jets based on diffSignal  		
+		float radiusFxFactor = 1.0f + diffSignal(jetPack.fxRadius, jetIndex, RADIUS) * radiusFxDepth; 
 
         float radius = jetPack.radius * 
                        (1.0f + radiusSignal * jetPack.modRadius.modLevel *
@@ -255,8 +216,8 @@ namespace multiJet {
                 break;
         }
 
-        float directionFxDepth = 0.9f;   // how much we want each jet's direction to vary from other jets based on diffSignal 
-        float directionFxFactor = 1.0f + diffSignal(jetPack.fxDirection, jetIndex) * directionFxDepth; 
+        float directionFxDepth = 1.0f;   // how much we want each jet's direction to vary from other jets based on diffSignal 
+        float directionFxFactor = 1.0f + diffSignal(jetPack.fxDirection, jetIndex, DIRECTION) * directionFxDepth; 
         
         const float directionModulation = directionSignal *
                                           jetPack.modDirection.modLevel *

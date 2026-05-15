@@ -353,10 +353,8 @@ namespace fastFluid {
                 //cModForceLevel = pack.modForce.modLevel;
                 cModHueSpeedRate = pack.modHueSpeed.modRate;
                 cModHueSpeedLevel = pack.modHueSpeed.modLevel;
-                cFxNoiseRate = pack.fxNoise.modRate;
-                cFxNoiseLevel = pack.fxNoise.modLevel;
-                cFxSineRate = pack.fxSine.modRate;
-                cFxSineLevel = pack.fxSine.modLevel;
+                cRadiusStep = pack.radiusStep;
+                cDirectionStep = pack.directionStep;
                 break;
             }
             default: break;
@@ -459,10 +457,8 @@ namespace fastFluid {
         //multiJet::jetPack.modDensity.modLevel = cModDensityLevel;
         multiJet::jetPack.modHueSpeed.modRate = cModHueSpeedRate;
         multiJet::jetPack.modHueSpeed.modLevel = cModHueSpeedLevel;
-        multiJet::jetPack.fxNoise.modLevel = cFxNoiseLevel;
-        multiJet::jetPack.fxNoise.modRate = cFxNoiseRate;
-        multiJet::jetPack.fxSine.modLevel = cFxSineLevel;
-        multiJet::jetPack.fxSine.modRate = cFxSineRate;
+        multiJet::jetPack.radiusStep = cRadiusStep;
+        multiJet::jetPack.directionStep = cDirectionStep;
     }
 
     static void syncFlowFromCVars() {
@@ -514,7 +510,7 @@ namespace fastFluid {
     }
 
     void runfastFluid() {
-        unsigned long now = fl::millis();
+        now = fl::millis();
         float rawDt = (now - lastFrameMs) * 0.001f;
         lastFrameMs = now;
         dt = rawDt * globalSpeed * 0.5f; // change takes effect one frame late
