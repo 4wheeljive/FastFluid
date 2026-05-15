@@ -134,7 +134,7 @@ namespace fastFluid {
     static void drawEmitterDebugOverlay() {
         if (activeEmitter != EMITTER_MULTIJET) return;
 
-        const uint8_t count = multiJet::multiJetCount();
+        const uint8_t count = multiJet::getNumJets();
         if (count == 0) return;
 
         const float arrowLength = clampf(multiJet::jetPack.size * 2.0f, 3.0f, (float)MIN_DIMENSION * 0.28f);
@@ -144,11 +144,11 @@ namespace fastFluid {
 
             float anchorCol;
             float anchorRow;
-            multiJet::resolveMultiJetAnchor(i, count, thisJet, anchorCol, anchorRow);
+            multiJet::getJetPlacement(i, count, thisJet, anchorCol, anchorRow);
 
             float dirCol;
             float dirRow;
-            multiJet::resolveMultiJetDirection(i, thisJet, anchorCol, anchorRow, dirCol, dirRow);
+            multiJet::getJetDirection(i, thisJet, anchorCol, anchorRow, dirCol, dirRow);
 
             const float tipCol = anchorCol + dirCol * arrowLength;
             const float tipRow = anchorRow + dirRow * arrowLength;

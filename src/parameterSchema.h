@@ -53,7 +53,7 @@ const char* const MULTIJET_PARAMS[] PROGMEM = {
    "density", "force", 
    "hueSpeed", "hueSpread",
    "varRadius", "modRadiusRate", "modRadiusLevel",
-   "varRadialAngle", "modRadialAngleRate", "modRadialAngleLevel",
+   //"varRadialAngle", "modRadialAngleRate", "modRadialAngleLevel",
    //"varSize", "modSizeRate", "modSizeLevel",
    //"varDensity", "modDensityRate", "modDensityLevel",
    "varDirection", "modDirectionRate", "modDirectionLevel",
@@ -70,7 +70,7 @@ struct EmitterParamEntry {
 
 const EmitterParamEntry EMITTER_PARAM_LOOKUP[] PROGMEM = {
    {"singlejet", SINGLEJET_PARAMS, 13},
-   {"multijet", MULTIJET_PARAMS, 25},
+   {"multijet", MULTIJET_PARAMS, 22},
 };
 
 static const EmitterParamEntry* getEmitterParams(uint8_t emitterIdx) {
@@ -192,15 +192,15 @@ float cSpread = (float)MIN_DIMENSION * 0.05f;
 float cHueSpeed = 0.25f;
 float cHueSpread = 1.0f;
 float cSlideRange = (float)MIN_DIMENSION * 0.5f; 
-float cVarRadialAngle = 0.75f;
+//float cVarRadialAngle = 0.75f;
 float cVarRadius = 0.25f;
 //float cVarSize = 0.25f;
 float cVarDirection = 3.1415927f;
 //float cVarDensity = 0.25f;
 //float cVarForce = 0.15f;
 float cVarHueSpeed = 0.1f;
-float cModRadialAngleRate = 0.2f;
-float cModRadialAngleLevel = 0.4f;
+//float cModRadialAngleRate = 0.2f;
+//float cModRadialAngleLevel = 0.4f;
 float cModRadiusRate = 0.4f;
 float cModRadiusLevel = 1.5f;
 float cModDirectionRate = 0.5f;
@@ -281,14 +281,11 @@ bool  cPaddleOverlay = false;
    X(float, SlideRange, (float)WIDTH * 0.5f) \
    X(float, HueSpeed, 0.25f) \
    X(float, HueSpread, 1.0f) \
-   X(float, VarRadialAngle, 0.75f) \
    X(float, VarRadius, 0.25f) \
    X(float, VarDirection, 0.75f) \
    X(float, VarHueSpeed, 0.1f) \
    X(float, ModRadiusRate, 0.4f) \
    X(float, ModRadiusLevel, 1.5f) \
-   X(float, ModRadialAngleRate, 0.2f) \
-   X(float, ModRadialAngleLevel, 0.4f) \
    X(float, ModDirectionRate, 0.5f) \
    X(float, ModDirectionLevel, 1.5f) \
    X(float, ModForceRate, 0.2f) \

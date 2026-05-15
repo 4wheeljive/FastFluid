@@ -52,8 +52,6 @@ namespace fastFluid {
 
     static void renderFluidToLeds();
 
-
-
     static void renderFluidToLeds() {
         const float invBlack = 1.0f / fmaxf(1e-3f, 1.0f - render.blackPoint);
         const float gamma    = 1.0f / fmaxf(0.2f, render.colorContrast);
@@ -333,7 +331,7 @@ namespace fastFluid {
                 cHueSpeed = pack.hueSpeed;
                 cHueSpread = pack.hueSpread;
                 cVarRadius = pack.varRadius;
-                cVarRadialAngle = pack.varRadialAngle;
+                //cVarRadialAngle = pack.varRadialAngle;
                 //cVarSize = pack.varSize;
                 cVarDirection = pack.varDirection;
                 //cVarDensity = pack.varDensity;
@@ -341,8 +339,8 @@ namespace fastFluid {
                 cVarHueSpeed = pack.varHueSpeed;
                 cModRadiusRate = pack.modRadius.modRate;
                 cModRadiusLevel = pack.modRadius.modLevel;
-                cModRadialAngleRate = pack.modRadialAngle.modRate;
-                cModRadialAngleLevel = pack.modRadialAngle.modLevel;
+                //cModRadialAngleRate = pack.modRadialAngle.modRate;
+                //cModRadialAngleLevel = pack.modRadialAngle.modLevel;
                 //cModSizeRate = pack.modSize.modRate;
                 //cModSizeLevel = pack.modSize.modLevel;
                 //cModDensityRate = pack.modDensity.modRate;
@@ -436,15 +434,15 @@ namespace fastFluid {
         multiJet::jetPack.direction = cDirection;
         multiJet::jetPack.hueSpeed = cHueSpeed;
         multiJet::jetPack.hueSpread = cHueSpread;
-        multiJet::jetPack.varRadialAngle = cVarRadialAngle;
+        //multiJet::jetPack.varRadialAngle = cVarRadialAngle;
         multiJet::jetPack.varRadius = cVarRadius;
         multiJet::jetPack.varDirection = cVarDirection;
         //multiJet::jetPack.varSize = cVarSize;
         //multiJet::jetPack.varForce = cVarForce;
         //multiJet::jetPack.varDensity = cVarDensity;
         multiJet::jetPack.varHueSpeed = cVarHueSpeed;
-        multiJet::jetPack.modRadialAngle.modRate = cModRadialAngleRate;
-        multiJet::jetPack.modRadialAngle.modLevel = cModRadialAngleLevel;
+        //multiJet::jetPack.modRadialAngle.modRate = cModRadialAngleRate;
+        //multiJet::jetPack.modRadialAngle.modLevel = cModRadialAngleLevel;
         multiJet::jetPack.modRadius.modRate = cModRadiusRate;
         multiJet::jetPack.modRadius.modLevel = cModRadiusLevel;
         multiJet::jetPack.modDirection.modRate = cModDirectionRate;

@@ -28,6 +28,7 @@ namespace fastFluid {
     static float tR[HEIGHT][WIDTH], tG[HEIGHT][WIDTH], tB[HEIGHT][WIDTH];
 
     static unsigned long now = 0;
+    
     static unsigned long lastFrameMs;
     uint8_t lastEmitter = 255;  // force initial setup on first frame
     uint8_t lastFlow = 255;  // force initial setup on first frame
@@ -378,9 +379,16 @@ namespace fastFluid {
         uint8_t modTimer = 0;          // which timer index to read from (0 to num_timers)
 
         // UI-tunable via cVars — struct values are defaults, overwritten by syncFromCVars()
+        
         float   modRate  = 0.0f;       // UI adjustment to timings.ratio[timer] (developer uses in formula)
         float   modLevel = 0.0f;       // modulation depth (0 = mod off)
     };
+
+    struct ModConfig2 {
+        uint32_t   modRate  = 10000;
+        float      modLevel  = 0.0f;
+    };
+
 
     template <typename Params, size_t N>
     inline uint8_t assignModSlots(Params& params, ModConfig Params::* const (&mods)[N], uint8_t baseSlot) {

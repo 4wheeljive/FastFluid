@@ -19,29 +19,29 @@ namespace multiJet {
     static constexpr float MULTIJET_INV_2PI = 1.0f / FF_2PI;
 
     float radiusSignal = 0.0f;
-    float radialAngleSignal = 0.0f;
+    //float wobbleSignal = 0.0f;
     float directionSignal = 0.0f;
     float forceSignal = 0.0f;
     float hueSpeedSignal = 0.0f;
 
     static inline JetParams makeMultiJetParams(float radiusModScale,
-                                               float radialAngleModScale,
+                                               //float wobbleModScale,
                                                float directionModScale,
                                                float forceModScale) {
         JetParams params{};
         params.radiusModScale = radiusModScale;
-        params.radialAngleModScale = radialAngleModScale;
+        //params.wobbleModScale = wobbleModScale;
         params.directionModScale = directionModScale;
         params.forceModScale = forceModScale;
         return params;
     }
 
     JetParams jet[MAX_NUM_JETS] = {
-        makeMultiJetParams(1.00f, 1.00f, 1.00f, 1.00f),
-        makeMultiJetParams(1.00f, 1.00f, 1.00f, 1.00f),
-        makeMultiJetParams(1.00f, 1.00f, 1.00f, 1.00f),
-        makeMultiJetParams(1.00f, 1.00f, 1.00f, 1.00f),
-        makeMultiJetParams(1.00f, 1.00f, 1.00f, 1.00f)
+        makeMultiJetParams(1.00f, 1.00f, 1.00f),
+        makeMultiJetParams(1.00f, 1.00f, 1.00f),
+        makeMultiJetParams(1.00f, 1.00f, 1.00f),
+        makeMultiJetParams(1.00f, 1.00f, 1.00f),
+        makeMultiJetParams(1.00f, 1.00f, 1.00f)
     };
 
     /*
@@ -54,12 +54,14 @@ namespace multiJet {
     */
 
     JetPackParams jetPack;
+    
+    static inline uint8_t getNumJets() {
+        return jetPack.numJets > MAX_NUM_JETS ? MAX_NUM_JETS : jetPack.numJets;
+    }
 
     static constexpr ModConfig JetPackParams::* MULTIJET_MODS[] = {
         &JetPackParams::modRadius,
-        &JetPackParams::modRadialAngle,
         &JetPackParams::modDirection,
-        //&JetPackParams::modForce,
         &JetPackParams::modHueSpeed,
     };
     
@@ -79,47 +81,31 @@ namespace multiJet {
         jetPack = JetPackParams{};
     }
 
+    // Modulation signal processing functions -----------------------------
+
     static void prepEmitterMods() {
         timings.ratio[jetPack.modRadius.modTimer] = 0.00049f * jetPack.modRadius.modRate;
-        timings.ratio[jetPack.modRadialAngle.modTimer] = 0.0004f * jetPack.modRadialAngle.modRate;
         timings.ratio[jetPack.modDirection.modTimer] = 0.0006f * jetPack.modDirection.modRate;
         timings.ratio[jetPack.modHueSpeed.modTimer] = 0.00035f * jetPack.modHueSpeed.modRate;
     }
 
-    enum param : uint8_t {
-		RADIUS = 0,
-		DIRECTION = 1
-	};
-
     static void acquireSignals() {
         radiusSignal = move.directional_noise[jetPack.modRadius.modTimer];
-        radialAngleSignal = move.directional_noise[jetPack.modRadialAngle.modTimer];
         directionSignal = move.directional_noise[jetPack.modDirection.modTimer];
         hueSpeedSignal = move.directional_noise[jetPack.modHueSpeed.modTimer];
     }
-
-    /* 
-    ----------------------------------------------------
-    timeScale = 16;   // slow-ish drift
-    timeScale = 64;   // faster visible drift
-
-    step = 1000;      // nearby, coordinated
-    step = 5000;      // gentle variation
-    step = 20000;     // more separated
-    step = 60000;     // strongly decorrelated
-    ----------------------------------------------------
-    */
 
     uint32_t getStep(uint8_t param) {
         switch(param) {
             case RADIUS:     return jetPack.radiusStep; break;
             case DIRECTION:  return jetPack.directionStep; break;
+            //case WOBBLE:     return jetPack.diffWobble.modRate; break;  // was the step
             default:         return 0; break;
         }
     }
 
     float getNoiseSignal(uint8_t jetIndex, param param) {
-		uint32_t t = (uint32_t)now * 16u;
+		uint32_t t = (uint32_t)now * jetPack.modTimeScale; //16u;
         uint32_t offset = (uint32_t)jetIndex * getStep(param);
         float noiseVal = inoise16(t, t + offset) * (2.0f / 65535.0f) - 1.0f;
         return noiseVal;
@@ -135,25 +121,29 @@ namespace multiJet {
         }
     }
 
-    static inline uint8_t multiJetCount() {
-        return jetPack.numJets > MAX_NUM_JETS ? MAX_NUM_JETS : jetPack.numJets;
-    }
-
-    static inline void resolveMultiJetAnchor(uint8_t jetIndex, uint8_t count,
+    static inline void getJetPlacement(uint8_t jetIndex, uint8_t count,
                                              const JetParams& thisJet,
                                              float& anchorCol, float& anchorRow) {
         const float rawAngle = jetPack.radialAngleBase +
                                FF_2PI * ((float)jetIndex / (float)count);
 
-        const float angle = rawAngle +
-                            radialAngleSignal *
-                            jetPack.modRadialAngle.modLevel *
-                            jetPack.varRadialAngle *
-                            thisJet.radialAngleModScale;
+        const float rotationOffset = t * jetPack.rotationRate * (FF_2PI / 60.0f);
+        
+        const float rotatedAngle = rawAngle + rotationOffset;
 
+        //float wobbleFxDepth = 1.0f;   // how much we want each jet's wobble to vary from other jets based on diffSignal  		
+		//float wobbleFxFactor = 1.0f + diffSignal(jetPack.fxWobble, jetIndex, WOBBLE) * jetPack.varWobble; //wobbleFxDepth;
 
-		float radiusFxDepth = 1.5f;   // how much we want each jet's radius to vary from other jets based on diffSignal  		
-		float radiusFxFactor = 1.0f + diffSignal(jetPack.fxRadius, jetIndex, RADIUS) * radiusFxDepth; 
+        const float angle = rotatedAngle; /* +
+                            wobbleSignal *                  // common wobble signal
+                            jetPack.diffWobble.modLevel *   // jetPack-level magnitude of wobble   
+                            //jetPack.varWobble *             // jetPack-level of wobble differentiation among jets    
+                            wobbleFxFactor *                // jetPack-level of wobble differentiation among jets                
+                            thisJet.wobbleModScale;         // thisJet's specified responsiveness to wobble 
+                            */
+
+		//float radiusFxDepth = 1.5f;   // how much we want each jet's radius to vary from other jets based on diffSignal  		
+		float radiusFxFactor = 1.0f + diffSignal(jetPack.fxRadius, jetIndex, RADIUS) * jetPack.varRadius; // radiusFxDepth; 
 
         float radius = jetPack.radius * 
                        (1.0f + radiusSignal * jetPack.modRadius.modLevel *
@@ -165,9 +155,9 @@ namespace multiJet {
         anchorCol = jetPack.centerCol + sc.cos_val * radius;
         anchorRow = jetPack.centerRow + sc.sin_val * radius;
     
-    } // resolveMultiJetAnchor()
+    } // getJetPlacement()
 
-    static inline void resolveMultiJetDirection(uint8_t jetIndex, const JetParams& thisJet,
+    static inline void getJetDirection(uint8_t jetIndex, const JetParams& thisJet,
                                                 float anchorCol, float anchorRow,
                                                 float& dirCol, float& dirRow) {
         float radialCol = anchorCol - jetPack.centerCol;
@@ -212,7 +202,7 @@ namespace multiJet {
         float directionFxDepth = 1.5f;   // how much we want each jet's direction to vary from other jets based on diffSignal 
         float directionFxFactor = 1.0f + diffSignal(jetPack.fxDirection, jetIndex, DIRECTION) * directionFxDepth; 
         
-        const float directionModulation = directionSignal *
+        const float directionModulation = directionSignal *                 
                                           jetPack.modDirection.modLevel *
                                           jetPack.varDirection *
                                           thisJet.directionModScale * 
@@ -228,9 +218,9 @@ namespace multiJet {
             dirRow = rotatedRow;
         }
     
-    } // resolveMultiJetDirection()
+    } // getJetDirection()
 
-    static inline float multiJetHueForJet(uint8_t jetIndex, uint8_t count,
+    static inline float getJetHue(uint8_t jetIndex, uint8_t count,
                                           const JetParams& thisJet) {
         const float hueShift = hueSpeedSignal *
                                jetPack.modHueSpeed.modLevel *
@@ -260,9 +250,9 @@ namespace multiJet {
 
         return fmodPos(baseHue + hueOffset + hueShift, 1.0f);
 
-    } // multiJetHueForJet
+    } // getJetHue())
 
-    static inline void emitLayeredJet(float anchorCol, float anchorRow,
+    static inline void emitJet(float anchorCol, float anchorRow,
                                       float dirCol, float dirRow,
                                       float hue, float density,
                                       float force, float radius) {
@@ -285,10 +275,11 @@ namespace multiJet {
                  density * 0.15f,
                  velX * 0.65f, velY * 0.65f, hue);
     
-    } // emitLayeredJet()
+    } // emitJet()
 
+    // Main runEmitter loop -----------------------------------
     static void runEmitter() {
-        const uint8_t count = multiJetCount();
+        const uint8_t count = getNumJets();
         if (count == 0) return;
 
         acquireSignals();
@@ -300,13 +291,13 @@ namespace multiJet {
 
             float anchorCol;
             float anchorRow;
-            resolveMultiJetAnchor(i, count, thisJet, anchorCol, anchorRow);
+            getJetPlacement(i, count, thisJet, anchorCol, anchorRow);
 
             float dirCol;
             float dirRow;
-            resolveMultiJetDirection(i, thisJet, anchorCol, anchorRow, dirCol, dirRow);
+            getJetDirection(i, thisJet, anchorCol, anchorRow, dirCol, dirRow);
 
-            const float hue = multiJetHueForJet(i, count, thisJet);
+            const float hue = getJetHue(i, count, thisJet);
             
             const float density = jetPack.density;
             
@@ -316,8 +307,8 @@ namespace multiJet {
             
             const float size = jetPack.size; 
 
-            emitLayeredJet(anchorCol, anchorRow, dirCol, dirRow,
-                           hue, density, force, size);
+            emitJet(anchorCol, anchorRow, dirCol, dirRow,
+                    hue, density, force, size);
         }
     } // runEmitter()
 
