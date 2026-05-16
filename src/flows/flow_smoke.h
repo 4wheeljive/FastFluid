@@ -324,6 +324,7 @@ namespace smoke {
     }
 
     static void advectFlow() {
+        
         // Decompose 2D gravity from intensity + angle.
         // Angle convention matches jetAngle: 0°=up, 90°=right, 180°=down, 270°=left.
         //   u (horizontal, +x = right):  sin(angle) * force
@@ -336,8 +337,10 @@ namespace smoke {
             gravityU =  sc.sin_val * smoke.gravityForce;
             gravityV = -sc.cos_val * smoke.gravityForce;
         }
-
+        
+        
         // ─── VELOCITY STEP ─────────────────────────────────────────
+        PROFILE_START("advectVelocity");
         const float viscosityA = dt * smoke.viscosity * SIM_SIZE * SIM_SIZE;
         if (viscosityA <= FAST_DIFFUSION_THRESHOLD) {
             setBnd(1, u);
@@ -370,17 +373,22 @@ namespace smoke {
         fl::memcpy(vPrev, v, sizeof(v));
         advectVelocityPair(dt);
         applyObstacleVelocity();   // hook 2: after self-advect
-        project();
 
+        project();
+        PROFILE_END();
+
+        PROFILE_START("advectVorticity");
         if (smoke.vorticity > 0.0f) {
             applyVorticityConfinement(dt);
             applyObstacleVelocity(); // hook 3: after vorticity confinement
             project();
         }
+        PROFILE_END();
 
         // ─── DYE STEP ──────────────────────────────────────────────
         // For each channel: optionally diffuse, then advect through u,v.
         // Use tR/tG/tB as the previous-frame buffer.
+        PROFILE_START("advectDiffusion");
         if (smoke.diffusion > 0.0f) {
             fl::memcpy(tR, gR, sizeof(gR));
             fl::memcpy(tG, gG, sizeof(gG));
@@ -389,16 +397,21 @@ namespace smoke {
             diffuse(0, gG, tG, smoke.diffusion, dt);
             diffuse(0, gB, tB, smoke.diffusion, dt);
         }
+        PROFILE_END();
 
+        PROFILE_START("advectDye");
         fl::memcpy(tR, gR, sizeof(gR));
         fl::memcpy(tG, gG, sizeof(gG));
         fl::memcpy(tB, gB, sizeof(gB));
         advectDyeRGB(dt);
+        PROFILE_END();
+
         // Dye hard-clear in solid cells — keeps the paddle crisp after advect.
         applyObstacleField(gR);
         applyObstacleField(gG);
         applyObstacleField(gB);
-
+        
+        PROFILE_START("advectDissipation");
         // ─── DISSIPATION ───────────────────────────────────────────
         const float fadeVel = fl::powf(workVelDissip, dt);
         const float fadeDye = fl::powf(workDyeDissip, dt);
@@ -411,9 +424,11 @@ namespace smoke {
                 gB[y][xc] *= fadeDye;
             }
         }
+        PROFILE_END();
 
         applyObstacleVelocity();   // hook 4: end of step
     }
+
 
     FL_OPTIMIZATION_LEVEL_O3_END
     FL_FAST_MATH_END

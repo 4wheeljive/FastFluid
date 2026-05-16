@@ -12,7 +12,7 @@
 #define FASTLED_OVERCLOCK 1.2
 #include <FastLED.h>
 
-//#define SERIAL_PROFILE_REPORTS
+#define SERIAL_PROFILE_REPORTS
 
 //#include <FS.h>
 //#include "LittleFS.h"
@@ -187,9 +187,9 @@ void loop() {
 		defaultMapping = Mapping::TopDownProgressive;
 
 		if (!fastFluid::fastFluidInstance) {
-			fastFluid::initfastFluid(myXY);
+			fastFluid::initFastFluid(myXY);
 		}
-		fastFluid::runfastFluid();
+		fastFluid::runFastFluid();
 	}
 
 	PROFILE_START("led_show");

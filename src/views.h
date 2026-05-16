@@ -134,11 +134,11 @@ namespace fastFluid {
     static void drawEmitterDebugOverlay() {
         if (activeEmitter != EMITTER_MULTIJET) return;
 
-        const uint8_t count = multiJet::getNumJets();
+        const int count = multiJet::getNumJets();
         if (count == 0) return;
 
         const float arrowLength = clampf(multiJet::jetPack.size * 2.0f, 3.0f, (float)MIN_DIMENSION * 0.28f);
-        for (uint8_t i = 0; i < count; i++) {
+        for (int i = 0; i < count; i++) {
             const JetParams& thisJet = multiJet::jet[i];
             if (!thisJet.enabled) continue;
 
@@ -168,8 +168,8 @@ namespace fastFluid {
         const bool signedView = debugViewIsSigned(view);
         float maxValue = 1e-6f;
 
-        for (uint8_t y = 0; y < HEIGHT; y++) {
-            for (uint8_t xc = 0; xc < WIDTH; xc++) {
+        for (int y = 0; y < HEIGHT; y++) {
+            for (int xc = 0; xc < WIDTH; xc++) {
                 float value = debugScalarValue(view, xc, y);
                 if (view == DEBUG_VIEW_DIVERGENCE) value = fl::fabsf(value);
                 if (signedView) value = fl::fabsf(value);
@@ -178,8 +178,8 @@ namespace fastFluid {
         }
 
         const float invMax = 1.0f / maxValue;
-        for (uint8_t y = 0; y < HEIGHT; y++) {
-            for (uint8_t xc = 0; xc < WIDTH; xc++) {
+        for (int y = 0; y < HEIGHT; y++) {
+            for (int xc = 0; xc < WIDTH; xc++) {
                 float value = debugScalarValue(view, xc, y);
 
                 if (signedView) {

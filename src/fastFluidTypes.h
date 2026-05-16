@@ -39,7 +39,7 @@ namespace fastFluid {
     static float t  = 0.0f;   // virtual elapsed time (seconds), accumulated each frame
     static float dt = 0.0f;   // virtual frame delta (seconds), already scaled by globalSpeed
     float globalSpeed = 0.5f;  // master clock multiplier
-    uint8_t paletteBlendRate = 32;
+    int paletteBlendRate = 32;
     float paletteFloor = 0.05f;
 
     // Persistent simulation state (survives across frames)
@@ -392,7 +392,7 @@ namespace fastFluid {
 
     template <typename Params, size_t N>
     inline uint8_t assignModSlots(Params& params, ModConfig Params::* const (&mods)[N], uint8_t baseSlot) {
-        for (uint8_t i = 0; i < N; i++) {
+        for (int i = 0; i < N; i++) {
             (params.*mods[i]).modTimer = baseSlot + i;
         }
         return baseSlot + N;
@@ -400,6 +400,7 @@ namespace fastFluid {
 
     template <typename Params, size_t N>
     constexpr uint8_t modCount(ModConfig Params::* const (&)[N]) {
+        //return static_cast<uint8_t>(N);
         return static_cast<uint8_t>(N);
     }
 

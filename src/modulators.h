@@ -39,7 +39,7 @@ namespace fastFluid {
     timers timings;     // timer inputs; all time/speed settings in one place
     modulators move;    // timer outputs; all time-based modulators in one place
 
-    void calculate_modulators(timers &timings, uint8_t numActiveTimers) {
+    void calculate_modulators(timers &timings, int numActiveTimers) {
         // Virtual millis accumulator — scales with globalSpeed to avoid
         // discontinuities when globalSpeed changes mid-run.
         static unsigned long lastRealMs = 0;
@@ -50,7 +50,7 @@ namespace fastFluid {
         lastRealMs = realMs;
         const float runtime = virtualMs;
 
-        for (uint8_t i = 0; i < numActiveTimers; i++) {
+        for (int i = 0; i < numActiveTimers; i++) {
             // -----------------------------------------------------------------
             // Base time progression
             // -----------------------------------------------------------------

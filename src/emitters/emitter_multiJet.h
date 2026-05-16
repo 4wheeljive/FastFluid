@@ -15,7 +15,7 @@ namespace multiJet {
     FL_FAST_MATH_BEGIN
     FL_OPTIMIZATION_LEVEL_O3_BEGIN
 
-    static constexpr uint8_t MAX_NUM_JETS = 5;
+    static constexpr int MAX_NUM_JETS = 5;
     static constexpr float MULTIJET_INV_2PI = 1.0f / FF_2PI;
 
     float radiusSignal = 0.0f;
@@ -95,7 +95,7 @@ namespace multiJet {
         hueSpeedSignal = move.directional_noise[jetPack.modHueSpeed.modTimer];
     }
 
-    uint32_t getStep(uint8_t param) {
+    uint32_t getStep(int param) {
         switch(param) {
             case RADIUS:     return jetPack.radiusStep; break;
             case DIRECTION:  return jetPack.directionStep; break;
@@ -111,7 +111,7 @@ namespace multiJet {
         return noiseVal;
 	}
 
-    static float diffSignal(uint8_t fxMode, uint8_t jetIndex, param param) {
+    static float diffSignal(int fxMode, uint8_t jetIndex, param param) {
 		switch (fxMode) {
             case SYNCHRONOUS:  return 0.0f; break;
             case NOISE:        return getNoiseSignal(jetIndex, param); break;
@@ -279,12 +279,12 @@ namespace multiJet {
 
     // Main runEmitter loop -----------------------------------
     static void runEmitter() {
-        const uint8_t count = getNumJets();
+        const int count = getNumJets();
         if (count == 0) return;
 
         acquireSignals();
 
-        for (uint8_t i = 0; i < count; i++) {
+        for (int i = 0; i < count; i++) {
             
             const JetParams& thisJet = jet[i];
             if (!thisJet.enabled) continue;

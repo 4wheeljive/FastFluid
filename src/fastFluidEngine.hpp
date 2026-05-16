@@ -136,9 +136,9 @@ namespace fastFluid {
         }
 
         // ─── Stage 5+6+7: black point → gamma → Bayer dither → LEDs ───
-        for (uint8_t y = 0; y < HEIGHT; y++) {
-            for (uint8_t xc = 0; xc < WIDTH; xc++) {
-                uint16_t idx = xyFunc(xc, y);
+        for (int y = 0; y < HEIGHT; y++) {
+            for (int xc = 0; xc < WIDTH; xc++) {
+                int idx = xyFunc(xc, y);
                 if (idx >= NUM_LEDS) continue;
 
                 float r = clampf((tR[y][xc] - render.blackPoint) * invBlack, 0.0f, 1.0f);
@@ -256,7 +256,7 @@ namespace fastFluid {
     //  INIT & MAIN LOOP
     // ═══════════════════════════════════════════════════════════════════
 
-    void initfastFluid(uint16_t (*xy_func)(uint8_t, uint8_t)) {
+    void initFastFluid(uint16_t (*xy_func)(uint8_t, uint8_t)) {
         fastFluidInstance = true;
         xyFunc = xy_func;
 
@@ -390,10 +390,6 @@ namespace fastFluid {
         cPaddleB          = paddles::paddles.colorB;
     }
 
-    // Sync ALL emitters' cVars into their structs every frame. Inactive
-    // emitters' state is updated harmlessly — only EMITTER_RUN[activeEmitter]
-    // actually consumes them this frame.
-    
     static void syncGlobalFromCVars() {
         globalSpeed = cGlobalSpeed;
         paletteBlendRate = cPaletteBlendRate;
@@ -407,56 +403,67 @@ namespace fastFluid {
     }
 
     static void syncEmittersFromCVars() {
-        // singleJet
-        singleJet::jet.density = cDensity;
-        singleJet::jet.force = cForce;
-        singleJet::jet.size = cRadius;
-        singleJet::jet.spread = cSpread;
-        singleJet::jet.direction = cDirection;
-        singleJet::jet.hueSpeed = cHueSpeed;
-        singleJet::jet.slideRange = cSlideRange;
-        singleJet::jet.modForce.modRate = cModForceRate;
-        singleJet::jet.modForce.modLevel = cModForceLevel;
-        singleJet::jet.modDirection.modRate = cModDirectionRate;
-        singleJet::jet.modDirection.modLevel = cModDirectionLevel;
-        singleJet::jet.modSlideRange.modRate = cModSlideRate;
-        singleJet::jet.modSlideRange.modLevel = cModSlideLevel;
+    
+        switch (activeEmitter) {
+    
+            case EMITTER_SINGLEJET: {
+                JetParams& jet = singleJet::jet;
+                singleJet::jet.density = cDensity;
+                singleJet::jet.force = cForce;
+                singleJet::jet.size = cRadius;
+                singleJet::jet.spread = cSpread;
+                singleJet::jet.direction = cDirection;
+                singleJet::jet.hueSpeed = cHueSpeed;
+                singleJet::jet.slideRange = cSlideRange;
+                singleJet::jet.modForce.modRate = cModForceRate;
+                singleJet::jet.modForce.modLevel = cModForceLevel;
+                singleJet::jet.modDirection.modRate = cModDirectionRate;
+                singleJet::jet.modDirection.modLevel = cModDirectionLevel;
+                singleJet::jet.modSlideRange.modRate = cModSlideRate;
+                singleJet::jet.modSlideRange.modLevel = cModSlideLevel;
+                break;
+            }
+            
+            case EMITTER_MULTIJET: {
+                multiJet::jetPack.numJets = cNumJets;
+                multiJet::jetPack.directionMode = cDirectionMode;
+                multiJet::jetPack.colorMode = cColorMode;
+                multiJet::jetPack.radialAngleBase = cRadialAngleBase;
+                multiJet::jetPack.density = cDensity;
+                multiJet::jetPack.force = cForce;
+                multiJet::jetPack.size = cSize;
+                multiJet::jetPack.radius = cRadius;
+                multiJet::jetPack.direction = cDirection;
+                multiJet::jetPack.hueSpeed = cHueSpeed;
+                multiJet::jetPack.hueSpread = cHueSpread;
+                //multiJet::jetPack.varRadialAngle = cVarRadialAngle;
+                multiJet::jetPack.varRadius = cVarRadius;
+                multiJet::jetPack.varDirection = cVarDirection;
+                //multiJet::jetPack.varSize = cVarSize;
+                //multiJet::jetPack.varForce = cVarForce;
+                //multiJet::jetPack.varDensity = cVarDensity;
+                multiJet::jetPack.varHueSpeed = cVarHueSpeed;
+                //multiJet::jetPack.modRadialAngle.modRate = cModRadialAngleRate;
+                //multiJet::jetPack.modRadialAngle.modLevel = cModRadialAngleLevel;
+                multiJet::jetPack.modRadius.modRate = cModRadiusRate;
+                multiJet::jetPack.modRadius.modLevel = cModRadiusLevel;
+                multiJet::jetPack.modDirection.modRate = cModDirectionRate;
+                multiJet::jetPack.modDirection.modLevel = cModDirectionLevel;
+                //multiJet::jetPack.modSize.modRate = cModSizeRate;
+                //multiJet::jetPack.modSize.modLevel = cModSizeLevel;
+                //multiJet::jetPack.modForce.modRate = cModForceRate;
+                //multiJet::jetPack.modForce.modLevel = cModForceLevel;
+                //multiJet::jetPack.modDensity.modRate = cModDensityRate;
+                //multiJet::jetPack.modDensity.modLevel = cModDensityLevel;
+                multiJet::jetPack.modHueSpeed.modRate = cModHueSpeedRate;
+                multiJet::jetPack.modHueSpeed.modLevel = cModHueSpeedLevel;
+                multiJet::jetPack.radiusStep = cRadiusStep;
+                multiJet::jetPack.directionStep = cDirectionStep;
+                break;
+            }
 
-        // multiJet
-        multiJet::jetPack.numJets = cNumJets;
-        multiJet::jetPack.directionMode = cDirectionMode;
-        multiJet::jetPack.colorMode = cColorMode;
-        multiJet::jetPack.radialAngleBase = cRadialAngleBase;
-        multiJet::jetPack.density = cDensity;
-        multiJet::jetPack.force = cForce;
-        multiJet::jetPack.size = cSize;
-        multiJet::jetPack.radius = cRadius;
-        multiJet::jetPack.direction = cDirection;
-        multiJet::jetPack.hueSpeed = cHueSpeed;
-        multiJet::jetPack.hueSpread = cHueSpread;
-        //multiJet::jetPack.varRadialAngle = cVarRadialAngle;
-        multiJet::jetPack.varRadius = cVarRadius;
-        multiJet::jetPack.varDirection = cVarDirection;
-        //multiJet::jetPack.varSize = cVarSize;
-        //multiJet::jetPack.varForce = cVarForce;
-        //multiJet::jetPack.varDensity = cVarDensity;
-        multiJet::jetPack.varHueSpeed = cVarHueSpeed;
-        //multiJet::jetPack.modRadialAngle.modRate = cModRadialAngleRate;
-        //multiJet::jetPack.modRadialAngle.modLevel = cModRadialAngleLevel;
-        multiJet::jetPack.modRadius.modRate = cModRadiusRate;
-        multiJet::jetPack.modRadius.modLevel = cModRadiusLevel;
-        multiJet::jetPack.modDirection.modRate = cModDirectionRate;
-        multiJet::jetPack.modDirection.modLevel = cModDirectionLevel;
-        //multiJet::jetPack.modSize.modRate = cModSizeRate;
-        //multiJet::jetPack.modSize.modLevel = cModSizeLevel;
-        //multiJet::jetPack.modForce.modRate = cModForceRate;
-        //multiJet::jetPack.modForce.modLevel = cModForceLevel;
-        //multiJet::jetPack.modDensity.modRate = cModDensityRate;
-        //multiJet::jetPack.modDensity.modLevel = cModDensityLevel;
-        multiJet::jetPack.modHueSpeed.modRate = cModHueSpeedRate;
-        multiJet::jetPack.modHueSpeed.modLevel = cModHueSpeedLevel;
-        multiJet::jetPack.radiusStep = cRadiusStep;
-        multiJet::jetPack.directionStep = cDirectionStep;
+            default: break;
+        }
     }
 
     static void syncFlowFromCVars() {
@@ -507,16 +514,13 @@ namespace fastFluid {
         }
     }
 
-    void runfastFluid() {
+    void runFastFluid() {
         now = fl::millis();
         float rawDt = (now - lastFrameMs) * 0.001f;
         lastFrameMs = now;
         dt = rawDt * globalSpeed * 0.5f; // change takes effect one frame late
         t += dt;
-
-        // consider way to do this only upon change
-        //pushGlobalDefaultsToCVars();
-
+        
         // First-time setup of emitter/flow/obstacle state. Only one of each in fastFluid,
         // but keep the trigger pattern to fire defaults push exactly once at start.
         if (EMITTER < EMITTER_COUNT && EMITTER != lastEmitter) {
@@ -555,7 +559,7 @@ namespace fastFluid {
         // Pipeline: obstacle → prepare flow → emit → advect flow → render → overlay
         OBSTACLE_APPLY[activeObstacle](); // updateObstacle()
         FLOW_PREP[activeFlow]();    //smokePrepare();
-
+        
         PROFILE_START("emitter");
         EMITTER_RUN[activeEmitter]();  // runMultiJet();
         PROFILE_END();
@@ -577,15 +581,13 @@ namespace fastFluid {
         // obstacle generator each frame). Solver-enforce and overlay are
         // independently toggleable so the user can verify dye actually
         // deflects (overlay off, BC on) vs. is just hidden.
-        PROFILE_START("applyObstacleOverlay");
         applyObstacleOverlay();
-        PROFILE_END();
-
+        
         if (cDebugView == DEBUG_VIEW_EMITTER_OVERLAY) {
             PROFILE_START("emitterOverlay");
             drawEmitterDebugOverlay();
             PROFILE_END();
         }
-    } // runfastFluid() 
+    } // runFastFluid() 
 
 } // namespace fastFluid

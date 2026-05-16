@@ -211,7 +211,7 @@ void sendGlobalState() {
    ArduinoJson::JsonDocument stateDoc;
    ArduinoJson::JsonObject params = stateDoc["parameters"].to<ArduinoJson::JsonObject>();
 
-   for (uint8_t i = 0; i < GLOBAL_PARAM_COUNT; i++) {
+   for (int i = 0; i < GLOBAL_PARAM_COUNT; i++) {
        char paramName[32];
        ::strcpy(paramName, (char*)pgm_read_ptr(&GLOBAL_PARAMS[i]));
 
@@ -274,7 +274,7 @@ void sendEmitterState() {
 
    if (emitterParams != nullptr) {
        // Loop through parameters for current emitter
-       for (uint8_t i = 0; i < emitterParams->count; i++) {
+       for (int i = 0; i < emitterParams->count; i++) {
            char paramName[32];
            ::strcpy(paramName, (char*)pgm_read_ptr(&emitterParams->params[i]));
 
@@ -305,7 +305,7 @@ void sendEmitterState() {
    pStringCharacteristic->notify();
 
    if (emitterParams != nullptr) {
-       for (uint8_t i = 0; i < emitterParams->count; i++) {
+       for (int i = 0; i < emitterParams->count; i++) {
            char paramName[32];
            ::strcpy(paramName, (char*)pgm_read_ptr(&emitterParams->params[i]));
 
@@ -361,7 +361,7 @@ void sendFlowState() {
 
    if (flowParams != nullptr) {
        // Loop through parameters for current flow
-       for (uint8_t i = 0; i < flowParams->count; i++) {
+       for (int i = 0; i < flowParams->count; i++) {
            char paramName[32];
            ::strcpy(paramName, (char*)pgm_read_ptr(&flowParams->params[i]));
 
@@ -373,7 +373,7 @@ void sendFlowState() {
    }
 
    // Add parameter values to JSON based on visualizer params
-   for (uint8_t i = 0; i < flowParams->count; i++) {
+   for (int i = 0; i < flowParams->count; i++) {
        char paramName[32];
        ::strcpy(paramName, (char*)pgm_read_ptr(&flowParams->params[i]));
 
@@ -452,7 +452,7 @@ void sendObstacleState() {
 
    if (obstacleParams != nullptr) {
        // Loop through parameters for current obstacle
-       for (uint8_t i = 0; i < obstacleParams->count; i++) {
+       for (int i = 0; i < obstacleParams->count; i++) {
            char paramName[32];
            ::strcpy(paramName, (char*)pgm_read_ptr(&obstacleParams->params[i]));
 
@@ -464,7 +464,7 @@ void sendObstacleState() {
    }
 
    // Add parameter values to JSON based on visualizer params
-   for (uint8_t i = 0; i < obstacleParams->count; i++) {
+   for (int i = 0; i < obstacleParams->count; i++) {
        char paramName[32];
        ::strcpy(paramName, (char*)pgm_read_ptr(&obstacleParams->params[i]));
 
