@@ -34,15 +34,23 @@ namespace fastFluid {
     // 0.002 → ±0.001 hue cycle → ~1.5 RGB units max delta — enough to break bands.
     static constexpr float HUE_DITHER_SCALE = 0.002f;
 
+    static inline void buildHueDitherColorTable(float baseHue, ColorF colors[4][4]) {
+        for (int y = 0; y < 4; y++) {
+            for (int x = 0; x < 4; x++) {
+                const float hueOffset = bayerHueDither[y][x] * HUE_DITHER_SCALE;
+                const float dithered = fmodPos(baseHue + hueOffset, 1.0f);
+                colors[y][x] = rainbow(t, 0.0f, dithered);
+            }
+        }
+    }
+
     // 2D Gaussian splat: writes dye to gR/gG/gB and momentum to u/v.
-    // baseHue selects the splat color (passed by caller, computed from
-    // per-emitter hue logic). Per-cell hue dither is applied here so
-    // adjacent cells get distinct uint8 values at LED output, breaking
-    // the banding inherent to single-color splats.
-    static void jetSplat(float cx, float cy, float radius,
-                              float densityMag,
-                              float velX, float velY,
-                              float baseHue) {
+    // The color table holds the 4x4 Bayer hue offsets for a base hue, so
+    // palette/rainbow conversion happens once per hue instead of per cell.
+    static void jetSplatWithColors(float cx, float cy, float radius,
+                                   float densityMag,
+                                   float velX, float velY,
+                                   const ColorF colors[4][4]) {
         const float r2  = radius * radius * 0.6f;
         const float invR2 = 1.0f / r2;
         int x0 = max(0,           (int)fl::floorf(cx - radius));
@@ -61,13 +69,7 @@ namespace fastFluid {
                 float w = fastpow(2.71828183f, -d2 * invR2);
                 if (w < 0.005f) continue;
 
-                // Per-cell hue offset from Bayer matrix — deterministic spatial
-                // pattern, so the same cell gets the same offset across frames
-                // (no temporal flicker).
-                const float hueOffset = bayerHueDither[y & 3][x & 3] * HUE_DITHER_SCALE;
-                const float dithered  = fmodPos(baseHue + hueOffset, 1.0f);
-                // rainbow(t, 0, dithered) → hue = dithered (skips t * speed term).
-                ColorF c = rainbow(t, 0.0f, dithered);
+                const ColorF& c = colors[y & 3][x & 3];
 
                 const float wScale = w * densityScale;
                 gR[y][x] += c.r * wScale;
@@ -77,6 +79,18 @@ namespace fastFluid {
                 v[y][x] += velY * w;
             }
         }
+    }
+
+    // baseHue selects the splat color (passed by caller, computed from
+    // per-emitter hue logic). Per-cell hue dither is applied so adjacent cells
+    // get distinct uint8 values at LED output without temporal flicker.
+    static void jetSplat(float cx, float cy, float radius,
+                         float densityMag,
+                         float velX, float velY,
+                         float baseHue) {
+        ColorF colors[4][4];
+        buildHueDitherColorTable(baseHue, colors);
+        jetSplatWithColors(cx, cy, radius, densityMag, velX, velY, colors);
     }
 
     FL_OPTIMIZATION_LEVEL_O3_END

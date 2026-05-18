@@ -550,22 +550,27 @@ namespace fastFluid {
         updatePaletteState();
         uint8_t totalActiveTimers = configureActiveModulatorSlots();
 
-        // Pipeline: Prepare and calculate modulators
+
+        // ───────────────────────────────────────────────────────────────
+        //  MAIN PIPELINE
+        // ───────────────────────────────────────────────────────────────
+
+        // Pipeline Stage 1: Prepare and calculate modulators
         EMITTER_PREP_MODS[activeEmitter]();
         FLOW_PREP_MODS[activeFlow]();
         OBSTACLE_PREP_MODS[activeObstacle]();
         calculate_modulators(timings, totalActiveTimers);
 
-        // Pipeline: obstacle → prepare flow → emit → advect flow → render → overlay
+        // Pipeline Stage 2: Apply obstacle and prep flow
         OBSTACLE_APPLY[activeObstacle](); // updateObstacle()
-        FLOW_PREP[activeFlow]();    //smokePrepare();
+        FLOW_PREP[activeFlow]();    //prepFlow();
         
         PROFILE_START("emitter");
-        EMITTER_RUN[activeEmitter]();  // runMultiJet();
+        EMITTER_RUN[activeEmitter]();
         PROFILE_END();
 
         PROFILE_START("flowAdvect");
-        FLOW_ADVECT[activeFlow]();  //smokeAdvect();
+        FLOW_ADVECT[activeFlow]();  //advectFlow();
         PROFILE_END();
 
         PROFILE_START("render");

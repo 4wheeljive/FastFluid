@@ -56,7 +56,8 @@ namespace smoke {
 
     SmokeParams smoke;
 
-    // Working values prepared each frame by smokePrepare()
+    float velSignal = 0.0f;
+    float dyeSignal = 0.0f;
     static float workVelDissip = 0.5f;
     static float workDyeDissip = 0.5f;
 
@@ -294,7 +295,8 @@ namespace smoke {
     // ───────────────────────────────────────────────────────────────
     //  Pipeline entry points
     // ───────────────────────────────────────────────────────────────
-    // Phase 1 of frame: write this component's timer slot ratios.
+    // Pipeline Stage 1
+    // Write this component's modulation timer slot ratios.
     // Engine collects all components' ratios, then runs ONE central
     // calculate_modulators call before any component reads `move[*]`.
     static void prepFlowMods() {
@@ -302,24 +304,22 @@ namespace smoke {
         timings.ratio[smoke.modDyeDissip.modTimer] = 0.00045f * smoke.modDyeDissip.modRate;
     }
 
-    // Phase 3 of frame: read modulator output and compute work values.
-    // Called AFTER calculate_modulators has run.
+    // Pipeline Stage 2
+    // Acquire computed modulation signals and apply to work values
     static void prepFlow() {
+        // Signal acquisition (read modulator output): bipolar [-1, 1]
         const ModConfig& velMod = smoke.modVelDissip;
         const ModConfig& dyeMod = smoke.modDyeDissip;
+        velSignal = move.directional_noise[velMod.modTimer];
+        dyeSignal  = move.directional_noise[dyeMod.modTimer];
 
-        // Signal acquisition: bipolar [-1, 1]
-        const float velSignal = move.directional_noise[velMod.modTimer];
-        const float dySignal  = move.directional_noise[dyeMod.modTimer];
-
-        // Artistic application: orbitalDots-style bipolar modulation,
-        // clamped to [0.01, 1.0] to keep dissipation values stable.
+        // Artistic application, clamped to [0.01, 1.0] to keep dissipation values stable.
         workVelDissip = smoke.velocityDissipation *
             ((1.0f - velMod.modLevel) + velMod.modLevel * velSignal);
         workVelDissip = fmaxf(0.01f, fminf(1.0f, workVelDissip));
 
         workDyeDissip = smoke.dyeDissipation *
-            ((1.0f - dyeMod.modLevel) + dyeMod.modLevel * dySignal);
+            ((1.0f - dyeMod.modLevel) + dyeMod.modLevel * dyeSignal);
         workDyeDissip = fmaxf(0.01f, fminf(1.0f, workDyeDissip));
     }
 

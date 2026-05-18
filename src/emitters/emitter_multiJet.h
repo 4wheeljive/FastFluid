@@ -81,7 +81,9 @@ namespace multiJet {
         jetPack = JetPackParams{};
     }
 
-    // Modulation signal processing functions -----------------------------
+    // ───────────────────────────────────────────────────────────────
+    //  Pipeline entry points
+    // ───────────────────────────────────────────────────────────────
 
     static void prepEmitterMods() {
         timings.ratio[jetPack.modRadius.modTimer] = 0.00049f * jetPack.modRadius.modRate;
@@ -121,9 +123,10 @@ namespace multiJet {
         }
     }
 
-    static inline void getJetPlacement(uint8_t jetIndex, uint8_t count,
-                                             const JetParams& thisJet,
-                                             float& anchorCol, float& anchorRow) {
+    static inline void getJetPlacementResolved(uint8_t jetIndex, uint8_t count,
+                                               const JetParams& thisJet,
+                                               float& anchorCol, float& anchorRow,
+                                               float& radialCol, float& radialRow) {
         const float rawAngle = jetPack.radialAngleBase +
                                FF_2PI * ((float)jetIndex / (float)count);
 
@@ -152,25 +155,27 @@ namespace multiJet {
         radius = clampf(radius, (float)MIN_DIMENSION * 0.2f, (float)MIN_DIMENSION * 0.45f);
 
         SinCosResult sc = sincos_fast(wrapRad(angle));
-        anchorCol = jetPack.centerCol + sc.cos_val * radius;
-        anchorRow = jetPack.centerRow + sc.sin_val * radius;
+        radialCol = sc.cos_val;
+        radialRow = sc.sin_val;
+        anchorCol = jetPack.centerCol + radialCol * radius;
+        anchorRow = jetPack.centerRow + radialRow * radius;
     
+    } // getJetPlacementResolved()
+
+    static inline void getJetPlacement(uint8_t jetIndex, uint8_t count,
+                                             const JetParams& thisJet,
+                                             float& anchorCol, float& anchorRow) {
+        float radialCol;
+        float radialRow;
+        getJetPlacementResolved(jetIndex, count, thisJet,
+                                anchorCol, anchorRow,
+                                radialCol, radialRow);
+
     } // getJetPlacement()
 
-    static inline void getJetDirection(uint8_t jetIndex, const JetParams& thisJet,
-                                                float anchorCol, float anchorRow,
-                                                float& dirCol, float& dirRow) {
-        float radialCol = anchorCol - jetPack.centerCol;
-        float radialRow = anchorRow - jetPack.centerRow;
-        const float length = fl::sqrtf(radialCol * radialCol + radialRow * radialRow);
-        if (length > 1e-6f) {
-            radialCol /= length;
-            radialRow /= length;
-        } else {
-            radialCol = 0.0f;
-            radialRow = -1.0f;
-        }
-
+    static inline void getJetDirectionFromRadial(uint8_t jetIndex, const JetParams& thisJet,
+                                                 float radialCol, float radialRow,
+                                                 float& dirCol, float& dirRow) {
         switch (jetPack.directionMode) {
             case MULTIJET_DIR_RADIAL_IN:
             case MULTIJET_DIR_AIM_CENTER:
@@ -218,6 +223,25 @@ namespace multiJet {
             dirRow = rotatedRow;
         }
     
+    } // getJetDirectionFromRadial()
+
+    static inline void getJetDirection(uint8_t jetIndex, const JetParams& thisJet,
+                                                float anchorCol, float anchorRow,
+                                                float& dirCol, float& dirRow) {
+        float radialCol = anchorCol - jetPack.centerCol;
+        float radialRow = anchorRow - jetPack.centerRow;
+        const float length = fl::sqrtf(radialCol * radialCol + radialRow * radialRow);
+        if (length > 1e-6f) {
+            radialCol /= length;
+            radialRow /= length;
+        } else {
+            radialCol = 0.0f;
+            radialRow = -1.0f;
+        }
+
+        getJetDirectionFromRadial(jetIndex, thisJet, radialCol, radialRow,
+                                  dirCol, dirRow);
+
     } // getJetDirection()
 
     static inline float getJetHue(uint8_t jetIndex, uint8_t count,
@@ -258,27 +282,31 @@ namespace multiJet {
                                       float force, float radius) {
         if (radius <= 0.0f || density <= 0.0f) return;
 
+        ColorF colors[4][4];
+        buildHueDitherColorTable(hue, colors);
+
         const float velX = dirCol * force;
         const float velY = dirRow * force;
         const float layerMid = radius * 0.6f;
         const float layerOut = radius * 1.1f;
 
-        jetSplat(anchorCol, anchorRow, radius,
-                 density * 0.55f,
-                 velX, velY, hue);
+        jetSplatWithColors(anchorCol, anchorRow, radius,
+                           density * 0.55f,
+                           velX, velY, colors);
 
-        jetSplat(anchorCol + dirCol * layerMid, anchorRow + dirRow * layerMid, radius,
-                 density * 0.30f,
-                 velX * 0.82f, velY * 0.82f, hue);
+        jetSplatWithColors(anchorCol + dirCol * layerMid, anchorRow + dirRow * layerMid, radius,
+                           density * 0.30f,
+                           velX * 0.82f, velY * 0.82f, colors);
 
-        jetSplat(anchorCol + dirCol * layerOut, anchorRow + dirRow * layerOut, radius,
-                 density * 0.15f,
-                 velX * 0.65f, velY * 0.65f, hue);
+        jetSplatWithColors(anchorCol + dirCol * layerOut, anchorRow + dirRow * layerOut, radius,
+                           density * 0.15f,
+                           velX * 0.65f, velY * 0.65f, colors);
     
     } // emitJet()
 
     // Main runEmitter loop -----------------------------------
     static void runEmitter() {
+        
         const int count = getNumJets();
         if (count == 0) return;
 
@@ -291,20 +319,19 @@ namespace multiJet {
 
             float anchorCol;
             float anchorRow;
-            getJetPlacement(i, count, thisJet, anchorCol, anchorRow);
+            float radialCol;
+            float radialRow;
+            getJetPlacementResolved(i, count, thisJet,
+                                    anchorCol, anchorRow,
+                                    radialCol, radialRow);
 
             float dirCol;
             float dirRow;
-            getJetDirection(i, thisJet, anchorCol, anchorRow, dirCol, dirRow);
+            getJetDirectionFromRadial(i, thisJet, radialCol, radialRow, dirCol, dirRow);
 
             const float hue = getJetHue(i, count, thisJet);
-            
             const float density = jetPack.density;
-            
             const float force = jetPack.force;
-            //float force = jetPack.force * (1.0f + forceSignal * jetPack.modForce.modLevel * thisJet.forceModScale);
-            //force = fmaxf(0.0f, force);
-            
             const float size = jetPack.size; 
 
             emitJet(anchorCol, anchorRow, dirCol, dirRow,
