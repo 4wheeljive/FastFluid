@@ -59,6 +59,8 @@ using namespace fl;
 
 void setup() {
 
+	//pinMode(PROFILE_PIN, OUTPUT);
+
 	Serial.begin(115200);
 	#if defined(CONFIG_IDF_TARGET_ESP32S3)
 		Serial.setTxTimeoutMs(1);  // S3-only: avoids unsigned underflow on USB CDC
@@ -163,7 +165,7 @@ void setup() {
 void loop() {
 
 	PROFILE_FRAME_BEGIN();
-
+	
 	EVERY_N_SECONDS(3) {
 		uint8_t fps = FastLED.getFPS();
 		FASTLED_DBG(fps << " fps");
@@ -193,7 +195,9 @@ void loop() {
 	}
 
 	PROFILE_START("led_show");
+	//digitalWrite(PROFILE_PIN, HIGH);
 	FastLED.show();
+	//digitalWrite(PROFILE_PIN, LOW);
 	PROFILE_END();
 
 	if (!deviceConnected && wasConnected) {
@@ -203,6 +207,7 @@ void loop() {
 		if (debug) {Serial.println("Start advertising");}
 		wasConnected = false;
 	}
+
 
 	PROFILE_FRAME_END();
 

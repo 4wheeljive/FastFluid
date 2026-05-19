@@ -68,6 +68,7 @@
     #define PIN9  21
     #define PIN10 50
     #define PIN11 20
+    #define PROFILE_PIN 31
     #define HEIGHT 48
     #define WIDTH  64
     #define NUM_STRIPS 12

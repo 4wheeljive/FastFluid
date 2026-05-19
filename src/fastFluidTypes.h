@@ -416,4 +416,16 @@ namespace fastFluid {
     uint8_t activeFlowTimers = 0;
     uint8_t activeObstacleTimers = 0;
 
+    struct RenderParams {
+        float colorContrast = 1.0f;
+        float blackPoint    = 0.105f;
+        float flowSat       = 2.0f;
+        float flowBright    = 0.5f;
+        float glowStrength  = 0.0f;
+        float highlightSat  = 2.0f;
+    };
+
+    RenderParams render;
+
+
 } // namespace fastFluid
