@@ -289,6 +289,7 @@ namespace fastFluid {
     }
 
     void runFastFluid() {
+        PROFILE_START("prep_and_mods");
         now = fl::millis();
         float rawDt = (now - lastFrameMs) * 0.001f;
         lastFrameMs = now;
@@ -338,6 +339,7 @@ namespace fastFluid {
         // Pipeline Stage 2: Apply obstacle and prep flow
         OBSTACLE_APPLY[activeObstacle](); // updateObstacle()
         FLOW_PREP[activeFlow]();    //prepFlow();
+        PROFILE_END();
         
         PROFILE_START("emitter");
         EMITTER_RUN[activeEmitter]();
@@ -353,7 +355,6 @@ namespace fastFluid {
         } else {
             renderDebugView(cDebugView);
         }
-        PROFILE_END();
 
         // Obstacle overlay: write color over the rendered dye at solid
         // cells. Generic — reads obstacleCommon (mirrored from the active
@@ -361,7 +362,8 @@ namespace fastFluid {
         // independently toggleable so the user can verify dye actually
         // deflects (overlay off, BC on) vs. is just hidden.
         applyObstacleOverlay();
-        
+        PROFILE_END();
+
         if (cDebugView == DEBUG_VIEW_EMITTER_OVERLAY) {
             PROFILE_START("emitterOverlay");
             drawEmitterDebugOverlay();

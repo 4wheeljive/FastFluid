@@ -36,7 +36,7 @@ namespace fastFluid {
                 cForce = jet.force;
                 cSize = jet.size;
                 cSpread = jet.spread;
-                cDirection = jet.direction;
+                cDirection = jet.direction * (180.0f / FF_PI);
                 cHueSpeed = jet.hueSpeed;
                 cSlideRange = jet.slideRange;
                 cModForceRate = jet.modForce.modRate;
@@ -143,7 +143,7 @@ namespace fastFluid {
                 singleJet::jet.force = cForce;
                 singleJet::jet.size = cRadius;
                 singleJet::jet.spread = cSpread;
-                singleJet::jet.direction = cDirection;
+                singleJet::jet.direction = cDirection * (FF_PI / 180.0f);
                 singleJet::jet.hueSpeed = cHueSpeed;
                 singleJet::jet.slideRange = cSlideRange;
                 singleJet::jet.modForce.modRate = cModForceRate;

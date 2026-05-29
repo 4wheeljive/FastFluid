@@ -40,13 +40,10 @@ uint16_t ledNum = 0;
 
 // ***************************************************************************************
 // elements that must be set before #include "bleControl.h"
-
 uint8_t EMITTER = 1;
 uint8_t FLOW = 0;
 uint8_t OBSTACLE = 0;
-
 uint8_t BRIGHTNESS = 50;
-
 uint8_t defaultMapping = 0;
 bool mappingOverride = false;
 
@@ -67,7 +64,7 @@ void setup() {
 	#endif
 	delay(1000);
 
-	FastLED.setExclusiveDriver(LED_DRIVER);
+	FastLED.setExclusiveDriver(fl::Bus::LED_DRIVER); 
 
 	#ifndef S3_15x38_2PIN 
 
@@ -166,7 +163,7 @@ void loop() {
 
 	PROFILE_FRAME_BEGIN();
 	
-	EVERY_N_SECONDS(3) {
+	EVERY_N_SECONDS(5) {
 		uint8_t fps = FastLED.getFPS();
 		FASTLED_DBG(fps << " fps");
 	}
@@ -207,7 +204,6 @@ void loop() {
 		if (debug) {Serial.println("Start advertising");}
 		wasConnected = false;
 	}
-
 
 	PROFILE_FRAME_END();
 

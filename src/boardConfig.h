@@ -31,7 +31,7 @@
     #define WIDTH 48
     #define NUM_STRIPS 3
     #define NUM_LEDS_PER_STRIP 512
-    #define LED_DRIVER "RMT"
+    #define LED_DRIVER RMT
 #endif
 
 #ifdef S3_22x22
@@ -41,7 +41,7 @@
     #define WIDTH 22
     #define NUM_STRIPS 1
     #define NUM_LEDS_PER_STRIP 484
-    #define LED_DRIVER "RMT"
+    #define LED_DRIVER RMT
 #endif
 
 #ifdef S3_15x38_2PIN
@@ -51,7 +51,7 @@
     #define HEIGHT 15
     #define WIDTH 38
     #define NUM_STRIPS 2
-    #define LED_DRIVER "RMT"
+    #define LED_DRIVER RMT
 #endif
 
 #ifdef P4_64x48_12PIN
@@ -73,7 +73,7 @@
     #define WIDTH  64
     #define NUM_STRIPS 12
     #define NUM_LEDS_PER_STRIP 256
-    #define LED_DRIVER "PARLIO"
+    #define LED_DRIVER PARLIO
 #endif
 
 #define NUM_LEDS (WIDTH * HEIGHT)
@@ -109,6 +109,12 @@ uint16_t myXY(uint8_t x, uint8_t y) {
 		}
 		return ledNum;
 }
+
+/*uint16_t myXY(uint8_t x, uint8_t y) {
+		if (x >= WIDTH || y >= HEIGHT) return 0;
+		uint16_t i = ( y * WIDTH ) + x;
+        return i;
+}*/
 
 //XYMap myXYmap = XYMap::constructWithLookUpTable(WIDTH, HEIGHT, progBottomUp);
 //XYMap xyRect = XYMap::constructRectangularGrid(WIDTH, HEIGHT);
