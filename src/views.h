@@ -131,9 +131,28 @@ namespace fastFluid {
         }
     }
 
-    static void drawEmitterDebugOverlay() {
-        if (activeEmitter != EMITTER_MULTIJET) return;
+    static inline void drawEmitterPoseOverlay(float anchorCol, float anchorRow,
+                                              float dirCol, float dirRow,
+                                              float arrowLength) {
+        const float tipCol = anchorCol + dirCol * arrowLength;
+        const float tipRow = anchorRow + dirRow * arrowLength;
+        drawOverlayLine(anchorCol, anchorRow, tipCol, tipRow, 0.1f, 0.85f, 1.0f);
+        drawOverlayDisc(tipCol, tipRow, 0.1f, 0.85f, 1.0f, 0.85f);
+        drawOverlayDisc(anchorCol, anchorRow, 1.0f, 0.95f, 0.1f, 1.35f);
+    }
 
+    static void drawSingleJetDebugOverlay() {
+        float anchorCol;
+        float anchorRow;
+        float dirCol;
+        float dirRow;
+        singleJet::resolveJetPose(anchorCol, anchorRow, dirCol, dirRow);
+
+        const float arrowLength = clampf(singleJet::jet.size * 2.0f, 3.0f, (float)MIN_DIMENSION * 0.28f);
+        drawEmitterPoseOverlay(anchorCol, anchorRow, dirCol, dirRow, arrowLength);
+    }
+
+    static void drawMultiJetDebugOverlay() {
         const int count = multiJet::getNumJets();
         if (count == 0) return;
 
@@ -150,11 +169,20 @@ namespace fastFluid {
             float dirRow;
             multiJet::getJetDirection(i, thisJet, anchorCol, anchorRow, dirCol, dirRow);
 
-            const float tipCol = anchorCol + dirCol * arrowLength;
-            const float tipRow = anchorRow + dirRow * arrowLength;
-            drawOverlayLine(anchorCol, anchorRow, tipCol, tipRow, 0.1f, 0.85f, 1.0f);
-            drawOverlayDisc(tipCol, tipRow, 0.1f, 0.85f, 1.0f, 0.85f);
-            drawOverlayDisc(anchorCol, anchorRow, 1.0f, 0.95f, 0.1f, 1.35f);
+            drawEmitterPoseOverlay(anchorCol, anchorRow, dirCol, dirRow, arrowLength);
+        }
+    }
+
+    static void drawEmitterDebugOverlay() {
+        switch (activeEmitter) {
+            case EMITTER_SINGLEJET:
+                drawSingleJetDebugOverlay();
+                break;
+            case EMITTER_MULTIJET:
+                drawMultiJetDebugOverlay();
+                break;
+            default:
+                break;
         }
     }
 

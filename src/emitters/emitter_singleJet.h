@@ -50,33 +50,45 @@ namespace singleJet {
         timings.ratio[jet.modSlideRange.modTimer] = 0.0004f  * jet.modSlideRange.modRate;
     }
 
-    static void runEmitter() {
+    static inline void resolveJetPose(float& anchorCol, float& anchorRow,
+                                      float& dirCol, float& dirRow) {
         const ModConfig& directionMod = jet.modDirection;
-        const ModConfig& forceMod = jet.modForce;
         const ModConfig& slideMod = jet.modSlideRange;
 
-        // ─── Signal acquisition ────────────────────────────────────
-        const float forceSignal = move.normalized_noise[forceMod.modTimer];
         const float directionSignal = move.directional_noise[directionMod.modTimer];
         const float slideSignal = move.directional_noise[slideMod.modTimer];
 
-        // ─── Artistic application ──────────────────────────────────
-        const float currentForce = jet.force * (1.0f + forceSignal * 0.4f);
-
-        // Direction: noise-based offset around base direction.
-        // Coefficient π/4 per modLevel unit → modLevel=2 reaches full ±π/2 (±90°).
-        constexpr float DIRECTION_SCALE = FF_2PI * 0.125f;   // π/4
+        constexpr float DIRECTION_SCALE = FF_2PI * 0.125f;
         const float directionOffset = directionMod.modLevel * directionSignal * DIRECTION_SCALE;
 
-        // Wrap final angle to [0, 2π) for sincos_fast (UB for negative inputs).
         constexpr float INV_2PI = 1.0f / FF_2PI;
         float direction = jet.direction + directionOffset;
         direction -= fl::floorf(direction * INV_2PI) * FF_2PI;
 
-        // Direction decomposition: angle 0 = straight up (negative y)
         SinCosResult sc = sincos_fast(direction);
-        const float dirX =  sc.sin_val;
-        const float dirY = -sc.cos_val;
+        dirCol = sc.sin_val;
+        dirRow = -sc.cos_val;
+
+        const float slideOffset = slideSignal * slideMod.modLevel * jet.slideRange;
+        anchorCol = (float)WIDTH * 0.5f + slideOffset;
+        anchorRow = (float)HEIGHT - 1.0f;
+    }
+
+    static void runEmitter() {
+        const ModConfig& forceMod = jet.modForce;
+
+        // ─── Signal acquisition ────────────────────────────────────
+        const float forceSignal = move.normalized_noise[forceMod.modTimer];
+
+        // ─── Artistic application ──────────────────────────────────
+        const float currentForce = jet.force * (1.0f + forceSignal * 0.4f);
+
+        float jx;
+        float jy;
+        float dirX;
+        float dirY;
+        resolveJetPose(jx, jy, dirX, dirY);
+
         const float velX = dirX * currentForce;
         const float velY = dirY * currentForce;
 
@@ -84,15 +96,6 @@ namespace singleJet {
 
         // Per-frame base hue. Each splat call dithers around this in the cell loop.
         const float baseHue = fmodPos(t * jet.hueSpeed, 1.0f);
-
-        // Lateral position slide: plume slides side-to-side around base position.
-        // Independent of direction modulation — both can run simultaneously, or
-        // either alone. modLevel=0 disables slide without affecting direction.
-        const float slideOffset = slideSignal * slideMod.modLevel * jet.slideRange;
-
-        // Jet position: bottom-center, offset horizontally by slide.
-        const float jx = (float)WIDTH * 0.5f + slideOffset;
-        const float jy = (float)HEIGHT - 1.0f;
 
         // ─── 3-layered Gaussian splat ──────────────────────────────
         // Each layer is shifted along the jet axis. Offsets scale with
